@@ -36,7 +36,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!response.ok) {
-      return res.status(500).json({ error: data.message || 'Failed to fetch data from Dhan' });
+      return res.status(500).json({ error: 'Failed to fetch data from Dhan', dhanResponse: data, status: response.status });
     }
 
     const candles = data.timestamp.map((ts, i) => ({
@@ -51,6 +51,6 @@ export default async function handler(req, res) {
     return res.status(200).json({ securityId, candles });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error', details: String(err) });
   }
 }
