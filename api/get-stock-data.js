@@ -3,52 +3,53 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { securityId, days = 300 } = req.query;
+  const { symbol, range = '1y', interval = '1d' } = req.query;
 
-  if (!securityId) {
-    return res.status(400).json({ error: 'securityId is required (Dhan instrument security ID)' });
+  if (!symbol) {
+    return res.status(400).json({ error: 'symbol is required, e.g. RELIANCE.NS' });
   }
 
   try {
-    const toDate = new Date();
-    const fromDate = new Date();
-    fromDate.setDate(fromDate.getDate() - Number(days));
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+      symbol
+    )}?range=${range}&interval=${interval}`;
 
-    const formatDate = (d) => d.toISOString().split('T')[0];
-
-    const response = await fetch('https://api.dhan.co/v2/charts/historical', {
-      method: 'POST',
+    const response = await fetch(url, {
       headers: {
-        'Content-Type': 'application/json',
-        'access-token': process.env.DHAN_ACCESS_TOKEN,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
       },
-      body: JSON.stringify({
-        securityId: String(securityId),
-        exchangeSegment: 'NSE_EQ',
-        instrument: 'EQUITY',
-        expiryCode: 0,
-        oi: false,
-        fromDate: formatDate(fromDate),
-        toDate: formatDate(toDate),
-      }),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
-      return res.status(500).json({ error: 'Failed to fetch data from Dhan', dhanResponse: data, status: response.status });
+    if (!response.ok || data.chart?.error) {
+      return res.status(500).json({
+        error: 'Failed to fetch data from Yahoo Finance',
+        details: data.chart?.error || data,
+      });
     }
 
-    const candles = data.timestamp.map((ts, i) => ({
-      time: ts,
-      open: data.open[i],
-      high: data.high[i],
-      low: data.low[i],
-      close: data.close[i],
-      volume: data.volume[i],
-    }));
+    const result = data.chart?.result?.[0];
+    if (!result) {
+      return res.status(404).json({ error: 'No data found for this symbol' });
+    }
 
-    return res.status(200).json({ securityId, candles });
+    const timestamps = result.timestamp || [];
+    const quote = result.indicators?.quote?.[0] || {};
+
+    const candles = timestamps
+      .map((ts, i) => ({
+        time: ts,
+        open: quote.open?.[i],
+        high: quote.high?.[i],
+        low: quote.low?.[i],
+        close: quote.close?.[i],
+        volume: quote.volume?.[i],
+      }))
+      .filter((c) => c.close != null);
+
+    return res.status(200).json({ symbol, candles });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Internal server error', details: String(err) });
