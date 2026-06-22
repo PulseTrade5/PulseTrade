@@ -38,44 +38,22 @@ export default function StockDashboard() {
     setError('');
     setResult(null);
     setSymbolInput(sym);
-
     let symbol = sym;
     if (!symbol.includes('.')) symbol = symbol + '.NS';
-
     try {
       const res = await fetch(`/api/get-stock-data?symbol=${encodeURIComponent(symbol)}&range=1y`);
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Data fetch failed.');
-        setLoading(false);
-        return;
-      }
-
-      if (!data.candles || data.candles.length < 50) {
-        setError('Itna data nahi mila. Dobara try karo.');
-        setLoading(false);
-        return;
-      }
-
+      if (!res.ok) { setError(data.error || 'Data fetch failed.'); setLoading(false); return; }
+      if (!data.candles || data.candles.length < 50) { setError('Itna data nahi mila.'); setLoading(false); return; }
       const analysis = analyzeStock(data.candles);
-      if (analysis.error) {
-        setError(analysis.error);
-        setLoading(false);
-        return;
-      }
-
+      if (analysis.error) { setError(analysis.error); setLoading(false); return; }
       setResult(analysis);
       setStockName(sym);
       setEntryPrice(analysis.lastClose);
       setDirection(analysis.trend === 'Bullish' ? 'BUY' : 'SELL');
       if (analysis.atr) setSlPercent(Math.min(6, Math.max(1.5, (analysis.atr / analysis.lastClose * 100).toFixed(1))));
-
-      const entry = { id: Date.now(), symbol: sym, trend: analysis.trend, price: analysis.lastClose, date: new Date().toISOString(), outcome: 'pending' };
-      setHistory(prev => [entry, ...prev].slice(0, 100));
-
+      setHistory(prev => [{ id: Date.now(), symbol: sym, trend: analysis.trend, price: analysis.lastClose, date: new Date().toISOString(), outcome: 'pending' }, ...prev].slice(0, 100));
     } catch (err) {
-      console.error(err);
       setError('Kuch gadbad ho gayi, dobara try karo.');
     } finally {
       setLoading(false);
@@ -97,7 +75,7 @@ export default function StockDashboard() {
     <div style={{ backgroundColor: COLORS.bg, color: COLORS.text, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 20px 48px' }}>
 
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>
           <div style={{ color: COLORS.gold, fontWeight: 700, fontSize: 14 }}>🔱 हर हर महादेव 🔱</div>
         </div>
         <h1 style={{ fontSize: 32, fontWeight: 700, margin: '0 0 4px' }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span></h1>
@@ -119,14 +97,12 @@ export default function StockDashboard() {
               <label style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, display: 'block', marginBottom: 8 }}>STOCK SYMBOL YA NAAM</label>
               <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS"
                 style={{ width: '100%', padding: '10px 12px', fontSize: 14, backgroundColor: COLORS.bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box' }} />
-
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                 {POPULAR.map(s => (
                   <button key={s} disabled={loading} onClick={() => handleSearch(s)}
                     style={{ fontSize: 11, padding: '4px 10px', borderRadius: 20, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: symbolInput===s ? COLORS.gold : 'transparent', color: symbolInput===s ? '#1A1306' : COLORS.muted, cursor: 'pointer' }}>{s}</button>
                 ))}
               </div>
-
               <div style={{ marginTop: 16 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <label style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted }}>POSITION SIZING</label>
@@ -150,7 +126,6 @@ export default function StockDashboard() {
                     style={{ width: '100%', padding: '10px 12px', fontSize: 14, backgroundColor: COLORS.bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box' }} />
                 )}
               </div>
-
               <button onClick={() => handleSearch()} disabled={loading}
                 style={{ width: '100%', marginTop: 12, padding: '10px', fontSize: 14, fontWeight: 600, borderRadius: 10, border: 'none', backgroundColor: loading ? COLORS.goldDim : COLORS.gold, color: '#1A1306', cursor: loading ? 'not-allowed' : 'pointer' }}>
                 {loading ? '⏳ Check ho raha hai...' : '🔍 Trend Nikalo'}
@@ -160,6 +135,7 @@ export default function StockDashboard() {
 
             {result && (
               <>
+                {/* Main Result Card */}
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                     <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
@@ -168,7 +144,7 @@ export default function StockDashboard() {
                   {[
                     ['Trend', result.trend, trendColor],
                     ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? COLORS.green : COLORS.red],
-                    ['RSI', result.rsi, null],
+                    ['RSI', result.rsi, result.rsi > 70 ? COLORS.red : result.rsi < 30 ? COLORS.green : null],
                     ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
                     ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? COLORS.green : COLORS.red],
                     ['Long Score', `${result.longScore} / 100`, COLORS.green],
@@ -176,13 +152,21 @@ export default function StockDashboard() {
                     ['52W High / Low', `${fmtINR(result.week52High)} / ${fmtINR(result.week52Low)}`, null],
                     ['Distance from 52W High', `${result.distFromHighPct}%`, null],
                   ].map(([label, value, color]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <span style={{ color: COLORS.muted }}>{label}</span>
                       <span style={{ fontWeight: 600, color: color || COLORS.text }}>{value}</span>
                     </div>
                   ))}
+
+                  <button onClick={() => {
+                    const exists = watchlist.some(w => w.symbol === stockName);
+                    setWatchlist(prev => exists ? prev.filter(w => w.symbol !== stockName) : [{ symbol: stockName, lastTrend: result.trend, lastPrice: result.lastClose, lastChecked: new Date().toISOString() }, ...prev].slice(0, 30));
+                  }} style={{ width: '100%', marginTop: 12, padding: '8px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: `1px solid ${COLORS.goldDim}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer' }}>
+                    {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
+                  </button>
                 </div>
 
+                {/* Signal Card */}
                 {result.signal ? (
                   <div style={{ backgroundColor: COLORS.surface, border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: result.signal==='LONG' ? COLORS.green : COLORS.red, marginBottom: 12 }}>
@@ -196,7 +180,7 @@ export default function StockDashboard() {
                       ['Target 3 (10%)', fmtINR(result.targets?.[2])],
                       ['Suggested Hold', result.suggestedHold],
                     ].map(([label, value]) => (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                         <span style={{ color: COLORS.muted }}>{label}</span>
                         <span style={{ fontWeight: 600 }}>{value}</span>
                       </div>
@@ -204,12 +188,13 @@ export default function StockDashboard() {
                   </div>
                 ) : (
                   <div style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 16, fontSize: 13, color: COLORS.muted }}>
-                    Abhi koi clear signal nahi hai. Wait karo.
+                    ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
                   </div>
                 )}
 
+                {/* Position Sizing Card */}
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING</div>
+                  <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING CALCULATOR</div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                     {['BUY','SELL'].map(d => (
                       <button key={d} onClick={() => setDirection(d)} style={{ flex: 1, padding: '8px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: 'none', backgroundColor: direction===d ? (d==='BUY' ? COLORS.green : COLORS.red) : COLORS.bg, color: direction===d ? '#fff' : COLORS.muted, cursor: 'pointer' }}>{d}</button>
@@ -217,12 +202,12 @@ export default function StockDashboard() {
                   </div>
                   {[
                     ['Entry Price', fmtINR(ep)],
-                    ['Stop Loss', fmtINR(stopLossPrice)],
+                    ['Stop Loss Price', fmtINR(stopLossPrice)],
                     ['Quantity', `${qty} shares`],
                     ['Max Loss', fmtINR(lossAmount)],
-                    ['Risk:Reward', `1 : ${riskReward}`],
+                    ['Risk:Reward (10%)', `1 : ${riskReward}`],
                   ].map(([label, value]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <span style={{ color: COLORS.muted }}>{label}</span>
                       <span style={{ fontWeight: 600 }}>{value}</span>
                     </div>
@@ -243,16 +228,49 @@ export default function StockDashboard() {
         )}
 
         {tab === 'watchlist' && (
-          <div style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 16 }}>
-            <p style={{ color: COLORS.muted, fontSize: 13 }}>Watchlist abhi khaali hai.</p>
+          <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 16 }}>WATCHLIST</div>
+            {watchlist.length === 0 ? (
+              <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi khaali hai. Check tab se add karo.</p>
+            ) : watchlist.map(w => (
+              <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{w.symbol}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(w.lastPrice)} • {w.lastTrend}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#1A1306', cursor: 'pointer', fontWeight: 600 }}>Check</button>
+                  <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer' }}>✕</button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
         {tab === 'track' && (
-          <div style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 16 }}>
-            <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi koi trade history nahi hai.</p>
+          <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>TRACK RECORD</div>
+            {history.length === 0 ? (
+              <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi koi history nahi hai.</p>
+            ) : history.map(h => (
+              <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{h.symbol}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(h.price)} • {h.trend}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['win','loss','pending'].map(o => (
+                    <button key={o} onClick={() => setHistory(prev => prev.map(x => x.id===h.id ? {...x, outcome: o} : x))}
+                      style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: 'none', backgroundColor: h.outcome===o ? (o==='win' ? COLORS.green : o==='loss' ? COLORS.red : COLORS.goldDim) : COLORS.bg, color: '#fff', cursor: 'pointer' }}>
+                      {o==='win' ? '✓' : o==='loss' ? '✗' : '⏳'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
+
       </div>
     </div>
   );
