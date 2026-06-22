@@ -17,7 +17,7 @@ export default function Login() {
       options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
-    if (error) { setError('Login link nahi bheja. Dobara try karo.'); }
+    if (error) { setError('Error: ' + (error.message || JSON.stringify(error))); }
     else { setSent(true); }
   };
 
