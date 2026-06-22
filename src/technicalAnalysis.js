@@ -1,54 +1,99 @@
-export default async function handler(req, res) {
-  import { analyzeStock } from './technicalAnalysis';
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+export function analyzeStock(candles) {
+  if (!candles || candles.length < 50) return { error: 'Insufficient data' };
 
-  const { symbol } = req.query;
+  const closes = candles.map(c => c.close);
+  const highs = candles.map(c => c.high);
+  const lows = candles.map(c => c.low);
+  const n = closes.length;
+  const last = closes[n - 1];
 
-  if (!symbol) {
-    return res.status(400).json({ error: 'symbol is required, e.g. RELIANCE.NS' });
-  }
-
-  async function fetchCandles(range, interval) {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`;
-    const response = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36' },
-    });
-    const data = await response.json();
-    if (!response.ok || data.chart?.error) return null;
-    const result = data.chart?.result?.[0];
-    if (!result) return null;
-    const timestamps = result.timestamp || [];
-    const quote = result.indicators?.quote?.[0] || {};
-    return timestamps.map((ts, i) => ({
-      time: ts,
-      open: quote.open?.[i],
-      high: quote.high?.[i],
-      low: quote.low?.[i],
-      close: quote.close?.[i],
-      volume: quote.volume?.[i],
-    })).filter(c => c.close != null);
-  }
-
-  try {
-    const [dailyCandles, weeklyCandles, monthlyCandles] = await Promise.all([
-      fetchCandles('1y', '1d'),
-      fetchCandles('2y', '1wk'),
-      fetchCandles('5y', '1mo'),
-    ]);
-
-    if (!dailyCandles || dailyCandles.length < 50) {
-      return res.status(500).json({ error: 'Failed to fetch data from Yahoo Finance' });
+  // RSI
+  function calcRSI(data, period = 14) {
+    let gains = 0, losses = 0;
+    for (let i = 1; i <= period; i++) {
+      const diff = data[i] - data[i - 1];
+      if (diff > 0) gains += diff; else losses -= diff;
     }
-
-    return res.status(200).json({
-      symbol,
-      candles: dailyCandles,
-      weeklyCandles: weeklyCandles || [],
-      monthlyCandles: monthlyCandles || [],
-    });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal server error', details: String(err) });
+    let avgGain = gains / period, avgLoss = losses / period;
+    for (let i = period + 1; i < data.length; i++) {
+      const diff = data[i] - data[i - 1];
+      avgGain = (avgGain * (period - 1) + (diff > 0 ? diff : 0)) / period;
+      avgLoss = (avgLoss * (period - 1) + (diff < 0 ? -diff : 0)) / period;
+    }
+    return avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
   }
+
+  // EMA
+  function calcEMA(data, period) {
+    const k = 2 / (period + 1);
+    let ema = data[0];
+    for (let i = 1; i < data.length; i++) ema = data[i] * k + ema * (1 - k);
+    return ema;
+  }
+
+  // MACD
+  const ema12 = calcEMA(closes, 12);
+  const ema26 = calcEMA(closes, 26);
+  const macd = ema12 - ema26;
+
+  // ADX
+  function calcADX(period = 14) {
+    let trSum = 0, dmPlusSum = 0, dmMinusSum = 0;
+    for (let i = 1; i <= period; i++) {
+      const tr = Math.max(highs[n-i] - lows[n-i], Math.abs(highs[n-i] - closes[n-i-1]), Math.abs(lows[n-i] - closes[n-i-1]));
+      const dmPlus = Math.max(highs[n-i] - highs[n-i-1], 0);
+      const dmMinus = Math.max(lows[n-i-1] - lows[n-i], 0);
+      trSum += tr; dmPlusSum += dmPlus; dmMinusSum += dmMinus;
+    }
+    const diPlus = (dmPlusSum / trSum) * 100;
+    const diMinus = (dmMinusSum / trSum) * 100;
+    const adx = Math.abs(diPlus - diMinus) / (diPlus + diMinus) * 100;
+    return { adx: Math.round(adx), diPlus: Math.round(diPlus), diMinus: Math.round(diMinus) };
+  }
+
+  // Supertrend
+  function calcSupertrend(period = 10, multiplier = 3) {
+    const atr = closes.slice(-period).reduce((sum, _, i) => {
+      const idx = n - period + i;
+      return sum + Math.max(highs[idx] - lows[idx], Math.abs(highs[idx] - closes[idx-1] || 0), Math.abs(lows[idx] - closes[idx-1] || 0));
+    }, 0) / period;
+    const upperBand = (highs[n-1] + lows[n-1]) / 2 + multiplier * atr;
+    const lowerBand = (highs[n-1] + lows[n-1]) / 2 - multiplier * atr;
+    return last > lowerBand ? 'Bullish' : 'Bearish';
+  }
+
+  const rsi = Math.round(calcRSI(closes));
+  const { adx, diPlus, diMinus } = calcADX();
+  const supertrend = calcSupertrend();
+  const momentum = macd > 0 ? 'Bullish' : 'Bearish';
+  const trend = last > closes[n - 20] ? 'Bullish' : 'Bearish';
+  const trendStrength = adx > 25 ? 'Strong' : adx > 20 ? 'Moderate' : 'Weak';
+
+  const week52High = Math.max(...closes.slice(-252));
+  const week52Low = Math.min(...closes.slice(-252));
+  const distFromHighPct = (((week52High - last) / week52High) * 100).toFixed(1);
+
+  // Scoring
+  let longScore = 0, shortScore = 0;
+  if (trend === 'Bullish') longScore += 25; else shortScore += 25;
+  if (momentum === 'Bullish') longScore += 20; else shortScore += 20;
+  if (supertrend === 'Bullish') longScore += 20; else shortScore += 20;
+  if (rsi > 50 && rsi < 70) longScore += 15; else if (rsi < 50 && rsi > 30) shortScore += 15;
+  if (adx > 20) { longScore += 10; shortScore += 10; }
+  if (diPlus > diMinus) longScore += 10; else shortScore += 10;
+
+  const signal = longScore >= 70 ? 'LONG' : shortScore >= 70 ? 'SHORT' : null;
+  const atr = closes.slice(-14).reduce((s, _, i) => s + Math.abs(closes[n-1-i] - closes[n-2-i] || 0), 0) / 14;
+
+  return {
+    lastClose: last,
+    trend, momentum, rsi, adx, trendStrength, supertrend,
+    longScore, shortScore, signal,
+    week52High, week52Low, distFromHighPct,
+    entry: last,
+    stopLoss: trend === 'Bullish' ? last * 0.97 : last * 1.03,
+    targets: [last * 1.03, last * 1.06, last * 1.10],
+    suggestedHold: '~2 months',
+    atr,
+  };
 }
