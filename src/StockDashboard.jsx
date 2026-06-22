@@ -15,11 +15,27 @@ function fmtINR(n) {
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
+function fmtCr(n) {
+  if (!n) return "—";
+  const cr = n / 1e7;
+  if (cr >= 1e5) return `₹${(cr/1e5).toFixed(2)} L Cr`;
+  if (cr >= 1e3) return `₹${(cr/1e3).toFixed(2)}K Cr`;
+  return `₹${cr.toFixed(0)} Cr`;
+}
+
+function fmtVol(n) {
+  if (!n) return "—";
+  if (n >= 1e7) return `${(n/1e7).toFixed(2)} Cr`;
+  if (n >= 1e5) return `${(n/1e5).toFixed(2)} L`;
+  return n.toLocaleString('en-IN');
+}
+
 export default function StockDashboard() {
   const [symbolInput, setSymbolInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
+  const [stockInfo, setStockInfo] = useState(null);
   const [stockName, setStockName] = useState('');
   const [tab, setTab] = useState('check');
   const [watchlist, setWatchlist] = useState([]);
@@ -37,6 +53,7 @@ export default function StockDashboard() {
     setLoading(true);
     setError('');
     setResult(null);
+    setStockInfo(null);
     setSymbolInput(sym);
     let symbol = sym;
     if (!symbol.includes('.')) symbol = symbol + '.NS';
@@ -48,6 +65,7 @@ export default function StockDashboard() {
       const analysis = analyzeStock(data.candles);
       if (analysis.error) { setError(analysis.error); setLoading(false); return; }
       setResult(analysis);
+      setStockInfo(data.stockInfo || null);
       setStockName(sym);
       setEntryPrice(analysis.lastClose);
       setDirection(analysis.trend === 'Bullish' ? 'BUY' : 'SELL');
@@ -135,6 +153,26 @@ export default function StockDashboard() {
 
             {result && (
               <>
+                {/* Stock Info Card */}
+                {stockInfo && (
+                  <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>📊 STOCK INFO</div>
+                    {stockInfo.longName && <div style={{ fontSize: 14, fontWeight: 600, marginBottom: 10, color: COLORS.text }}>{stockInfo.longName}</div>}
+                    {[
+                      ['Market Cap', fmtCr(stockInfo.marketCap)],
+                      ['P/E Ratio', stockInfo.trailingPE ? stockInfo.trailingPE.toFixed(2) : '—'],
+                      ['Aaj ka Volume', fmtVol(stockInfo.regularMarketVolume)],
+                      ['Avg Volume (3M)', fmtVol(stockInfo.averageDailyVolume3Month)],
+                      ['Exchange', stockInfo.exchangeName || '—'],
+                    ].map(([label, value]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                        <span style={{ color: COLORS.muted }}>{label}</span>
+                        <span style={{ fontWeight: 600, color: COLORS.text }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 {/* Main Result Card */}
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
@@ -157,7 +195,6 @@ export default function StockDashboard() {
                       <span style={{ fontWeight: 600, color: color || COLORS.text }}>{value}</span>
                     </div>
                   ))}
-
                   <button onClick={() => {
                     const exists = watchlist.some(w => w.symbol === stockName);
                     setWatchlist(prev => exists ? prev.filter(w => w.symbol !== stockName) : [{ symbol: stockName, lastTrend: result.trend, lastPrice: result.lastClose, lastChecked: new Date().toISOString() }, ...prev].slice(0, 30));
