@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { analyzeStock } from './technicalAnalysis';
 
 const COLORS = {
   bg: "#0D1117", surface: "#161B22", surfaceBorder: "#262C36",
@@ -57,39 +58,20 @@ export default function StockDashboard() {
         return;
       }
 
-      const closes = data.candles.map(c => c.close);
-      const lastClose = closes[closes.length - 1];
-      const week52High = Math.max(...closes);
-      const week52Low = Math.min(...closes);
-      const distFromHighPct = (((week52High - lastClose) / week52High) * 100).toFixed(1);
-
-      const analysis = {
-        lastClose,
-        week52High,
-        week52Low,
-        distFromHighPct,
-        trend: lastClose > closes[closes.length - 20] ? 'Bullish' : 'Bearish',
-        momentum: lastClose > closes[closes.length - 10] ? 'Bullish' : 'Bearish',
-        rsi: 55,
-        adx: 25,
-        trendStrength: 'Moderate',
-        supertrend: lastClose > closes[closes.length - 14] ? 'Bullish' : 'Bearish',
-        longScore: 65,
-        shortScore: 35,
-        signal: lastClose > closes[closes.length - 20] ? 'LONG' : 'SHORT',
-        entry: lastClose,
-        stopLoss: lastClose * 0.97,
-        targets: [lastClose * 1.03, lastClose * 1.06, lastClose * 1.10],
-        suggestedHold: '~2 months',
-        atr: lastClose * 0.02,
-      };
+      const analysis = analyzeStock(data.candles);
+      if (analysis.error) {
+        setError(analysis.error);
+        setLoading(false);
+        return;
+      }
 
       setResult(analysis);
       setStockName(sym);
-      setEntryPrice(lastClose);
+      setEntryPrice(analysis.lastClose);
       setDirection(analysis.trend === 'Bullish' ? 'BUY' : 'SELL');
+      if (analysis.atr) setSlPercent(Math.min(6, Math.max(1.5, (analysis.atr / analysis.lastClose * 100).toFixed(1))));
 
-      const entry = { id: Date.now(), symbol: sym, trend: analysis.trend, price: lastClose, date: new Date().toISOString(), outcome: 'pending' };
+      const entry = { id: Date.now(), symbol: sym, trend: analysis.trend, price: analysis.lastClose, date: new Date().toISOString(), outcome: 'pending' };
       setHistory(prev => [entry, ...prev].slice(0, 100));
 
     } catch (err) {
@@ -177,24 +159,85 @@ export default function StockDashboard() {
             </div>
 
             {result && (
-              <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                  <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
-                  <span style={{ fontSize: 18, fontWeight: 700, color: COLORS.gold }}>{fmtINR(result.lastClose)}</span>
-                </div>
-                {[
-                  ['Trend', result.trend, trendColor],
-                  ['52W High', fmtINR(result.week52High), null],
-                  ['52W Low', fmtINR(result.week52Low), null],
-                  ['Distance from High', `${result.distFromHighPct}%`, null],
-                  ['Signal', result.signal, result.signal==='LONG' ? COLORS.green : COLORS.red],
-                ].map(([label, value, color]) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
-                    <span style={{ color: COLORS.muted }}>{label}</span>
-                    <span style={{ fontWeight: 600, color: color || COLORS.text }}>{value}</span>
+              <>
+                <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                    <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: COLORS.gold }}>{fmtINR(result.lastClose)}</span>
                   </div>
-                ))}
-              </div>
+                  {[
+                    ['Trend', result.trend, trendColor],
+                    ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? COLORS.green : COLORS.red],
+                    ['RSI', result.rsi, null],
+                    ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
+                    ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? COLORS.green : COLORS.red],
+                    ['Long Score', `${result.longScore} / 100`, COLORS.green],
+                    ['Short Score', `${result.shortScore} / 100`, COLORS.red],
+                    ['52W High / Low', `${fmtINR(result.week52High)} / ${fmtINR(result.week52Low)}`, null],
+                    ['Distance from 52W High', `${result.distFromHighPct}%`, null],
+                  ].map(([label, value, color]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                      <span style={{ color: COLORS.muted }}>{label}</span>
+                      <span style={{ fontWeight: 600, color: color || COLORS.text }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {result.signal ? (
+                  <div style={{ backgroundColor: COLORS.surface, border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: result.signal==='LONG' ? COLORS.green : COLORS.red, marginBottom: 12 }}>
+                      {result.signal==='LONG' ? '📈 Bullish Setup' : '📉 Bearish Setup'}
+                    </div>
+                    {[
+                      ['Entry', fmtINR(result.entry)],
+                      ['Stop Loss', fmtINR(result.stopLoss)],
+                      ['Target 1 (3%)', fmtINR(result.targets?.[0])],
+                      ['Target 2 (6%)', fmtINR(result.targets?.[1])],
+                      ['Target 3 (10%)', fmtINR(result.targets?.[2])],
+                      ['Suggested Hold', result.suggestedHold],
+                    ].map(([label, value]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                        <span style={{ color: COLORS.muted }}>{label}</span>
+                        <span style={{ fontWeight: 600 }}>{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 16, fontSize: 13, color: COLORS.muted }}>
+                    Abhi koi clear signal nahi hai. Wait karo.
+                  </div>
+                )}
+
+                <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
+                  <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING</div>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    {['BUY','SELL'].map(d => (
+                      <button key={d} onClick={() => setDirection(d)} style={{ flex: 1, padding: '8px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: 'none', backgroundColor: direction===d ? (d==='BUY' ? COLORS.green : COLORS.red) : COLORS.bg, color: direction===d ? '#fff' : COLORS.muted, cursor: 'pointer' }}>{d}</button>
+                    ))}
+                  </div>
+                  {[
+                    ['Entry Price', fmtINR(ep)],
+                    ['Stop Loss', fmtINR(stopLossPrice)],
+                    ['Quantity', `${qty} shares`],
+                    ['Max Loss', fmtINR(lossAmount)],
+                    ['Risk:Reward', `1 : ${riskReward}`],
+                  ].map(([label, value]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, padding: '4px 0' }}>
+                      <span style={{ color: COLORS.muted }}>{label}</span>
+                      <span style={{ fontWeight: 600 }}>{value}</span>
+                    </div>
+                  ))}
+                  <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
+                    {tierResults.map(t => (
+                      <div key={t.percent} style={{ flex: 1, backgroundColor: COLORS.bg, borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: 11, color: COLORS.muted }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold }}>{fmtINR(t.price)}</div>
+                        <div style={{ fontSize: 11, color: COLORS.green }}>+{fmtINR(t.profit)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
             )}
           </>
         )}
@@ -210,7 +253,6 @@ export default function StockDashboard() {
             <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi koi trade history nahi hai.</p>
           </div>
         )}
-
       </div>
     </div>
   );
