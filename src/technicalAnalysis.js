@@ -7,7 +7,6 @@ export function analyzeStock(candles) {
   const n = closes.length;
   const last = closes[n - 1];
 
-  // RSI
   function calcRSI(data, period = 14) {
     let gains = 0, losses = 0;
     for (let i = 1; i <= period; i++) {
@@ -23,7 +22,6 @@ export function analyzeStock(candles) {
     return avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
   }
 
-  // EMA
   function calcEMA(data, period) {
     const k = 2 / (period + 1);
     let ema = data[0];
@@ -31,12 +29,6 @@ export function analyzeStock(candles) {
     return ema;
   }
 
-  // MACD
-  const ema12 = calcEMA(closes, 12);
-  const ema26 = calcEMA(closes, 26);
-  const macd = ema12 - ema26;
-
-  // ADX
   function calcADX(period = 14) {
     let trSum = 0, dmPlusSum = 0, dmMinusSum = 0;
     for (let i = 1; i <= period; i++) {
@@ -51,18 +43,19 @@ export function analyzeStock(candles) {
     return { adx: Math.round(adx), diPlus: Math.round(diPlus), diMinus: Math.round(diMinus) };
   }
 
-  // Supertrend
   function calcSupertrend(period = 10, multiplier = 3) {
     const atr = closes.slice(-period).reduce((sum, _, i) => {
       const idx = n - period + i;
-      return sum + Math.max(highs[idx] - lows[idx], Math.abs(highs[idx] - closes[idx-1] || 0), Math.abs(lows[idx] - closes[idx-1] || 0));
+      return sum + Math.max(highs[idx] - lows[idx], Math.abs(highs[idx] - (closes[idx-1] || closes[idx])), Math.abs(lows[idx] - (closes[idx-1] || closes[idx])));
     }, 0) / period;
-    const upperBand = (highs[n-1] + lows[n-1]) / 2 + multiplier * atr;
     const lowerBand = (highs[n-1] + lows[n-1]) / 2 - multiplier * atr;
     return last > lowerBand ? 'Bullish' : 'Bearish';
   }
 
   const rsi = Math.round(calcRSI(closes));
+  const ema12 = calcEMA(closes, 12);
+  const ema26 = calcEMA(closes, 26);
+  const macd = ema12 - ema26;
   const { adx, diPlus, diMinus } = calcADX();
   const supertrend = calcSupertrend();
   const momentum = macd > 0 ? 'Bullish' : 'Bearish';
@@ -73,7 +66,6 @@ export function analyzeStock(candles) {
   const week52Low = Math.min(...closes.slice(-252));
   const distFromHighPct = (((week52High - last) / week52High) * 100).toFixed(1);
 
-  // Scoring
   let longScore = 0, shortScore = 0;
   if (trend === 'Bullish') longScore += 25; else shortScore += 25;
   if (momentum === 'Bullish') longScore += 20; else shortScore += 20;
@@ -83,7 +75,7 @@ export function analyzeStock(candles) {
   if (diPlus > diMinus) longScore += 10; else shortScore += 10;
 
   const signal = longScore >= 70 ? 'LONG' : shortScore >= 70 ? 'SHORT' : null;
-  const atr = closes.slice(-14).reduce((s, _, i) => s + Math.abs(closes[n-1-i] - closes[n-2-i] || 0), 0) / 14;
+  const atr = closes.slice(-14).reduce((s, _, i) => s + Math.abs((closes[n-1-i] || 0) - (closes[n-2-i] || 0)), 0) / 14;
 
   return {
     lastClose: last,
