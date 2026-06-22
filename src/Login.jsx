@@ -17,40 +17,31 @@ export default function Login() {
       options: { emailRedirectTo: window.location.origin },
     });
     setLoading(false);
-    if (error) {
-      setError('Login link bhejne mein dikkat aayi. Dobara try karo.');
-    } else {
-      setSent(true);
-    }
+    if (error) { setError('Login link nahi bheja. Dobara try karo.'); }
+    else { setSent(true); }
   };
 
-  if (sent) {
-    return (
-      <div style={styles.wrapper}>
-        <h2 style={styles.title}>📧 Email check karo</h2>
-        <p style={styles.text}><b>{email}</b> pe login link bhej diya hai.</p>
-      </div>
-    );
-  }
+  if (sent) return (
+    <div style={{maxWidth:360,margin:'60px auto',textAlign:'center',fontFamily:'sans-serif'}}>
+      <h2>📧 Email check karo</h2>
+      <p>{email} pe login link bhej diya hai.</p>
+    </div>
+  );
 
   return (
-    <div style={styles.wrapper}>
-      <h2 style={styles.title}>PulseTrade 🐂</h2>
-      <p style={styles.text}>Email daalo, hum login link bhejenge — password ki zaroorat nahi.</p>
-      <form onSubmit={handleLogin} style={styles.form}>
+    <div style={{maxWidth:360,margin:'60px auto',padding:'0 20px',textAlign:'center',fontFamily:'sans-serif'}}>
+      <h2>PulseTrade 🐂</h2>
+      <p style={{color:'#666',marginBottom:20}}>Email daalo, login link bhejenge.</p>
+      <form onSubmit={handleLogin} style={{display:'flex',flexDirection:'column',gap:10}}>
         <input type="email" placeholder="tumhara@email.com" value={email}
-          onChange={(e) => setEmail(e.target.value)} style={styles.input} required />
-        <button type="submit" disabled={loading} style={styles.button}>
+          onChange={(e)=>setEmail(e.target.value)}
+          style={{padding:'12px',fontSize:15,border:'1px solid #ccc',borderRadius:8}} required />
+        <button type="submit" disabled={loading}
+          style={{padding:'12px',fontSize:15,fontWeight:'bold',backgroundColor:'#8B4513',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>
           {loading ? 'Bhej rahe hain...' : 'Login Link Bhejo'}
         </button>
       </form>
-      {error && <p style={styles.error}>{error}</p>}
+      {error && <p style={{color:'#a33',marginTop:10}}>{error}</p>}
     </div>
   );
 }
-
-const styles = {
-  wrapper: { maxWidth: 360, margin: '60px auto', padding: '0 20px', textAlign: 'center', fontFamily: 'sans-serif' },
-  title: { fontSize: 24, marginBottom: 8 },
-  text: { fontSize: 14, color: '#666', marginBottom: 20 },
-  form: { display: 'flex', flexDirection: 'column',
