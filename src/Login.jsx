@@ -16,14 +16,15 @@ export default function Login() {
       email: email.trim(),
       options: { emailRedirectTo: window.location.origin },
     });
+    console.log('Supabase error:', error);
     setLoading(false);
-    if (error) { setError('Error: ' + (error.message || JSON.stringify(error))); }
+    if (error) { setError('Error: ' + (error?.message || error?.error_description || JSON.stringify(error) || 'Unknown error')); }
     else { setSent(true); }
   };
 
   if (sent) return (
     <div style={{maxWidth:360,margin:'60px auto',textAlign:'center',fontFamily:'sans-serif'}}>
-      <h2>📧 Email check karo</h2>
+      <h2>✅ Email check karo</h2>
       <p>{email} pe login link bhej diya hai.</p>
     </div>
   );
@@ -37,7 +38,7 @@ export default function Login() {
           onChange={(e)=>setEmail(e.target.value)}
           style={{padding:'12px',fontSize:15,border:'1px solid #ccc',borderRadius:8}} required />
         <button type="submit" disabled={loading}
-          style={{padding:'12px',fontSize:15,fontWeight:'bold',backgroundColor:'#8B4513',color:'#fff',border:'none',borderRadius:8,cursor:'pointer'}}>
+          style={{padding:'12px',fontSize:15,fontWeight:'bold',backgroundColor:'#8B4513',color:'#fff',border:'none',borderRadius:8}}>
           {loading ? 'Bhej rahe hain...' : 'Login Link Bhejo'}
         </button>
       </form>
