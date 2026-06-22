@@ -9,9 +9,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'symbol is required, e.g. RELIANCE.NS' });
   }
 
+  // Auto-add .NS suffix for NSE stocks
+  const nsSymbol = symbol.includes('.') ? symbol : `${symbol}.NS`;
+
   try {
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-      symbol
+      nsSymbol
     )}?range=${range}&interval=${interval}`;
 
     const response = await fetch(url, {
@@ -49,7 +52,7 @@ export default async function handler(req, res) {
       }))
       .filter((c) => c.close != null);
 
-    return res.status(200).json({ symbol, candles });
+    return res.status(200).json({ symbol: nsSymbol, candles });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'Internal server error', details: String(err) });
