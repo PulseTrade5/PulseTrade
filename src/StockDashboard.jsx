@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { analyzeStock } from './technicalAnalysis';
+
 const COLORS = {
   bg: "#0D1117", surface: "#161B22", surfaceBorder: "#262C36",
   gold: "#D8A33D", goldDim: "#9C7A33",
