@@ -21,7 +21,7 @@ export default function SubscribeButton({ userEmail, userId }) {
       const { payment_session_id, error } = await res.json();
       if (error) throw new Error(error);
 
-      const cashfree = await load({ mode: 'production' });
+      const cashfree = await load({ mode: 'sandbox' });
       cashfree.checkout({
         paymentSessionId: payment_session_id,
         redirectTarget: '_self',
