@@ -13,7 +13,7 @@ export default async function handler(req, res) {
       customer_phone: "9999999999",
     },
     order_meta: {
-      return_url: `https://www.pulsetrade.in/payment-status?order_id={order_id}`,
+      return_url: `https://pulsetrade.in/payment-status?order_id={order_id}`,
     },
     order_note: `PulseTrade ${planName || 'Monthly'} Plan`,
   };
