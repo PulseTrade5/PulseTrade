@@ -216,4 +216,17 @@ function App() {
               <div style={{ fontSize: 12, color: '#8B92A0', marginTop: 8 }}>{email} pe login link gaya hai. Check karo.</div>
             </div>
           )}
-          <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #30363D', display: 'flex', justifyConte
+          <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #30363D', display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12, color: '#8B92A0' }}>
+            <a href="/terms" style={{ color: '#8B92A0' }}>Terms</a>
+            <a href="/refund" style={{ color: '#8B92A0' }}>Refund Policy</a>
+            <a href="/contact" style={{ color: '#8B92A0' }}>Contact</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <StockDashboard user={session.user} onLogout={handleLogout} />;
+}
+
+export default App;
