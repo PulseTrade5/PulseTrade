@@ -314,4 +314,67 @@ export default function StockDashboard({ user }) {
                       <div key={t.percent} style={{ flex: 1, backgroundColor: COLORS.bg, borderRadius: 10, padding: '10px 8px', textAlign: 'center' }}>
                         <div style={{ fontSize: 11, color: COLORS.muted }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold }}>{fmtINR(t.price)}</div>
-                        <div style={{ fontSize: 11, co
+                        <div style={{ fontSize: 11, color: COLORS.green }}>+{fmtINR(t.profit)}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {tab === 'watchlist' && (
+          <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 16 }}>WATCHLIST</div>
+            {watchlist.length === 0 ? (
+              <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi khaali hai. Check tab se add karo.</p>
+            ) : watchlist.map(w => (
+              <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{w.symbol}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(w.lastPrice)} • {w.lastTrend}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#1A1306', cursor: 'pointer', fontWeight: 600 }}>Check</button>
+                  <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 8, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer' }}>✕</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === 'track' && (
+          <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>TRACK RECORD</div>
+            {history.length === 0 ? (
+              <p style={{ color: COLORS.muted, fontSize: 13 }}>Abhi koi history nahi hai.</p>
+            ) : history.map(h => (
+              <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{h.symbol}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(h.price)} • {h.trend}</div>
+                </div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {['win','loss','pending'].map(o => (
+                    <button key={o} onClick={() => setHistory(prev => prev.map(x => x.id===h.id ? {...x, outcome: o} : x))}
+                      style={{ fontSize: 11, padding: '4px 8px', borderRadius: 8, border: 'none', backgroundColor: h.outcome===o ? (o==='win' ? COLORS.green : o==='loss' ? COLORS.red : COLORS.goldDim) : COLORS.bg, color: '#fff', cursor: 'pointer' }}>
+                      {o==='win' ? '✓' : o==='loss' ? '✗' : '⏳'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: '1px solid #262C36', display: 'flex', justifyContent: 'center', gap: 20, fontSize: 12 }}>
+          <a href="/terms" style={{ color: '#8B92A0', textDecoration: 'none' }}>Terms</a>
+          <a href="/refund" style={{ color: '#8B92A0', textDecoration: 'none' }}>Refund Policy</a>
+          <a href="/contact" style={{ color: '#8B92A0', textDecoration: 'none' }}>Contact</a>
+        </div>
+
+      </div>
+    </div>
+  );
+}
