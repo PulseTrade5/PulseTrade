@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { analyzeStock } from './technicalAnalysis';
+import SubscribeButton from './SubscribeButton';
 
 const COLORS = {
   bg: "#0D1117", surface: "#161B22", surfaceBorder: "#262C36",
@@ -30,7 +31,7 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
-export default function StockDashboard() {
+export default function StockDashboard({ user }) {
   const [symbolInput, setSymbolInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -105,8 +106,12 @@ export default function StockDashboard() {
           ))}
         </div>
 
-        <div style={{ backgroundColor: 'rgba(216,163,61,0.08)', border: `1px solid ${COLORS.goldDim}`, borderRadius: 8, padding: '10px 12px', marginBottom: 24, fontSize: 12, color: COLORS.muted }}>
+        <div style={{ backgroundColor: 'rgba(216,163,61,0.08)', border: `1px solid ${COLORS.goldDim}`, borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 12, color: COLORS.muted }}>
           ⚠️ Yeh sirf technical trend par based estimate hai — investment advice nahi hai. SEBI registered advisor se salah lein.
+        </div>
+
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <SubscribeButton userEmail={user?.email} userId={user?.id} />
         </div>
 
         {tab === 'check' && (
@@ -153,7 +158,6 @@ export default function StockDashboard() {
 
             {result && (
               <>
-                {/* Stock Info Card */}
                 {stockInfo && (
                   <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                     <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>📊 STOCK INFO</div>
@@ -173,7 +177,6 @@ export default function StockDashboard() {
                   </div>
                 )}
 
-                {/* Main Result Card */}
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                     <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
@@ -203,7 +206,6 @@ export default function StockDashboard() {
                   </button>
                 </div>
 
-                {/* Signal Card */}
                 {result.signal ? (
                   <div style={{ backgroundColor: COLORS.surface, border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: result.signal==='LONG' ? COLORS.green : COLORS.red, marginBottom: 12 }}>
@@ -229,7 +231,6 @@ export default function StockDashboard() {
                   </div>
                 )}
 
-                {/* Position Sizing Card */}
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING CALCULATOR</div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
