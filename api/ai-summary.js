@@ -36,13 +36,14 @@ Stock Data:
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-3-5-haiku-20241022",
+        model: "claude-3-haiku-20240307",
         max_tokens: 300,
         messages: [{ role: "user", content: prompt }],
       }),
     });
     const data = await response.json();
-    return res.status(200).json({ summary: JSON.stringify(data) });
+    const summary = data.content?.[0]?.text || JSON.stringify(data);
+    return res.status(200).json({ summary });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
