@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
-import PulseBoltaHai from './PulseBoltaHai';
+import PulseBoltaHai from '../PulseBoltaHai';
 
 const COLORS = {
   bg: "#0D1117", surface: "#161B22", surfaceBorder: "#262C36",
@@ -142,27 +142,22 @@ export default function StockDashboard({ user }) {
   return (
     <div style={{ backgroundColor: COLORS.bg, color: COLORS.text, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 20px 48px' }}>
-
         <div style={{ textAlign: 'center', marginBottom: 4 }}>
           <div style={{ color: COLORS.gold, fontWeight: 700, fontSize: 14 }}>🔱 हर हर महादेव 🔱</div>
         </div>
         <h1 style={{ fontSize: 32, fontWeight: 700, margin: '0 0 4px' }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span></h1>
         <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 20px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
-
         <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
           {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
             <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 600, borderRadius: 12, border: tab===key ? 'none' : `1px solid ${COLORS.surfaceBorder}`, backgroundColor: tab===key ? COLORS.gold : COLORS.surface, color: tab===key ? '#1A1306' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
           ))}
         </div>
-
         <div style={{ backgroundColor: 'rgba(216,163,61,0.08)', border: `1px solid ${COLORS.goldDim}`, borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 12, color: COLORS.muted }}>
           ⚠️ Yeh sirf technical trend par based estimate hai — investment advice nahi hai. SEBI registered advisor se salah lein.
         </div>
-
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <SubscribeButton userEmail={user?.email} userId={user?.id} />
         </div>
-
         {tab === 'check' && (
           <>
             <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 24 }}>
@@ -204,7 +199,6 @@ export default function StockDashboard({ user }) {
               </button>
               {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 8 }}>{error}</p>}
             </div>
-
             {result && (
               <>
                 {stockInfo && (
@@ -225,9 +219,7 @@ export default function StockDashboard({ user }) {
                     ))}
                   </div>
                 )}
-
                 {pulseData && <PulseBoltaHai stockData={pulseData} />}
-
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                     <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
@@ -256,7 +248,6 @@ export default function StockDashboard({ user }) {
                     {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
                   </button>
                 </div>
-
                 {result.signal ? (
                   <div style={{ backgroundColor: COLORS.surface, border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: result.signal==='LONG' ? COLORS.green : COLORS.red, marginBottom: 12 }}>
@@ -285,7 +276,6 @@ export default function StockDashboard({ user }) {
                     ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
                   </div>
                 )}
-
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING CALCULATOR</div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -319,7 +309,6 @@ export default function StockDashboard({ user }) {
             )}
           </>
         )}
-
         {tab === 'watchlist' && (
           <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 16 }}>WATCHLIST</div>
@@ -339,7 +328,6 @@ export default function StockDashboard({ user }) {
             ))}
           </div>
         )}
-
         {tab === 'track' && (
           <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>TRACK RECORD</div>
@@ -363,13 +351,11 @@ export default function StockDashboard({ user }) {
             ))}
           </div>
         )}
-
         <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: '1px solid #262C36', display: 'flex', justifyContent: 'center', gap: 20, fontSize: 12 }}>
           <a href="/terms" style={{ color: '#8B92A0', textDecoration: 'none' }}>Terms</a>
           <a href="/refund" style={{ color: '#8B92A0', textDecoration: 'none' }}>Refund Policy</a>
           <a href="/contact" style={{ color: '#8B92A0', textDecoration: 'none' }}>Contact</a>
         </div>
-
       </div>
     </div>
   );
