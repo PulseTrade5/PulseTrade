@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { supabase } from './supabaseClient';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
@@ -32,7 +33,6 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
-// ✅ ANIMATED TREND METER
 function TrendMeter({ longScore, shortScore, trend }) {
   const score = trend === 'Bullish' ? longScore : shortScore;
   const isBullish = trend === 'Bullish';
@@ -49,7 +49,6 @@ function TrendMeter({ longScore, shortScore, trend }) {
     let start = null;
     const duration = 1500;
     const target = Math.min(100, Math.max(0, score));
-
     const animate = (timestamp) => {
       if (!start) start = timestamp;
       const progress = Math.min((timestamp - start) / duration, 1);
@@ -76,7 +75,6 @@ function TrendMeter({ longScore, shortScore, trend }) {
   const needleAngle = 180 - fillArc;
   const needleX = cx + (radius - 12) * Math.cos(toRad(needleAngle));
   const needleY = cy + (radius - 12) * Math.sin(toRad(needleAngle));
-
   const bgPath = `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`;
   const fillPath = animPct > 0
     ? `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${arcX(fillAngle)} ${arcY(fillAngle)}`
@@ -92,36 +90,26 @@ function TrendMeter({ longScore, shortScore, trend }) {
     }}>
       <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>🎯 TREND METER</div>
       <svg width="200" height="110" viewBox="0 0 200 110" style={{ overflow: 'visible' }}>
-        {/* Glow filter */}
         <defs>
           <filter id="glow">
             <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
             <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
           </filter>
         </defs>
-        {/* Background arc */}
         <path d={bgPath} fill="none" stroke="#262C36" strokeWidth="14" strokeLinecap="round"/>
-        {/* Zone colors */}
         <path d={`M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(120)} ${arcY(120)}`} fill="none" stroke="#D1453B" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
         <path d={`M ${arcX(120)} ${arcY(120)} A ${radius} ${radius} 0 0 1 ${arcX(60)} ${arcY(60)}`} fill="none" stroke="#D8A33D" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
         <path d={`M ${arcX(60)} ${arcY(60)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`} fill="none" stroke="#3FAE7C" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
-        {/* Animated fill arc */}
         {fillPath && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" filter={showGlow ? "url(#glow)" : "none"}/>}
-        {/* Needle */}
         <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#E8E6E0" strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx={cx} cy={cy} r="6" fill={color} filter={showGlow ? "url(#glow)" : "none"}/>
-        {/* Labels */}
         <text x="18" y="108" fill="#D1453B" fontSize="9" fontWeight="700">BEARISH</text>
         <text x="152" y="108" fill="#3FAE7C" fontSize="9" fontWeight="700">BULLISH</text>
         <text x="82" y="18" fill="#D8A33D" fontSize="9" fontWeight="700">NEUTRAL</text>
       </svg>
-
-      {/* Animated score */}
       <div style={{ fontSize: 32, fontWeight: 800, color, marginTop: -6 }}>
         {animScore}<span style={{ fontSize: 14, color: COLORS.muted }}>/100</span>
       </div>
-
-      {/* Label with fade */}
       <div style={{
         fontSize: 13, fontWeight: 700, color, marginTop: 4,
         opacity: showGlow ? 1 : 0,
@@ -129,8 +117,6 @@ function TrendMeter({ longScore, shortScore, trend }) {
       }}>
         {score >= 70 ? '🔥 Strong ' : score >= 40 ? '⚡ Moderate ' : '❄️ Weak '}{trend}
       </div>
-
-      {/* Pulse animation */}
       <style>{`
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -168,6 +154,10 @@ export default function StockDashboard({ user }) {
   const [alertSent, setAlertSent] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
@@ -259,22 +249,35 @@ export default function StockDashboard({ user }) {
   return (
     <div style={{ backgroundColor: COLORS.bg, color: COLORS.text, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '32px 20px 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 4 }}>
+
+        {/* HEADER WITH LOGOUT */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
           <div style={{ color: COLORS.gold, fontWeight: 700, fontSize: 14 }}>🔱 हर हर महादेव 🔱</div>
+          <button onClick={handleLogout} style={{
+            fontSize: 11, padding: '5px 14px', borderRadius: 20,
+            border: `1px solid ${COLORS.surfaceBorder}`,
+            backgroundColor: 'transparent', color: COLORS.muted,
+            cursor: 'pointer', fontWeight: 600,
+          }}>🚪 Logout</button>
         </div>
+
         <h1 style={{ fontSize: 32, fontWeight: 700, margin: '0 0 4px' }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span></h1>
         <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 20px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
+
         <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
           {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
             <button key={key} onClick={() => setTab(key)} style={{ flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 600, borderRadius: 12, border: tab===key ? 'none' : `1px solid ${COLORS.surfaceBorder}`, backgroundColor: tab===key ? COLORS.gold : COLORS.surface, color: tab===key ? '#1A1306' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
           ))}
         </div>
+
         <div style={{ backgroundColor: 'rgba(216,163,61,0.08)', border: `1px solid ${COLORS.goldDim}`, borderRadius: 8, padding: '10px 12px', marginBottom: 16, fontSize: 12, color: COLORS.muted }}>
           ⚠️ Yeh sirf technical trend par based estimate hai — investment advice nahi hai. SEBI registered advisor se salah lein.
         </div>
+
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
           <SubscribeButton userEmail={user?.email} userId={user?.id} />
         </div>
+
         {tab === 'check' && (
           <>
             <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 24 }}>
@@ -316,6 +319,7 @@ export default function StockDashboard({ user }) {
               </button>
               {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 8 }}>{error}</p>}
             </div>
+
             {result && (
               <>
                 {stockInfo && (
@@ -337,10 +341,10 @@ export default function StockDashboard({ user }) {
                   </div>
                 )}
 
-                {/* ✅ ANIMATED TREND METER */}
                 <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} />
 
                 {pulseData && <PulseBoltaHai stockData={pulseData} />}
+
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                     <span style={{ fontSize: 20, fontWeight: 700 }}>{stockName}</span>
@@ -369,6 +373,7 @@ export default function StockDashboard({ user }) {
                     {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
                   </button>
                 </div>
+
                 {result.signal ? (
                   <div style={{ backgroundColor: COLORS.surface, border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: result.signal==='LONG' ? COLORS.green : COLORS.red, marginBottom: 12 }}>
@@ -397,6 +402,7 @@ export default function StockDashboard({ user }) {
                     ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
                   </div>
                 )}
+
                 <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16 }}>
                   <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 12 }}>POSITION SIZING CALCULATOR</div>
                   <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
@@ -430,6 +436,7 @@ export default function StockDashboard({ user }) {
             )}
           </>
         )}
+
         {tab === 'watchlist' && (
           <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 16 }}>WATCHLIST</div>
@@ -449,6 +456,7 @@ export default function StockDashboard({ user }) {
             ))}
           </div>
         )}
+
         {tab === 'track' && (
           <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16 }}>
             <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>TRACK RECORD</div>
@@ -472,6 +480,7 @@ export default function StockDashboard({ user }) {
             ))}
           </div>
         )}
+
         <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: '1px solid #262C36', display: 'flex', justifyContent: 'center', gap: 20, fontSize: 12 }}>
           <a href="/terms" style={{ color: '#8B92A0', textDecoration: 'none' }}>Terms</a>
           <a href="/refund" style={{ color: '#8B92A0', textDecoration: 'none' }}>Refund Policy</a>
