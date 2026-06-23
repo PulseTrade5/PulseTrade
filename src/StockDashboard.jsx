@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
@@ -32,60 +32,119 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
-// ✅ TREND METER GAUGE COMPONENT
+// ✅ ANIMATED TREND METER
 function TrendMeter({ longScore, shortScore, trend }) {
   const score = trend === 'Bullish' ? longScore : shortScore;
   const isBullish = trend === 'Bullish';
   const color = isBullish ? '#3FAE7C' : '#D1453B';
-  const pct = Math.min(100, Math.max(0, score));
+  const [animScore, setAnimScore] = useState(0);
+  const [animPct, setAnimPct] = useState(0);
+  const [showGlow, setShowGlow] = useState(false);
+  const animRef = useRef(null);
 
-  // Gauge arc calculation
+  useEffect(() => {
+    setAnimScore(0);
+    setAnimPct(0);
+    setShowGlow(false);
+    let start = null;
+    const duration = 1500;
+    const target = Math.min(100, Math.max(0, score));
+
+    const animate = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - progress, 3);
+      setAnimScore(Math.round(ease * target));
+      setAnimPct(ease * target);
+      if (progress < 1) {
+        animRef.current = requestAnimationFrame(animate);
+      } else {
+        setShowGlow(true);
+      }
+    };
+    animRef.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animRef.current);
+  }, [score, trend]);
+
   const radius = 70;
   const cx = 100, cy = 90;
-  const startAngle = 180;
-  const endAngle = 0;
-  const totalArc = 180;
-  const fillArc = (pct / 100) * totalArc;
-
   const toRad = deg => (deg * Math.PI) / 180;
   const arcX = (angle) => cx + radius * Math.cos(toRad(angle));
   const arcY = (angle) => cy + radius * Math.sin(toRad(angle));
+  const fillArc = (animPct / 100) * 180;
+  const fillAngle = 180 - fillArc;
+  const needleAngle = 180 - fillArc;
+  const needleX = cx + (radius - 12) * Math.cos(toRad(needleAngle));
+  const needleY = cy + (radius - 12) * Math.sin(toRad(needleAngle));
 
   const bgPath = `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`;
-  const fillAngle = 180 - fillArc;
-  const fillPath = `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${arcX(fillAngle)} ${arcY(fillAngle)}`;
-
-  // Needle
-  const needleAngle = 180 - fillArc;
-  const needleX = cx + (radius - 10) * Math.cos(toRad(needleAngle));
-  const needleY = cy + (radius - 10) * Math.sin(toRad(needleAngle));
+  const fillPath = animPct > 0
+    ? `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${arcX(fillAngle)} ${arcY(fillAngle)}`
+    : null;
 
   return (
-    <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 16, textAlign: 'center' }}>
+    <div style={{
+      backgroundColor: COLORS.surface,
+      border: `1px solid ${showGlow ? color : COLORS.surfaceBorder}`,
+      borderRadius: 16, padding: 16, marginBottom: 16, textAlign: 'center',
+      boxShadow: showGlow ? `0 0 20px ${color}33` : 'none',
+      transition: 'box-shadow 0.5s, border-color 0.5s',
+    }}>
       <div style={{ fontSize: 11, letterSpacing: 2, color: COLORS.muted, marginBottom: 8 }}>🎯 TREND METER</div>
       <svg width="200" height="110" viewBox="0 0 200 110" style={{ overflow: 'visible' }}>
+        {/* Glow filter */}
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
         {/* Background arc */}
-        <path d={bgPath} fill="none" stroke="#262C36" strokeWidth="14" strokeLinecap="round" />
-        {/* Red zone */}
-        <path d={`M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(120)} ${arcY(120)}`} fill="none" stroke="#D1453B" strokeWidth="14" strokeLinecap="round" opacity="0.3" />
-        {/* Yellow zone */}
-        <path d={`M ${arcX(120)} ${arcY(120)} A ${radius} ${radius} 0 0 1 ${arcX(60)} ${arcY(60)}`} fill="none" stroke="#D8A33D" strokeWidth="14" strokeLinecap="round" opacity="0.3" />
-        {/* Green zone */}
-        <path d={`M ${arcX(60)} ${arcY(60)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`} fill="none" stroke="#3FAE7C" strokeWidth="14" strokeLinecap="round" opacity="0.3" />
-        {/* Fill arc */}
-        {pct > 0 && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" />}
+        <path d={bgPath} fill="none" stroke="#262C36" strokeWidth="14" strokeLinecap="round"/>
+        {/* Zone colors */}
+        <path d={`M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(120)} ${arcY(120)}`} fill="none" stroke="#D1453B" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
+        <path d={`M ${arcX(120)} ${arcY(120)} A ${radius} ${radius} 0 0 1 ${arcX(60)} ${arcY(60)}`} fill="none" stroke="#D8A33D" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
+        <path d={`M ${arcX(60)} ${arcY(60)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`} fill="none" stroke="#3FAE7C" strokeWidth="14" strokeLinecap="round" opacity="0.25"/>
+        {/* Animated fill arc */}
+        {fillPath && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" filter={showGlow ? "url(#glow)" : "none"}/>}
         {/* Needle */}
-        <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#E8E6E0" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r="5" fill={color} />
+        <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke="#E8E6E0" strokeWidth="2.5" strokeLinecap="round"/>
+        <circle cx={cx} cy={cy} r="6" fill={color} filter={showGlow ? "url(#glow)" : "none"}/>
         {/* Labels */}
-        <text x="22" y="105" fill="#D1453B" fontSize="9" fontWeight="600">BEARISH</text>
-        <text x="155" y="105" fill="#3FAE7C" fontSize="9" fontWeight="600">BULLISH</text>
-        <text x="87" y="22" fill="#D8A33D" fontSize="9" fontWeight="600">NEUTRAL</text>
+        <text x="18" y="108" fill="#D1453B" fontSize="9" fontWeight="700">BEARISH</text>
+        <text x="152" y="108" fill="#3FAE7C" fontSize="9" fontWeight="700">BULLISH</text>
+        <text x="82" y="18" fill="#D8A33D" fontSize="9" fontWeight="700">NEUTRAL</text>
       </svg>
-      <div style={{ fontSize: 28, fontWeight: 800, color, marginTop: -8 }}>{score}<span style={{ fontSize: 14, color: COLORS.muted }}>/100</span></div>
-      <div style={{ fontSize: 13, fontWeight: 700, color, marginTop: 4 }}>
-        {pct >= 70 ? '🔥 Strong ' : pct >= 40 ? '⚡ Moderate ' : '❄️ Weak '}{trend}
+
+      {/* Animated score */}
+      <div style={{ fontSize: 32, fontWeight: 800, color, marginTop: -6 }}>
+        {animScore}<span style={{ fontSize: 14, color: COLORS.muted }}>/100</span>
       </div>
+
+      {/* Label with fade */}
+      <div style={{
+        fontSize: 13, fontWeight: 700, color, marginTop: 4,
+        opacity: showGlow ? 1 : 0,
+        transition: 'opacity 0.5s',
+      }}>
+        {score >= 70 ? '🔥 Strong ' : score >= 40 ? '⚡ Moderate ' : '❄️ Weak '}{trend}
+      </div>
+
+      {/* Pulse animation */}
+      <style>{`
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.6; }
+        }
+      `}</style>
+      {showGlow && (
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: color, margin: '8px auto 0',
+          animation: 'pulse 1.5s ease-in-out infinite',
+          boxShadow: `0 0 8px ${color}`,
+        }} />
+      )}
     </div>
   );
 }
@@ -278,7 +337,7 @@ export default function StockDashboard({ user }) {
                   </div>
                 )}
 
-                {/* ✅ TREND METER */}
+                {/* ✅ ANIMATED TREND METER */}
                 <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} />
 
                 {pulseData && <PulseBoltaHai stockData={pulseData} />}
