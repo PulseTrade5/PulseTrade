@@ -47,6 +47,8 @@ export default function StockDashboard({ user }) {
   const [slPercent, setSlPercent] = useState(3);
   const [entryPrice, setEntryPrice] = useState(0);
   const [direction, setDirection] = useState('BUY');
+  const [alertSent, setAlertSent] = useState(false);
+  const [alertSending, setAlertSending] = useState(false);
 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
@@ -56,6 +58,7 @@ export default function StockDashboard({ user }) {
     setResult(null);
     setStockInfo(null);
     setSymbolInput(sym);
+    setAlertSent(false);
     let symbol = sym;
     if (!symbol.includes('.')) symbol = symbol + '.NS';
     try {
@@ -76,6 +79,32 @@ export default function StockDashboard({ user }) {
       setError('Kuch gadbad ho gayi, dobara try karo.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendAlert = async () => {
+    if (!user?.email || !result?.signal) return;
+    setAlertSending(true);
+    try {
+      await fetch('/api/send-alert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          symbol: stockName,
+          trend: result.trend,
+          entry: result.entry?.toFixed(2),
+          stopLoss: result.stopLoss?.toFixed(2),
+          target1: result.targets?.[0]?.toFixed(2),
+          target2: result.targets?.[1]?.toFixed(2),
+          target3: result.targets?.[2]?.toFixed(2),
+        }),
+      });
+      setAlertSent(true);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setAlertSending(false);
     }
   };
 
@@ -224,6 +253,10 @@ export default function StockDashboard({ user }) {
                         <span style={{ fontWeight: 600 }}>{value}</span>
                       </div>
                     ))}
+                    <button onClick={handleSendAlert} disabled={alertSending || alertSent}
+                      style={{ width: '100%', marginTop: 12, padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: 'none', backgroundColor: alertSent ? COLORS.green : COLORS.gold, color: '#0D1117', cursor: alertSent ? 'default' : 'pointer' }}>
+                      {alertSent ? '✅ Alert Bhej Diya!' : alertSending ? '📨 Bhej rahe hain...' : '📧 Email Alert Bhejo'}
+                    </button>
                   </div>
                 ) : (
                   <div style={{ backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 16, fontSize: 13, color: COLORS.muted }}>
