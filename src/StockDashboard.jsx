@@ -80,6 +80,157 @@ function IndicatorBar({ label, value, max, color }) {
   );
 }
 
+/* ── Trial Offer helpers ── */
+function getMsUntilMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight.getTime() - now.getTime();
+}
+
+function fmtCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+}
+
+/* ── Trial Offer Card ── */
+function TrialOfferCard({ onActivated }) {
+  const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error | exists
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleActivate = async () => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      setStatus("error");
+      setErrorMsg("Sahi email daalo.");
+      return;
+    }
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      const { error } = await supabase
+        .from("trial_signups")
+        .insert([{ email: trimmed }]);
+
+      if (error) {
+        if (error.code === "23505") {
+          setStatus("exists");
+        } else {
+          setStatus("error");
+          setErrorMsg("Kuch gadbad hui, dobara try karo.");
+        }
+        return;
+      }
+      setStatus("success");
+      if (onActivated) onActivated(trimmed);
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg("Kuch gadbad hui, dobara try karo.");
+    }
+  };
+
+  return (
+    <div style={{
+      backgroundColor: COLORS.surface,
+      border: `2px solid ${COLORS.gold}`,
+      borderRadius: 16,
+      padding: 18,
+      marginBottom: 20,
+      boxShadow: "0 4px 20px rgba(200,146,10,0.18)",
+      textAlign: "center",
+    }}>
+      <div style={{
+        display: "inline-block",
+        fontSize: 11,
+        fontWeight: 800,
+        letterSpacing: 1,
+        color: "#FFF",
+        backgroundColor: COLORS.red,
+        padding: "4px 12px",
+        borderRadius: 20,
+        marginBottom: 10,
+      }}>
+        🔥 LIMITED TIME OFFER
+      </div>
+
+      <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>
+        5-Day Free Trial
+      </div>
+      <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 12 }}>
+        Aaj signup karo, pura access 5 din ke liye free
+      </div>
+
+      <div style={{
+        fontSize: 13, fontWeight: 700, color: COLORS.goldDim,
+        backgroundColor: COLORS.goldLight, display: "inline-block",
+        padding: "6px 16px", borderRadius: 10, marginBottom: 14,
+        fontFamily: "monospace", letterSpacing: 1,
+      }}>
+        ⏳ Offer ends in {fmtCountdown(msLeft)}
+      </div>
+
+      {status === "success" ? (
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: COLORS.green,
+          backgroundColor: COLORS.greenLight, padding: "12px", borderRadius: 10,
+        }}>
+          ✅ Trial activate ho gaya! Confirmation email check karo.
+        </div>
+      ) : status === "exists" ? (
+        <div style={{
+          fontSize: 13, fontWeight: 700, color: COLORS.goldDim,
+          backgroundColor: COLORS.goldLight, padding: "12px", borderRadius: 10,
+        }}>
+          Yeh email pehle hi trial le chuka hai.
+        </div>
+      ) : (
+        <>
+          <input
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="Apna email daalo"
+            style={{
+              width: "100%", padding: "11px 14px", fontSize: 14,
+              backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`,
+              borderRadius: 10, color: COLORS.text, outline: "none",
+              boxSizing: "border-box", fontFamily: "Inter, sans-serif",
+              marginBottom: 10,
+            }}
+          />
+          <button
+            onClick={handleActivate}
+            disabled={status === "loading"}
+            style={{
+              width: "100%", padding: "12px",
+              fontSize: 14, fontWeight: 700, borderRadius: 12, border: "none",
+              backgroundColor: status === "loading" ? "#CBD5E1" : COLORS.gold,
+              color: "#FFF", cursor: status === "loading" ? "not-allowed" : "pointer",
+              boxShadow: status === "loading" ? "none" : "0 2px 12px rgba(200,146,10,0.3)",
+            }}
+          >
+            {status === "loading" ? "⏳ Activate ho raha hai..." : "🚀 Start 5-Day Free Trial"}
+          </button>
+          {status === "error" && (
+            <p style={{ fontSize: 12, color: COLORS.red, marginTop: 8, fontWeight: 600 }}>{errorMsg}</p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 /* ── Trend Meter ── */
 function TrendMeter({ longScore, shortScore, trend }) {
   const score = trend === 'Bullish' ? longScore : shortScore;
@@ -322,6 +473,9 @@ export default function StockDashboard({ user }) {
               }}>{label}</button>
             ))}
           </div>
+
+          {/* ── TRIAL OFFER ── */}
+          <TrialOfferCard onActivated={(email) => console.log("Trial activated:", email)} />
 
           {/* ── SUBSCRIBE ── */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
