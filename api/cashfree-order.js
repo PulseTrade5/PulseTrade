@@ -6,37 +6,43 @@ export default async function handler(req, res) {
   const payload = {
     order_amount: amount,
     order_currency: "INR",
-    order_id: `PT_${userId}_${Date.now()}`,
+    order_id: `PT_${Date.now()}`,
     customer_details: {
-      customer_id: userId,
-      customer_email: userEmail,
+      customer_id: userId || `guest_${Date.now()}`,
+      customer_email: userEmail || "test@pulsetrade.in",
       customer_phone: "9999999999",
     },
     order_meta: {
       return_url: `https://www.pulsetrade.in/payment-status?order_id={order_id}`,
     },
-    order_note: `PulseTrade ${planName} Plan`,
+    order_note: `PulseTrade ${planName || 'Monthly'} Plan`,
   };
 
-  const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-version": "2023-08-01",
-      "x-client-id": process.env.CASHFREE_TEST_APP_ID,
-      "x-client-secret": process.env.CASHFREE_TEST_SECRET_KEY,
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-version": "2023-08-01",
+        "x-client-id": process.env.CASHFREE_TEST_APP_ID,
+        "x-client-secret": process.env.CASHFREE_TEST_SECRET_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
 
-  const data = await response.json();
+    const data = await response.json();
+    console.log("Cashfree response:", JSON.stringify(data));
 
-  if (!response.ok) {
-    return res.status(500).json({ error: data.message || "Cashfree error" });
+    if (!response.ok) {
+      return res.status(500).json({ error: data.message || "Cashfree error", details: data });
+    }
+
+    return res.status(200).json({
+      payment_session_id: data.payment_session_id,
+      order_id: data.order_id,
+    });
+  } catch (err) {
+    console.error("Cashfree error:", err);
+    return res.status(500).json({ error: err.message });
   }
-
-  return res.status(200).json({
-    payment_session_id: data.payment_session_id,
-    order_id: data.order_id,
-  });
 }
