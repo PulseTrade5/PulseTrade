@@ -84,7 +84,7 @@ function App() {
         <span style={{ fontSize: 11, color: '#8B92A0' }}>{session.user.email}</span>
         <button onClick={handleLogout} style={{ border: 'none', background: 'none', color: '#D8A33D', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>Logout</button>
       </div>
-      <StockDashboard />
+      <StockDashboard user={session.user} />
     </div>
   );
 }
