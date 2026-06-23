@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import StockDashboard from './components/StockDashboard';
+import StockDashboard from './StockDashboard';
 
 function TermsPage() {
   return (
@@ -60,7 +60,6 @@ function ContactPage() {
 function PaymentStatusPage() {
   const [status, setStatus] = useState('loading');
   const [data, setData] = useState(null);
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const order_id = params.get('order_id');
@@ -70,57 +69,26 @@ function PaymentStatusPage() {
       .then(d => { setData(d); setStatus(d.status === 'PAID' ? 'success' : 'failed'); })
       .catch(() => setStatus('error'));
   }, []);
-
   return (
     <div style={{ backgroundColor: '#0D1117', color: '#E8E6E0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
         <div style={{ color: '#D8A33D', fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
-        {status === 'loading' && (
-          <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
-            <p style={{ color: '#8B92A0' }}>Payment verify ho raha hai...</p>
-          </div>
-        )}
+        {status === 'loading' && <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div><p style={{ color: '#8B92A0' }}>Payment verify ho raha hai...</p></div>}
         {status === 'success' && (
           <div style={{ backgroundColor: '#161B22', border: '2px solid #3FAE7C', borderRadius: 16, padding: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
             <h2 style={{ color: '#3FAE7C', marginBottom: 8 }}>Payment Successful!</h2>
             <p style={{ color: '#8B92A0', marginBottom: 16 }}>Tumhari subscription activate ho gayi hai.</p>
-            {data && (
-              <div style={{ backgroundColor: '#0D1117', borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-                  <span style={{ color: '#8B92A0' }}>Order ID</span>
-                  <span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-                  <span style={{ color: '#8B92A0' }}>Amount</span>
-                  <span style={{ fontWeight: 600, color: '#D8A33D' }}>₹{data.amount}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}>
-                  <span style={{ color: '#8B92A0' }}>Email</span>
-                  <span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span>
-                </div>
-              </div>
-            )}
+            {data && <div style={{ backgroundColor: '#0D1117', borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: '#8B92A0' }}>Order ID</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: '#8B92A0' }}>Amount</span><span style={{ fontWeight: 600, color: '#D8A33D' }}>₹{data.amount}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: '#8B92A0' }}>Email</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span></div>
+            </div>}
             <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
           </div>
         )}
-        {status === 'failed' && (
-          <div style={{ backgroundColor: '#161B22', border: '2px solid #D1453B', borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
-            <h2 style={{ color: '#D1453B', marginBottom: 8 }}>Payment Failed</h2>
-            <p style={{ color: '#8B92A0', marginBottom: 20 }}>Payment complete nahi hui. Dobara try karo.</p>
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a>
-          </div>
-        )}
-        {status === 'error' && (
-          <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-            <h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2>
-            <p style={{ color: '#8B92A0', marginBottom: 20 }}>Payment status check nahi ho saka.</p>
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a>
-          </div>
-        )}
+        {status === 'failed' && <div style={{ backgroundColor: '#161B22', border: '2px solid #D1453B', borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>❌</div><h2 style={{ color: '#D1453B', marginBottom: 8 }}>Payment Failed</h2><p style={{ color: '#8B92A0', marginBottom: 20 }}>Dobara try karo.</p><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
+        {status === 'error' && <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><p style={{ color: '#8B92A0', marginBottom: 20 }}>Support se contact karo.</p><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
       </div>
     </div>
   );
@@ -153,25 +121,14 @@ function App() {
   const handleLogin = async () => {
     if (!email) return;
     setSending(true);
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: 'https://pulsetrade.in' }
-    });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: 'https://pulsetrade.in' } });
     setSending(false);
     if (!error) setSent(true);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); };
 
-  if (loadingSession) {
-    return (
-      <div style={{ backgroundColor: '#0D1117', color: '#E8E6E0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        Loading...
-      </div>
-    );
-  }
+  if (loadingSession) return <div style={{ backgroundColor: '#0D1117', color: '#E8E6E0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>;
 
   if (!session) {
     return (
@@ -193,7 +150,7 @@ function App() {
             <div style={{ backgroundColor: '#161B22', border: '1px solid #3FAE7C', borderRadius: 12, padding: 20 }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>✅</div>
               <div style={{ fontSize: 14, fontWeight: 600 }}>Link bhej diya!</div>
-              <div style={{ fontSize: 12, color: '#8B92A0', marginTop: 8 }}>{email} pe login link gaya hai. Check karo.</div>
+              <div style={{ fontSize: 12, color: '#8B92A0', marginTop: 8 }}>{email} pe login link gaya hai.</div>
             </div>
           )}
           <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #30363D', display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
