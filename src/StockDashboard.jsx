@@ -309,6 +309,12 @@ export default function StockDashboard({ user }) {
           </div>
         )}
 
+        <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: '1px solid #262C36', display: 'flex', justifyContent: 'center', gap: 20, fontSize: 12 }}>
+          <a href="/terms" style={{ color: '#8B92A0', textDecoration: 'none' }}>Terms</a>
+          <a href="/refund" style={{ color: '#8B92A0', textDecoration: 'none' }}>Refund Policy</a>
+          <a href="/contact" style={{ color: '#8B92A0', textDecoration: 'none' }}>Contact</a>
+        </div>
+
       </div>
     </div>
   );
