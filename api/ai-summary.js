@@ -25,7 +25,7 @@ Stock Data:
 - Supertrend: ${supertrend}
 - ${volumeComment}
 
-4-5 sentence mein simple Hinglish summary de. BUY/SELL mat bol. End mein likho: "Yeh sirf technical analysis hai, investment advice nahi."`;
+4-5 sentence mein simple Hinglish mein samjhao. BUY/SELL mat bol. Koi markdown mat use karo, koi asterisk ya ## ya star mat lagao. Seedha plain text mein likho. End mein likho: Yeh sirf technical analysis hai, investment advice nahi.`;
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -42,7 +42,7 @@ Stock Data:
       }),
     });
     const data = await response.json();
-    const summary = data.content?.[0]?.text || JSON.stringify(data);
+    const summary = data.content?.[0]?.text || "Summary nahi aayi.";
     return res.status(200).json({ summary });
   } catch (err) {
     return res.status(500).json({ error: err.message });
