@@ -132,6 +132,15 @@ function TrialOfferCard({ onActivated }) {
         }
         return;
       }
+
+      // Trial saved — now send a magic link so the user can log in right away
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+      });
+      if (otpError) {
+        console.error("Magic link send failed:", otpError);
+      }
+
       setStatus("success");
       if (onActivated) onActivated(trimmed);
     } catch (err) {
@@ -185,7 +194,7 @@ function TrialOfferCard({ onActivated }) {
           fontSize: 13, fontWeight: 700, color: COLORS.green,
           backgroundColor: COLORS.greenLight, padding: "12px", borderRadius: 10,
         }}>
-          ✅ Trial activate ho gaya! Aapka 5-day access shuru ho gaya hai.
+          ✅ Trial activate ho gaya! Login link aapke email pe bhej diya hai — check karo.
         </div>
       ) : status === "exists" ? (
         <div style={{
