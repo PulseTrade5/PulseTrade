@@ -3,7 +3,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { symbol, trend, rsi, macd, adx, score } = req.body;
+  const { symbol, trend, rsi, macd, adx, supertrend, longScore, shortScore, entry, stopLoss, targets } = req.body;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -18,9 +18,23 @@ export default async function handler(req, res) {
         max_tokens: 300,
         messages: [{
           role: 'user',
-          content: `Tu ek expert Indian stock market analyst hai. ${symbol} stock ka analysis kar aur Hinglish mein 3-4 lines mein simple summary de. Data: Trend=${trend}, RSI=${rsi}, MACD=${macd}, ADX=${adx}, Score=${score}/100. Retail traders ke liye simple language mein explain kar.`
+          content: `Tu ek expert Indian stock market analyst hai jo Hinglish mein bolta hai - bilkul jaise traders baat karte hain. 2-3 sentences mein ${symbol} ka analysis do.
+
+Data:
+- Trend: ${trend}
+- RSI: ${rsi}
+- MACD: ${macd}
+- ADX: ${adx} 
+- Supertrend: ${supertrend}
+- Long Score: ${longScore}/100
+- Short Score: ${shortScore}/100
+- Entry: ${entry}
+- Stop Loss: ${stopLoss}
+- Targets: ${targets?.join(', ')}
+
+Casual Hinglish mein bolo jaise ek trader dost ko samjha raha ho. Short rakho, max 3 sentences. Numbers include karo.`
         }]
-      })
+      }),
     });
 
     const data = await response.json();
