@@ -1,71 +1,57 @@
 import { useState } from 'react';
+import { load } from '@cashfreepayments/cashfree-js';
 
-export default function SubscribeButton({ userEmail, userName }) {
+export default function SubscribeButton({ userEmail, userId }) {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
     setLoading(true);
     try {
-      const orderRes = await fetch('/api/create-order', {
+      const res = await fetch('/api/cashfree-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount: 1999 }),
+        body: JSON.stringify({
+          planName: 'Monthly',
+          amount: 299,
+          userEmail,
+          userId,
+        }),
       });
-      const order = await orderRes.json();
 
-      if (!orderRes.ok) {
-        alert('Something went wrong, please try again.');
-        setLoading(false);
-        return;
-      }
+      const { payment_session_id, error } = await res.json();
+      if (error) throw new Error(error);
 
-      const options = {
-        key: order.keyId,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'PulseTrade',
-        description: 'Monthly Subscription',
-        order_id: order.orderId,
-        handler: async function (response) {
-          const verifyRes = await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            }),
-          });
-          const result = await verifyRes.json();
+      const cashfree = await load({ mode: 'production' });
+      cashfree.checkout({
+        paymentSessionId: payment_session_id,
+        redirectTarget: '_self',
+      });
 
-          if (result.success) {
-            alert('Payment successful! Welcome to PulseTrade Pro.');
-          } else {
-            alert('Payment verification failed. Please contact support.');
-          }
-        },
-        prefill: {
-          name: userName || '',
-          email: userEmail || '',
-        },
-        theme: {
-          color: '#8B4513',
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
     } catch (err) {
       console.error(err);
-      alert('Something went wrong, please try again.');
+      alert('Payment shuru nahi ho saka. Dobara try karo.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <button onClick={handlePayment} disabled={loading}>
-      {loading ? 'Processing...' : 'Subscribe - ₹1,999/month'}
+    <button
+      onClick={handlePayment}
+      disabled={loading}
+      style={{
+        backgroundColor: '#D8A33D',
+        color: '#0D1117',
+        fontWeight: 'bold',
+        padding: '12px 28px',
+        borderRadius: '8px',
+        border: 'none',
+        cursor: loading ? 'not-allowed' : 'pointer',
+        opacity: loading ? 0.7 : 1,
+        fontSize: '16px',
+      }}
+    >
+      {loading ? 'Processing...' : 'Subscribe — ₹299/month'}
     </button>
   );
 }
