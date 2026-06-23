@@ -33,7 +33,6 @@ function fmtINR(n) {
   if (n === null || n === undefined || isNaN(n)) return "—";
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
-
 function fmtCr(n) {
   if (!n) return "—";
   const cr = n / 1e7;
@@ -41,7 +40,6 @@ function fmtCr(n) {
   if (cr >= 1e3) return `₹${(cr/1e3).toFixed(2)}K Cr`;
   return `₹${cr.toFixed(0)} Cr`;
 }
-
 function fmtVol(n) {
   if (!n) return "—";
   if (n >= 1e7) return `${(n/1e7).toFixed(2)} Cr`;
@@ -49,79 +47,98 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
+/* ── 52W Progress Bar ── */
+function Week52Bar({ current, low, high }) {
+  const pct = Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: COLORS.muted, marginBottom: 4, fontWeight: 600 }}>
+        <span>52W Low {fmtINR(low)}</span>
+        <span>52W High {fmtINR(high)}</span>
+      </div>
+      <div style={{ position: 'relative', height: 8, backgroundColor: '#E2E8F0', borderRadius: 99 }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS.red}, ${COLORS.gold}, ${COLORS.green})`, borderRadius: 99 }} />
+        <div style={{ position: 'absolute', top: -3, left: `${pct}%`, transform: 'translateX(-50%)', width: 14, height: 14, backgroundColor: COLORS.gold, border: '2.5px solid white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
+      </div>
+      <div style={{ textAlign: 'center', fontSize: 11, color: COLORS.goldDim, fontWeight: 700, marginTop: 5 }}>{pct.toFixed(0)}% of 52W range</div>
+    </div>
+  );
+}
+
+/* ── Indicator Progress Bar ── */
+function IndicatorBar({ label, value, max, color }) {
+  const pct = Math.min(100, (value / max) * 100);
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: COLORS.muted, marginBottom: 4, fontWeight: 600 }}>
+        <span>{label}</span><span style={{ color, fontWeight: 700 }}>{value}</span>
+      </div>
+      <div style={{ height: 6, backgroundColor: '#E2E8F0', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 99, transition: 'width 1s ease' }} />
+      </div>
+    </div>
+  );
+}
+
+/* ── Trend Meter ── */
 function TrendMeter({ longScore, shortScore, trend }) {
   const score = trend === 'Bullish' ? longScore : shortScore;
-  const isBullish = trend === 'Bullish';
-  const color = isBullish ? COLORS.green : COLORS.red;
-  const colorLight = isBullish ? COLORS.greenLight : COLORS.redLight;
+  const color = trend === 'Bullish' ? COLORS.green : COLORS.red;
+  const colorLight = trend === 'Bullish' ? COLORS.greenLight : COLORS.redLight;
   const [animScore, setAnimScore] = useState(0);
   const [animPct, setAnimPct] = useState(0);
   const [showGlow, setShowGlow] = useState(false);
   const animRef = useRef(null);
 
   useEffect(() => {
-    setAnimScore(0);
-    setAnimPct(0);
-    setShowGlow(false);
+    setAnimScore(0); setAnimPct(0); setShowGlow(false);
     let start = null;
-    const duration = 1500;
     const target = Math.min(100, Math.max(0, score));
-    const animate = (timestamp) => {
-      if (!start) start = timestamp;
-      const progress = Math.min((timestamp - start) / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-      setAnimScore(Math.round(ease * target));
-      setAnimPct(ease * target);
-      if (progress < 1) {
-        animRef.current = requestAnimationFrame(animate);
-      } else {
-        setShowGlow(true);
-      }
+    const animate = (ts) => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / 1500, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setAnimScore(Math.round(e * target));
+      setAnimPct(e * target);
+      if (p < 1) animRef.current = requestAnimationFrame(animate);
+      else setShowGlow(true);
     };
     animRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animRef.current);
   }, [score, trend]);
 
-  const radius = 70;
-  const cx = 100, cy = 90;
-  const toRad = deg => (deg * Math.PI) / 180;
-  const arcX = (angle) => cx + radius * Math.cos(toRad(angle));
-  const arcY = (angle) => cy + radius * Math.sin(toRad(angle));
+  const radius = 70, cx = 100, cy = 90;
+  const toRad = d => (d * Math.PI) / 180;
+  const ax = a => cx + radius * Math.cos(toRad(a));
+  const ay = a => cy + radius * Math.sin(toRad(a));
   const fillArc = (animPct / 100) * 180;
   const fillAngle = 180 - fillArc;
-  const needleAngle = 180 - fillArc;
-  const needleX = cx + (radius - 12) * Math.cos(toRad(needleAngle));
-  const needleY = cy + (radius - 12) * Math.sin(toRad(needleAngle));
-  const bgPath = `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`;
+  const nx = cx + (radius - 12) * Math.cos(toRad(fillAngle));
+  const ny = cy + (radius - 12) * Math.sin(toRad(fillAngle));
+  const bgPath = `M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 0 1 ${ax(0)} ${ay(0)}`;
   const fillPath = animPct > 0
-    ? `M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${arcX(fillAngle)} ${arcY(fillAngle)}`
+    ? `M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${ax(fillAngle)} ${ay(fillAngle)}`
     : null;
 
   return (
     <div style={{
       backgroundColor: COLORS.surface,
-      border: `1px solid ${showGlow ? color : COLORS.surfaceBorder}`,
-      borderRadius: 16,
-      padding: 20,
-      marginBottom: 16,
-      textAlign: 'center',
+      border: `1.5px solid ${showGlow ? color : COLORS.surfaceBorder}`,
+      borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center',
       boxShadow: showGlow ? `0 4px 24px ${color}22` : '0 1px 4px rgba(0,0,0,0.06)',
       transition: 'box-shadow 0.5s, border-color 0.5s',
     }}>
       <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 8, fontWeight: 700 }}>🎯 TREND METER</div>
       <svg width="200" height="110" viewBox="0 0 200 110" style={{ overflow: 'visible' }}>
         <defs>
-          <filter id="glow">
-            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
+          <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
         <path d={bgPath} fill="none" stroke="#E2E8F0" strokeWidth="14" strokeLinecap="round"/>
-        <path d={`M ${arcX(180)} ${arcY(180)} A ${radius} ${radius} 0 0 1 ${arcX(120)} ${arcY(120)}`} fill="none" stroke="#DC2626" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
-        <path d={`M ${arcX(120)} ${arcY(120)} A ${radius} ${radius} 0 0 1 ${arcX(60)} ${arcY(60)}`} fill="none" stroke="#C8920A" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
-        <path d={`M ${arcX(60)} ${arcY(60)} A ${radius} ${radius} 0 0 1 ${arcX(0)} ${arcY(0)}`} fill="none" stroke="#059669" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
+        <path d={`M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 0 1 ${ax(120)} ${ay(120)}`} fill="none" stroke="#DC2626" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
+        <path d={`M ${ax(120)} ${ay(120)} A ${radius} ${radius} 0 0 1 ${ax(60)} ${ay(60)}`} fill="none" stroke="#C8920A" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
+        <path d={`M ${ax(60)} ${ay(60)} A ${radius} ${radius} 0 0 1 ${ax(0)} ${ay(0)}`} fill="none" stroke="#059669" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
         {fillPath && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" filter={showGlow ? "url(#glow)" : "none"}/>}
-        <line x1={cx} y1={cy} x2={needleX} y2={needleY} stroke={COLORS.textSecondary} strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={COLORS.textSecondary} strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx={cx} cy={cy} r="6" fill={color} filter={showGlow ? "url(#glow)" : "none"}/>
         <text x="18" y="108" fill="#DC2626" fontSize="9" fontWeight="700">BEARISH</text>
         <text x="152" y="108" fill="#059669" fontSize="9" fontWeight="700">BULLISH</text>
@@ -131,14 +148,9 @@ function TrendMeter({ longScore, shortScore, trend }) {
         {animScore}<span style={{ fontSize: 14, color: COLORS.muted }}>/100</span>
       </div>
       <div style={{
-        display: 'inline-block',
-        fontSize: 13, fontWeight: 700, color,
-        backgroundColor: colorLight,
-        padding: '4px 14px',
-        borderRadius: 20,
-        marginTop: 6,
-        opacity: showGlow ? 1 : 0,
-        transition: 'opacity 0.5s',
+        display: 'inline-block', fontSize: 13, fontWeight: 700, color,
+        backgroundColor: colorLight, padding: '4px 14px', borderRadius: 20, marginTop: 6,
+        opacity: showGlow ? 1 : 0, transition: 'opacity 0.5s',
       }}>
         {score >= 70 ? '🔥 Strong ' : score >= 40 ? '⚡ Moderate ' : '❄️ Weak '}{trend}
       </div>
@@ -166,20 +178,13 @@ export default function StockDashboard({ user }) {
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); };
 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
     if (!sym) return;
-    setLoading(true);
-    setError('');
-    setResult(null);
-    setStockInfo(null);
-    setPulseData(null);
-    setSymbolInput(sym);
-    setAlertSent(false);
+    setLoading(true); setError(''); setResult(null); setStockInfo(null);
+    setPulseData(null); setSymbolInput(sym); setAlertSent(false);
     let symbol = sym;
     if (!symbol.includes('.')) symbol = symbol + '.NS';
     try {
@@ -202,14 +207,9 @@ export default function StockDashboard({ user }) {
         currentPrice: data.stockInfo?.regularMarketPrice || analysis.lastClose,
         change: data.stockInfo?.regularMarketChange,
         changePercent: data.stockInfo?.regularMarketChangePercent?.toFixed(2),
-        rsi: analysis.rsi,
-        macd: analysis.macd,
-        macdSignal: analysis.macdSignal,
-        ema20: analysis.ema20,
-        ema50: analysis.ema50,
-        adx: analysis.adx,
-        supertrend: analysis.supertrend,
-        trend: analysis.trend,
+        rsi: analysis.rsi, macd: analysis.macd, macdSignal: analysis.macdSignal,
+        ema20: analysis.ema20, ema50: analysis.ema50, adx: analysis.adx,
+        supertrend: analysis.supertrend, trend: analysis.trend,
         volume: data.stockInfo?.regularMarketVolume,
         avgVolume: data.stockInfo?.averageDailyVolume10Day,
       });
@@ -228,22 +228,14 @@ export default function StockDashboard({ user }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: user.email,
-          symbol: stockName,
-          trend: result.trend,
-          entry: result.entry?.toFixed(2),
-          stopLoss: result.stopLoss?.toFixed(2),
-          target1: result.targets?.[0]?.toFixed(2),
-          target2: result.targets?.[1]?.toFixed(2),
-          target3: result.targets?.[2]?.toFixed(2),
+          email: user.email, symbol: stockName, trend: result.trend,
+          entry: result.entry?.toFixed(2), stopLoss: result.stopLoss?.toFixed(2),
+          target1: result.targets?.[0]?.toFixed(2), target2: result.targets?.[1]?.toFixed(2), target3: result.targets?.[2]?.toFixed(2),
         }),
       });
       setAlertSent(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setAlertSending(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setAlertSending(false); }
   };
 
   const ep = Number(entryPrice) || 0;
@@ -258,45 +250,32 @@ export default function StockDashboard({ user }) {
   const trendColor = result?.trend === 'Bullish' ? COLORS.green : result?.trend === 'Bearish' ? COLORS.red : COLORS.gold;
 
   const inputStyle = {
-    width: '100%',
-    padding: '11px 14px',
-    fontSize: 14,
-    backgroundColor: COLORS.bg,
-    border: `1.5px solid ${COLORS.surfaceBorder}`,
-    borderRadius: 10,
-    color: COLORS.text,
-    outline: 'none',
-    boxSizing: 'border-box',
-    fontFamily: 'Inter, sans-serif',
+    width: '100%', padding: '11px 14px', fontSize: 14,
+    backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`,
+    borderRadius: 10, color: COLORS.text, outline: 'none',
+    boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
   };
-
   const rowStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    fontSize: 13,
-    padding: '7px 0',
-    borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+    display: 'flex', justifyContent: 'space-between',
+    fontSize: 13, padding: '7px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+  };
+  const cardStyle = {
+    backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`,
+    borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
   };
 
   return (
     <div style={{ backgroundColor: COLORS.bg, color: COLORS.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* ─── TOP HEADER ─── */}
+        {/* ── STICKY HEADER ── */}
         <div style={{
-          backgroundColor: COLORS.headerBg,
-          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-          padding: '14px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
-          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+          backgroundColor: COLORS.headerBg, borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
         }}>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, color: COLORS.text, letterSpacing: '-0.5px' }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: COLORS.gold }}>Trade</span>
             </h1>
             <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
@@ -304,19 +283,14 @@ export default function StockDashboard({ user }) {
           <button onClick={handleLogout} style={{
             fontSize: 12, padding: '6px 14px', borderRadius: 20,
             border: `1.5px solid ${COLORS.surfaceBorder}`,
-            backgroundColor: 'transparent', color: COLORS.muted,
-            cursor: 'pointer', fontWeight: 600,
+            backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600,
           }}>🚪 Logout</button>
         </div>
 
-        {/* ─── SEBI DISCLAIMER BANNER ─── */}
+        {/* ── SEBI BANNER ── */}
         <div style={{
-          backgroundColor: COLORS.sebiBg,
-          borderBottom: `2px solid ${COLORS.sebiBorder}`,
-          padding: '12px 20px',
-          display: 'flex',
-          gap: 10,
-          alignItems: 'flex-start',
+          backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`,
+          padding: '12px 20px', display: 'flex', gap: 10, alignItems: 'flex-start',
         }}>
           <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>🛡️</span>
           <div>
@@ -324,7 +298,7 @@ export default function StockDashboard({ user }) {
               SEBI DISCLAIMER — ZAROORI PADHE
             </div>
             <div style={{ fontSize: 11.5, color: COLORS.sebi, lineHeight: 1.6, opacity: 0.85 }}>
-              Yeh platform sirf <strong>technical trend analysis</strong> provide karta hai — yeh <strong>investment advice nahi hai</strong>. Koi bhi trade lene se pehle SEBI-registered investment advisor se salah zaroor lein. Loss ka risk aap khud uthate hain.
+              Yeh platform sirf <strong>technical trend analysis</strong> provide karta hai — yeh <strong>investment advice nahi hai</strong>. All outputs are algorithmic technical-analysis estimates for educational and informational purposes only. They are not investment recommendations. SEBI-registered advisor se salah zaroor lein.
             </div>
           </div>
         </div>
@@ -332,15 +306,11 @@ export default function StockDashboard({ user }) {
         <div style={{ padding: '20px 20px 0' }}>
           <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
 
-          {/* ─── TABS ─── */}
+          {/* ── TABS ── */}
           <div style={{
-            display: 'flex',
-            gap: 6,
-            marginBottom: 20,
-            backgroundColor: COLORS.surface,
-            padding: 4,
-            borderRadius: 14,
-            border: `1px solid ${COLORS.surfaceBorder}`,
+            display: 'flex', gap: 4, marginBottom: 20,
+            backgroundColor: COLORS.surface, padding: 4,
+            borderRadius: 14, border: `1px solid ${COLORS.surfaceBorder}`,
           }}>
             {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
@@ -348,36 +318,22 @@ export default function StockDashboard({ user }) {
                 borderRadius: 10, border: 'none',
                 backgroundColor: tab===key ? COLORS.gold : 'transparent',
                 color: tab===key ? '#FFF' : COLORS.muted,
-                cursor: 'pointer',
-                transition: 'background 0.2s',
+                cursor: 'pointer', transition: 'background 0.2s',
               }}>{label}</button>
             ))}
           </div>
 
-          {/* ─── SUBSCRIBE BUTTON ─── */}
+          {/* ── SUBSCRIBE ── */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <SubscribeButton userEmail={user?.email} userId={user?.id} />
           </div>
 
           {tab === 'check' && (
             <>
-              {/* ─── SEARCH CARD ─── */}
-              <div style={{
-                backgroundColor: COLORS.surface,
-                border: `1px solid ${COLORS.surfaceBorder}`,
-                borderRadius: 16,
-                padding: 18,
-                marginBottom: 20,
-                boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
-              }}>
+              {/* SEARCH CARD */}
+              <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
-                <input
-                  value={symbolInput}
-                  onChange={e => setSymbolInput(e.target.value)}
-                  onKeyDown={e => e.key==='Enter' && handleSearch()}
-                  placeholder="e.g. RELIANCE, TCS"
-                  style={inputStyle}
-                />
+                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                   {POPULAR.map(s => (
                     <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
@@ -434,11 +390,35 @@ export default function StockDashboard({ user }) {
 
               {result && (
                 <>
-                  {/* Stock Info */}
+                  {/* STOCK INFO CARD — with price badge + 52W bar */}
                   {stockInfo && (
-                    <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-                      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>📊 STOCK INFO</div>
-                      {stockInfo.longName && <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12, color: COLORS.text }}>{stockInfo.longName}</div>}
+                    <div style={cardStyle}>
+                      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 10, fontWeight: 700 }}>📊 STOCK INFO</div>
+
+                      {/* Company name + price + change badge */}
+                      {stockInfo.longName && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>{stockInfo.longName}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 26, fontWeight: 800, color: COLORS.text, letterSpacing: '-0.5px' }}>
+                              {fmtINR(stockInfo.regularMarketPrice || result.lastClose)}
+                            </span>
+                            {stockInfo.regularMarketChange !== undefined && (
+                              <span style={{
+                                fontSize: 12, fontWeight: 700,
+                                color: stockInfo.regularMarketChange >= 0 ? COLORS.green : COLORS.red,
+                                backgroundColor: stockInfo.regularMarketChange >= 0 ? COLORS.greenLight : COLORS.redLight,
+                                padding: '3px 10px', borderRadius: 20,
+                              }}>
+                                {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'}{' '}
+                                {fmtINR(Math.abs(stockInfo.regularMarketChange))}{' '}
+                                ({Math.abs(stockInfo.regularMarketChangePercent || 0).toFixed(2)}%)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
                       {[
                         ['Market Cap', fmtCr(stockInfo.marketCap)],
                         ['P/E Ratio', stockInfo.trailingPE ? stockInfo.trailingPE.toFixed(2) : '—'],
@@ -451,29 +431,44 @@ export default function StockDashboard({ user }) {
                           <span style={{ fontWeight: 600, color: COLORS.text }}>{value}</span>
                         </div>
                       ))}
+
+                      {/* 52W bar */}
+                      {result.week52High && result.week52Low && (
+                        <Week52Bar current={result.lastClose} low={result.week52Low} high={result.week52High} />
+                      )}
                     </div>
                   )}
 
                   <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} />
 
+                  {/* INDICATOR BARS */}
+                  <div style={cardStyle}>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 14, fontWeight: 700 }}>📈 INDICATOR STRENGTH</div>
+                    <IndicatorBar label={`RSI — ${result.rsi > 70 ? 'Overbought' : result.rsi < 30 ? 'Oversold' : 'Neutral zone'}`} value={result.rsi} max={100} color={result.rsi > 70 ? COLORS.red : result.rsi < 30 ? COLORS.green : COLORS.gold} />
+                    <IndicatorBar label={`ADX — ${result.trendStrength}`} value={result.adx} max={60} color={result.adx >= 25 ? COLORS.green : COLORS.muted} />
+                    <IndicatorBar label="Long Score" value={result.longScore} max={100} color={COLORS.green} />
+                    <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={COLORS.red} />
+                  </div>
+
                   {pulseData && <PulseBoltaHai stockData={pulseData} />}
 
-                  {/* Analysis Card */}
-                  <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+                  {/* ANALYSIS CARD */}
+                  <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <span style={{ fontSize: 20, fontWeight: 800, color: COLORS.text }}>{stockName}</span>
-                      <span style={{ fontSize: 18, fontWeight: 800, color: COLORS.gold }}>{fmtINR(result.lastClose)}</span>
+                      <span style={{
+                        fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
+                        backgroundColor: trendColor === COLORS.green ? COLORS.greenLight : trendColor === COLORS.red ? COLORS.redLight : COLORS.goldLight,
+                        color: trendColor,
+                      }}>{result.trend}</span>
                     </div>
                     {[
-                      ['Trend', result.trend, trendColor],
                       ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? COLORS.green : COLORS.red],
                       ['RSI', result.rsi, result.rsi > 70 ? COLORS.red : result.rsi < 30 ? COLORS.green : null],
                       ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
                       ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? COLORS.green : COLORS.red],
                       ['Long Score', `${result.longScore} / 100`, COLORS.green],
                       ['Short Score', `${result.shortScore} / 100`, COLORS.red],
-                      ['52W High / Low', `${fmtINR(result.week52High)} / ${fmtINR(result.week52Low)}`, null],
-                      ['Distance from 52W High', `${result.distFromHighPct}%`, null],
                     ].map(([label, value, color]) => (
                       <div key={label} style={rowStyle}>
                         <span style={{ color: COLORS.muted }}>{label}</span>
@@ -493,20 +488,19 @@ export default function StockDashboard({ user }) {
                     </button>
                   </div>
 
-                  {/* Signal Card */}
+                  {/* SIGNAL CARD */}
                   {result.signal ? (
                     <div style={{
                       backgroundColor: COLORS.surface,
                       border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`,
                       borderRadius: 16, padding: 18, marginBottom: 16,
-                      boxShadow: `0 2px 16px ${result.signal==='LONG' ? COLORS.green : COLORS.red}18`,
+                      boxShadow: `0 4px 20px ${result.signal==='LONG' ? COLORS.green : COLORS.red}18`,
                     }}>
                       <div style={{
                         fontSize: 15, fontWeight: 800,
                         color: result.signal==='LONG' ? COLORS.green : COLORS.red,
-                        marginBottom: 12,
                         backgroundColor: result.signal==='LONG' ? COLORS.greenLight : COLORS.redLight,
-                        padding: '8px 12px', borderRadius: 10,
+                        padding: '8px 14px', borderRadius: 10, marginBottom: 14,
                       }}>
                         {result.signal==='LONG' ? '📈 Bullish Setup' : '📉 Bearish Setup'}
                       </div>
@@ -524,7 +518,7 @@ export default function StockDashboard({ user }) {
                         </div>
                       ))}
                       <button onClick={handleSendAlert} disabled={alertSending || alertSent} style={{
-                        width: '100%', marginTop: 14, padding: '11px',
+                        width: '100%', marginTop: 14, padding: '12px',
                         fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
                         backgroundColor: alertSent ? COLORS.green : COLORS.gold,
                         color: '#FFF', cursor: alertSent ? 'default' : 'pointer',
@@ -535,8 +529,7 @@ export default function StockDashboard({ user }) {
                     </div>
                   ) : (
                     <div style={{
-                      backgroundColor: COLORS.surface,
-                      border: `1px dashed ${COLORS.surfaceBorder}`,
+                      backgroundColor: COLORS.surface, border: `1px dashed ${COLORS.surfaceBorder}`,
                       borderRadius: 16, padding: 18, marginBottom: 16,
                       fontSize: 13, color: COLORS.muted, textAlign: 'center',
                     }}>
@@ -544,8 +537,8 @@ export default function StockDashboard({ user }) {
                     </div>
                   )}
 
-                  {/* Position Sizing Results */}
-                  <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+                  {/* POSITION SIZING */}
+                  <div style={cardStyle}>
                     <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                       {['BUY','SELL'].map(d => (
@@ -587,9 +580,9 @@ export default function StockDashboard({ user }) {
             </>
           )}
 
-          {/* ─── WATCHLIST TAB ─── */}
+          {/* ── WATCHLIST TAB ── */}
           {tab === 'watchlist' && (
-            <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+            <div style={cardStyle}>
               <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
               {watchlist.length === 0 ? (
                 <p style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
@@ -597,7 +590,14 @@ export default function StockDashboard({ user }) {
                 <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                   <div>
                     <div style={{ fontWeight: 700, color: COLORS.text }}>{w.symbol}</div>
-                    <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{fmtINR(w.lastPrice)} • {w.lastTrend}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                      <span style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(w.lastPrice)}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
+                        color: w.lastTrend === 'Bullish' ? COLORS.green : COLORS.red,
+                        backgroundColor: w.lastTrend === 'Bullish' ? COLORS.greenLight : COLORS.redLight,
+                      }}>{w.lastTrend}</span>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
@@ -608,10 +608,27 @@ export default function StockDashboard({ user }) {
             </div>
           )}
 
-          {/* ─── TRACK RECORD TAB ─── */}
+          {/* ── TRACK RECORD TAB ── */}
           {tab === 'track' && (
-            <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 8, fontWeight: 700 }}>TRACK RECORD</div>
+            <div style={cardStyle}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
+
+              {/* Win/Loss summary tiles */}
+              {history.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  {[
+                    ['Wins', history.filter(h=>h.outcome==='win').length, COLORS.green, COLORS.greenLight],
+                    ['Losses', history.filter(h=>h.outcome==='loss').length, COLORS.red, COLORS.redLight],
+                    ['Pending', history.filter(h=>h.outcome==='pending').length, COLORS.gold, COLORS.goldLight],
+                  ].map(([l, v, c, bg]) => (
+                    <div key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
+                      <div style={{ fontSize: 11, color: c, fontWeight: 700 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {history.length === 0 ? (
                 <p style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi koi history nahi hai.</p>
               ) : history.map(h => (
@@ -637,7 +654,7 @@ export default function StockDashboard({ user }) {
             </div>
           )}
 
-          {/* ─── FOOTER ─── */}
+          {/* ── FOOTER ── */}
           <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
             <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
             <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
