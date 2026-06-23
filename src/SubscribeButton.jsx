@@ -48,7 +48,6 @@ export default function SubscribeButton({ userEmail, userId }) {
       <h2 style={{ color: '#D8A33D', textAlign: 'center', marginBottom: 20, fontSize: 20 }}>
         Choose Your Plan
       </h2>
-
       <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
         {PLANS.map((plan) => {
           const isSelected = selectedPlan.id === plan.id;
@@ -65,7 +64,6 @@ export default function SubscribeButton({ userEmail, userId }) {
                 background: isSelected ? '#1C2128' : '#0D1117',
                 textAlign: 'center',
                 position: 'relative',
-                transition: 'all 0.2s',
               }}
             >
               {plan.popular && (
@@ -91,7 +89,6 @@ export default function SubscribeButton({ userEmail, userId }) {
           );
         })}
       </div>
-
       <button
         onClick={handlePayment}
         disabled={loading}
@@ -109,13 +106,11 @@ export default function SubscribeButton({ userEmail, userId }) {
       >
         {loading ? 'Processing...' : `Subscribe — ₹${selectedPlan.amount}`}
       </button>
-
       {error && (
         <p style={{ color: '#FF6B6B', textAlign: 'center', marginTop: 12, fontSize: 13 }}>
           ⚠️ {error}
         </p>
       )}
-
       <p style={{ color: '#8B949E', textAlign: 'center', fontSize: 11, marginTop: 14 }}>
         Secure payment via Cashfree
       </p>
