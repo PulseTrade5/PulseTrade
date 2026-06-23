@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import StockDashboard from './StockDashboard';
+import StockDashboard from './components/StockDashboard';
 
 function TermsPage() {
   return (
@@ -65,13 +65,9 @@ function PaymentStatusPage() {
     const params = new URLSearchParams(window.location.search);
     const order_id = params.get('order_id');
     if (!order_id) { setStatus('error'); return; }
-
     fetch(`/api/verify-payment?order_id=${order_id}`)
       .then(r => r.json())
-      .then(d => {
-        setData(d);
-        setStatus(d.status === 'PAID' ? 'success' : 'failed');
-      })
+      .then(d => { setData(d); setStatus(d.status === 'PAID' ? 'success' : 'failed'); })
       .catch(() => setStatus('error'));
   }, []);
 
@@ -79,14 +75,12 @@ function PaymentStatusPage() {
     <div style={{ backgroundColor: '#0D1117', color: '#E8E6E0', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
         <div style={{ color: '#D8A33D', fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
-
         {status === 'loading' && (
           <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}>
             <div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div>
             <p style={{ color: '#8B92A0' }}>Payment verify ho raha hai...</p>
           </div>
         )}
-
         {status === 'success' && (
           <div style={{ backgroundColor: '#161B22', border: '2px solid #3FAE7C', borderRadius: 16, padding: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
@@ -108,31 +102,23 @@ function PaymentStatusPage() {
                 </div>
               </div>
             )}
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>
-              Dashboard Pe Jao →
-            </a>
+            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
           </div>
         )}
-
         {status === 'failed' && (
           <div style={{ backgroundColor: '#161B22', border: '2px solid #D1453B', borderRadius: 16, padding: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
             <h2 style={{ color: '#D1453B', marginBottom: 8 }}>Payment Failed</h2>
             <p style={{ color: '#8B92A0', marginBottom: 20 }}>Payment complete nahi hui. Dobara try karo.</p>
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>
-              Wapas Jao
-            </a>
+            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a>
           </div>
         )}
-
         {status === 'error' && (
           <div style={{ backgroundColor: '#161B22', borderRadius: 16, padding: 32 }}>
             <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
             <h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2>
-            <p style={{ color: '#8B92A0', marginBottom: 20 }}>Payment status check nahi ho saka. Support se contact karo.</p>
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>
-              Wapas Jao
-            </a>
+            <p style={{ color: '#8B92A0', marginBottom: 20 }}>Payment status check nahi ho saka.</p>
+            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: '#D8A33D', color: '#0D1117', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a>
           </div>
         )}
       </div>
@@ -196,14 +182,8 @@ function App() {
           <p style={{ fontSize: 13, color: '#8B92A0', marginBottom: 32 }}>Bazaar ka pulse dekho, faisla khud karo.</p>
           {!sent ? (
             <>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
-                placeholder="tumhara@email.com"
-                style={{ width: '100%', padding: '12px', fontSize: 14, backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 8, color: '#E8E6E0', marginBottom: 12, boxSizing: 'border-box' }}
-              />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleLogin()} placeholder="tumhara@email.com"
+                style={{ width: '100%', padding: '12px', fontSize: 14, backgroundColor: '#161B22', border: '1px solid #30363D', borderRadius: 8, color: '#E8E6E0', marginBottom: 12, boxSizing: 'border-box' }} />
               <button onClick={handleLogin} disabled={sending}
                 style={{ width: '100%', padding: '12px', fontSize: 14, fontWeight: 600, borderRadius: 10, border: 'none', backgroundColor: sending ? '#555' : '#D8A33D', color: '#0D1117', cursor: 'pointer' }}>
                 {sending ? '📨 Bhej rahe hain...' : '🔑 Login Link Bhejo'}
@@ -216,7 +196,7 @@ function App() {
               <div style={{ fontSize: 12, color: '#8B92A0', marginTop: 8 }}>{email} pe login link gaya hai. Check karo.</div>
             </div>
           )}
-          <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #30363D', display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12, color: '#8B92A0' }}>
+          <div style={{ marginTop: 32, paddingTop: 16, borderTop: '1px solid #30363D', display: 'flex', justifyContent: 'center', gap: 16, fontSize: 12 }}>
             <a href="/terms" style={{ color: '#8B92A0' }}>Terms</a>
             <a href="/refund" style={{ color: '#8B92A0' }}>Refund Policy</a>
             <a href="/contact" style={{ color: '#8B92A0' }}>Contact</a>
