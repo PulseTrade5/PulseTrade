@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 const GOLD = "#D8A33D";
 const BG_CARD = "#161B22";
 const BORDER = "#30363D";
-const PANDA_URL = "/file_00000000e4dc7208a1fbd212fdf49fb3.png";
+const PANDA_URL = "https://raw.githubusercontent.com/PulseTrade5/PulseTrade/main/file_00000000e4dc7208a1fbd212fdf49fb3.png";
 
 export default function PulseBoltaHai({ stockData }) {
   const [summary, setSummary] = useState("");
