@@ -185,7 +185,7 @@ function TrialOfferCard({ onActivated }) {
           fontSize: 13, fontWeight: 700, color: COLORS.green,
           backgroundColor: COLORS.greenLight, padding: "12px", borderRadius: 10,
         }}>
-          ✅ Trial activate ho gaya! Confirmation email check karo.
+          ✅ Trial activate ho gaya! Aapka 5-day access shuru ho gaya hai.
         </div>
       ) : status === "exists" ? (
         <div style={{
