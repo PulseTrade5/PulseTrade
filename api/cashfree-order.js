@@ -18,13 +18,13 @@ export default async function handler(req, res) {
     order_note: `PulseTrade ${planName} Plan`,
   };
 
-  const response = await fetch("https://api.cashfree.com/pg/orders", {
+  const response = await fetch("https://sandbox.cashfree.com/pg/orders", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-api-version": "2023-08-01",
-      "x-client-id": process.env.CASHFREE_APP_ID,
-      "x-client-secret": process.env.CASHFREE_SECRET_KEY,
+      "x-client-id": process.env.CASHFREE_TEST_APP_ID,
+      "x-client-secret": process.env.CASHFREE_TEST_SECRET_KEY,
     },
     body: JSON.stringify(payload),
   });
