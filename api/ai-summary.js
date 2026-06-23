@@ -41,24 +41,9 @@ Stock Data:
         messages: [{ role: "user", content: prompt }],
       }),
     });
-
     const data = await response.json();
-    console.log("Anthropic response:", JSON.stringify(data));
-    
-    if (data.error) {
-      console.error("Anthropic error:", data.error);
-      return res.status(500).json({ error: data.error.message || "AI error" });
-    }
-    
-    const summary = data.content?.[0]?.text;
-    if (!summary) {
-      console.error("No summary in response:", JSON.stringify(data));
-      return res.status(500).json({ error: "Summary nahi aayi", details: data });
-    }
-    
-    return res.status(200).json({ summary });
+    return res.status(200).json({ summary: JSON.stringify(data) });
   } catch (err) {
-    console.error("Catch error:", err.message);
     return res.status(500).json({ error: err.message });
   }
 }
