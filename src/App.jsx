@@ -3,16 +3,10 @@ import { supabase } from './supabaseClient';
 import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
 
-// ── Shared light theme colors (same as dashboard) ──
 const DARK = {
-  bg: '#0D1117',
-  surface: '#161B22',
-  gold: '#D8A33D',
-  text: '#E8E6E0',
-  muted: '#8B92A0',
-  green: '#3FAE7C',
-  red: '#D1453B',
-  border: '#30363D',
+  bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
+  text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
+  red: '#D1453B', border: '#30363D',
 };
 
 function TermsPage() {
@@ -128,56 +122,39 @@ function PaymentStatusPage() {
   );
 }
 
-// ── Trial date set karo + welcome email bhejo (sirf naye user ko ek baar) ──
 async function setTrialIfNew(user) {
   const meta = user.user_metadata || {};
-  // Pehle se trial ya paid hai toh kuch mat karo
   if (meta.trial_end_date || meta.is_paid) return;
-
-  // Step 1: Trial date set karo
   const trialEnd = new Date();
   trialEnd.setDate(trialEnd.getDate() + 5);
-
   await supabase.auth.updateUser({
     data: { trial_end_date: trialEnd.toISOString() },
   });
-
-  // Step 2: Welcome email bhejo (sirf ek baar — naya user)
   try {
     await fetch('/api/send-welcome', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: user.email,
-        trialEndDate: trialEnd.toISOString(),
-      }),
+      body: JSON.stringify({ email: user.email, trialEndDate: trialEnd.toISOString() }),
     });
   } catch (err) {
     console.error('Welcome email send failed:', err);
   }
 }
 
+// ✅ FIX: Routes ko App ke ANDAR move kiya — hooks violation fix
 function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
-  // ── Routes ──
-  const path = window.location.pathname;
-  if (path === '/terms') return <TermsPage />;
-  if (path === '/refund') return <RefundPage />;
-  if (path === '/contact') return <ContactPage />;
-  if (path === '/payment-status') return <PaymentStatusPage />;
-
   useEffect(() => {
-    // Session check on load
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) await setTrialIfNew(session.user);
       setSession(session);
       setLoadingSession(false);
     });
 
-    // Auth state change — handle ALL events including OTP verify
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, session?.user?.email); // debug ke liye
       if (session?.user) {
         await setTrialIfNew(session.user);
         setSession(session);
@@ -190,16 +167,19 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ── Loading screen ──
+  // ✅ Routes AFTER hooks — Rules of Hooks fix
+  const path = window.location.pathname;
+  if (path === '/terms') return <TermsPage />;
+  if (path === '/refund') return <RefundPage />;
+  if (path === '/contact') return <ContactPage />;
+  if (path === '/payment-status') return <PaymentStatusPage />;
+
   if (loadingSession) {
     return (
       <div style={{
-        backgroundColor: '#F4F6FA',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
+        backgroundColor: '#F4F6FA', minHeight: '100vh',
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
         fontFamily: 'Inter, sans-serif',
       }}>
         <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A' }}>
@@ -211,10 +191,7 @@ function App() {
     );
   }
 
-  // ── Not logged in → LoginPage ──
   if (!session) return <LoginPage />;
-
-  // ── Logged in → Dashboard ──
   return <StockDashboard user={session.user} />;
 }
 
