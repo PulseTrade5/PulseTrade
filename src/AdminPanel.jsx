@@ -8,6 +8,7 @@ const COLORS = {
   gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
   green: "#059669", greenLight: "#ECFDF5",
   red: "#DC2626", redLight: "#FEF2F2",
+  purple: "#7C3AED", purpleLight: "#EDE9FE",
   text: "#0F172A", textSecondary: "#334155", muted: "#64748B",
 };
 
@@ -43,6 +44,8 @@ export default function AdminPanel({ user, onLogout }) {
   const [editMonths, setEditMonths] = useState(1);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [activeTab, setActiveTab] = useState('users');
+  const [referrals, setReferrals] = useState([]);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -53,11 +56,21 @@ export default function AdminPanel({ user, onLogout }) {
     setLoading(false);
   };
 
+  const fetchReferrals = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, email, referred_by, referral_code, referral_count, created_at')
+      .order('created_at', { ascending: false });
+    setReferrals(data || []);
+  };
+
   useEffect(() => {
-    if (isAdmin) fetchProfiles();
+    if (isAdmin) {
+      fetchProfiles();
+      fetchReferrals();
+    }
   }, [isAdmin]);
 
-  // Admin check - AFTER hooks
   if (!isAdmin) {
     return (
       <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
@@ -77,6 +90,15 @@ export default function AdminPanel({ user, onLogout }) {
     paid: profiles.filter(p => getStatus(p) === 'paid').length,
     trial: profiles.filter(p => getStatus(p) === 'trial').length,
     expired: profiles.filter(p => getStatus(p) === 'expired').length,
+  };
+
+  // Referral stats
+  const referralStats = {
+    totalReferrals: referrals.filter(r => r.referred_by).length,
+    topReferrer: referrals.reduce((acc, r) => {
+      if (r.referral_count > (acc?.referral_count || 0)) return r;
+      return acc;
+    }, null),
   };
 
   const handleSubscribe = async () => {
@@ -109,11 +131,13 @@ export default function AdminPanel({ user, onLogout }) {
   };
 
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' };
+  const rowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` };
 
   return (
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 48px' }}>
 
+        {/* HEADER */}
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <div>
             <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 13, color: COLORS.muted, fontWeight: 600 }}>Admin</span></div>
@@ -122,58 +146,144 @@ export default function AdminPanel({ user, onLogout }) {
           <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
         </div>
 
+        {/* TABS */}
+        <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals']].map(([key, label]) => (
+            <button key={key} onClick={() => setActiveTab(key)} style={{
+              flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
+              borderRadius: 10, border: 'none',
+              backgroundColor: activeTab === key ? COLORS.gold : 'transparent',
+              color: activeTab === key ? '#FFF' : COLORS.muted,
+              cursor: 'pointer',
+            }}>{label}</button>
+          ))}
+        </div>
+
         <div style={{ padding: '20px 20px 0' }}>
           {successMsg && <div style={{ backgroundColor: COLORS.greenLight, border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>{successMsg}</div>}
 
-          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight]].map(([label, value, color, bg]) => (
-              <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
-                <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
-                <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
+          {/* USERS TAB */}
+          {activeTab === 'users' && (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight]].map(([label, value, color, bg]) => (
+                  <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
+                    <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div style={cardStyle}>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
-            <div style={{ display: 'flex', gap: 6 }}>
-              {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
-                <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
-              ))}
-            </div>
-          </div>
+              <div style={cardStyle}>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
+                    <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
+                  ))}
+                </div>
+              </div>
 
-          <div style={cardStyle}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>USERS ({filtered.length})</div>
-            {loading ? (
-              <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
-            ) : filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>Koi user nahi mila.</div>
-            ) : filtered.map(p => {
-              const status = getStatus(p);
-              const daysLeft = getDaysLeft(p.trial_start_date);
-              return (
-                <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                    <div style={{ flex: 1, marginRight: 8 }}>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{p.email}</div>
-                      <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
-                        Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
-                        {status === 'trial' && ` • ${daysLeft} din baaki`}
-                        {status === 'paid' && p.subscription_end_date && ` • Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>USERS ({filtered.length})</div>
+                {loading ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                ) : filtered.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>Koi user nahi mila.</div>
+                ) : filtered.map(p => {
+                  const status = getStatus(p);
+                  const daysLeft = getDaysLeft(p.trial_start_date);
+                  return (
+                    <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div style={{ flex: 1, marginRight: 8 }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{p.name || p.email}</div>
+                          <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
+                          <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
+                            Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
+                            {status === 'trial' && ` • ${daysLeft} din baaki`}
+                            {status === 'paid' && p.subscription_end_date && ` • Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
+                            {p.referred_by && <span style={{ color: COLORS.purple }}> • Ref: {p.referred_by}</span>}
+                          </div>
+                        </div>
+                        <StatusBadge status={status} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
+                        <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
+                        <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
                       </div>
                     </div>
-                    <StatusBadge status={status} />
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
-                    <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
-                    <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
-                  </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* REFERRALS TAB */}
+          {activeTab === 'referrals' && (
+            <>
+              {/* Referral Stats */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <div style={{ flex: 1, backgroundColor: COLORS.purpleLight, border: `1px solid #DDD6FE`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.purple }}>{referralStats.totalReferrals}</div>
+                  <div style={{ fontSize: 11, color: COLORS.purple, fontWeight: 700 }}>Total Referrals</div>
                 </div>
-              );
-            })}
-          </div>
+                <div style={{ flex: 1, backgroundColor: COLORS.goldLight, border: `1px solid #FDE68A`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.gold }}>
+                    {referralStats.topReferrer?.name || '—'}
+                  </div>
+                  <div style={{ fontSize: 11, color: COLORS.gold, fontWeight: 700 }}>Top Referrer</div>
+                </div>
+              </div>
+
+              {/* Who referred whom */}
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+                  🔗 REFERRAL TRACKING
+                </div>
+                {referrals.filter(r => r.referred_by).length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
+                    Abhi koi referral nahi aaya.
+                  </p>
+                ) : referrals.filter(r => r.referred_by).map((r, i) => (
+                  <div key={i} style={rowStyle}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: COLORS.text, fontSize: 13 }}>{r.name || r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>{r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>{new Date(r.created_at).toLocaleDateString('en-IN')}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 11, color: COLORS.purple, fontWeight: 700 }}>
+                        via {r.referred_by}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Top referrers */}
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+                  🏆 TOP REFERRERS
+                </div>
+                {referrals.filter(r => r.referral_count > 0).sort((a, b) => b.referral_count - a.referral_count).length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
+                    Abhi koi referral nahi.
+                  </p>
+                ) : referrals.filter(r => r.referral_count > 0).sort((a, b) => b.referral_count - a.referral_count).map((r, i) => (
+                  <div key={i} style={rowStyle}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: COLORS.text }}>{r.name || r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>Code: {r.referral_code}</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 16 }}>
+                      {r.referral_count} 🔗
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
