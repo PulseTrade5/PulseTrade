@@ -101,48 +101,19 @@ function PaymentStatusPage() {
   );
 }
 
-async function setTrialIfNew(user) {
-  try {
-    const meta = user.user_metadata || {};
-    if (meta.trial_end_date || meta.is_paid) return;
-    const trialEnd = new Date();
-    trialEnd.setDate(trialEnd.getDate() + 5);
-    await supabase.auth.updateUser({ data: { trial_end_date: trialEnd.toISOString() } });
-    try {
-      await fetch('/api/send-welcome', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: user.email, trialEndDate: trialEnd.toISOString() }),
-      });
-    } catch (err) {
-      console.error('Welcome email failed:', err);
-    }
-  } catch (err) {
-    console.error('setTrialIfNew failed:', err);
-  }
-}
-
 function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth event:', event, session?.user?.email);
-      if (session?.user) {
-        await setTrialIfNew(session.user);
-        setSession(session);
-      } else {
-        setSession(null);
-      }
+      setSession(session?.user ? session : null);
       setLoadingSession(false);
     });
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        await setTrialIfNew(session.user);
-        setSession(session);
-      }
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session?.user ? session : null);
       setLoadingSession(false);
     });
 
