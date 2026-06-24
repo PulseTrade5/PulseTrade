@@ -35,7 +35,7 @@ function StatusBadge({ status }) {
   return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
 }
 
-export default function AdminPanel({ user, onLogout }) {
+export default function AdminPanel({ user, onLogout, onBack }) {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -80,7 +80,7 @@ export default function AdminPanel({ user, onLogout }) {
   }
 
   const filtered = profiles.filter(p => {
-    const matchSearch = p.email?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.email?.toLowerCase().includes(search.toLowerCase()) || p.name?.toLowerCase().includes(search.toLowerCase());
     const status = getStatus(p);
     return matchSearch && (filter === 'all' || status === filter);
   });
@@ -92,13 +92,9 @@ export default function AdminPanel({ user, onLogout }) {
     expired: profiles.filter(p => getStatus(p) === 'expired').length,
   };
 
-  // Referral stats
   const referralStats = {
     totalReferrals: referrals.filter(r => r.referred_by).length,
-    topReferrer: referrals.reduce((acc, r) => {
-      if (r.referral_count > (acc?.referral_count || 0)) return r;
-      return acc;
-    }, null),
+    topReferrer: [...referrals].sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0))[0],
   };
 
   const handleSubscribe = async () => {
@@ -139,9 +135,18 @@ export default function AdminPanel({ user, onLogout }) {
 
         {/* HEADER */}
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <div>
-            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 13, color: COLORS.muted, fontWeight: 600 }}>Admin</span></div>
-            <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            {/* ✅ DASHBOARD BACK BUTTON */}
+            <button onClick={() => window.location.href = '/'} style={{
+              fontSize: 12, padding: '6px 12px', borderRadius: 20,
+              border: `1.5px solid ${COLORS.surfaceBorder}`,
+              backgroundColor: 'transparent', color: COLORS.muted,
+              cursor: 'pointer', fontWeight: 600,
+            }}>← Dashboard</button>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 12, color: COLORS.muted }}>Admin</span></div>
+              <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
+            </div>
           </div>
           <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
         </div>
@@ -175,7 +180,7 @@ export default function AdminPanel({ user, onLogout }) {
               </div>
 
               <div style={cardStyle}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Naam ya Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
                 <div style={{ display: 'flex', gap: 6 }}>
                   {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
                     <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
@@ -196,8 +201,9 @@ export default function AdminPanel({ user, onLogout }) {
                     <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div style={{ flex: 1, marginRight: 8 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{p.name || p.email}</div>
-                          <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
+                          {/* ✅ NAAM DIKHAO */}
+                          {p.name && <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{p.name}</div>}
+                          <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
                           <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
                             Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
                             {status === 'trial' && ` • ${daysLeft} din baaki`}
@@ -222,15 +228,14 @@ export default function AdminPanel({ user, onLogout }) {
           {/* REFERRALS TAB */}
           {activeTab === 'referrals' && (
             <>
-              {/* Referral Stats */}
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <div style={{ flex: 1, backgroundColor: COLORS.purpleLight, border: `1px solid #DDD6FE`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.purple }}>{referralStats.totalReferrals}</div>
                   <div style={{ fontSize: 11, color: COLORS.purple, fontWeight: 700 }}>Total Referrals</div>
                 </div>
                 <div style={{ flex: 1, backgroundColor: COLORS.goldLight, border: `1px solid #FDE68A`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.gold }}>
-                    {referralStats.topReferrer?.name || '—'}
+                  <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.gold }}>
+                    {referralStats.topReferrer?.name || referralStats.topReferrer?.email?.split('@')[0] || '—'}
                   </div>
                   <div style={{ fontSize: 11, color: COLORS.gold, fontWeight: 700 }}>Top Referrer</div>
                 </div>
@@ -239,7 +244,7 @@ export default function AdminPanel({ user, onLogout }) {
               {/* Who referred whom */}
               <div style={cardStyle}>
                 <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
-                  🔗 REFERRAL TRACKING
+                  🔗 KIS KE LINK SE AAYA
                 </div>
                 {referrals.filter(r => r.referred_by).length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
@@ -253,7 +258,7 @@ export default function AdminPanel({ user, onLogout }) {
                       <div style={{ fontSize: 11, color: COLORS.muted }}>{new Date(r.created_at).toLocaleDateString('en-IN')}</div>
                     </div>
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 11, color: COLORS.purple, fontWeight: 700 }}>
+                      <div style={{ fontSize: 12, color: COLORS.purple, fontWeight: 700, backgroundColor: COLORS.purpleLight, padding: '3px 10px', borderRadius: 20 }}>
                         via {r.referred_by}
                       </div>
                     </div>
@@ -266,17 +271,17 @@ export default function AdminPanel({ user, onLogout }) {
                 <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
                   🏆 TOP REFERRERS
                 </div>
-                {referrals.filter(r => r.referral_count > 0).sort((a, b) => b.referral_count - a.referral_count).length === 0 ? (
+                {referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
                     Abhi koi referral nahi.
                   </p>
-                ) : referrals.filter(r => r.referral_count > 0).sort((a, b) => b.referral_count - a.referral_count).map((r, i) => (
+                ) : referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).map((r, i) => (
                   <div key={i} style={rowStyle}>
                     <div>
                       <div style={{ fontWeight: 700, color: COLORS.text }}>{r.name || r.email}</div>
                       <div style={{ fontSize: 11, color: COLORS.muted }}>Code: {r.referral_code}</div>
                     </div>
-                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 16 }}>
+                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 18 }}>
                       {r.referral_count} 🔗
                     </div>
                   </div>
@@ -290,7 +295,8 @@ export default function AdminPanel({ user, onLogout }) {
       {editUser && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>💰 Subscription Do</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>💰 Subscription Do</div>
+            {editUser.name && <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, marginBottom: 2 }}>{editUser.name}</div>}
             <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16, wordBreak: 'break-all' }}>{editUser.email}</div>
             <div style={{ fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>MONTHS CHOOSE KARO</div>
             <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
