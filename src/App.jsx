@@ -177,9 +177,13 @@ function App() {
     });
 
     // Auth state change (magic link click, logout, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) await setTrialIfNew(session.user);
-      setSession(session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) await setTrialIfNew(session.user);
+        setSession(session);
+      } else if (event === 'SIGNED_OUT') {
+        setSession(null);
+      }
       setLoadingSession(false);
     });
 
