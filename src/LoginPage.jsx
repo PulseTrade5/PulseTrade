@@ -76,14 +76,22 @@ export default function LoginPage() {
         type: 'email',
       });
       if (verifyError) throw verifyError;
-      // ✅ Session manually set karo
+
       if (data?.session) {
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
+        await new Promise(r => setTimeout(r, 500));
       }
-      window.location.href = window.location.origin;
+
+      // ✅ getSession se confirm karo phir redirect
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        window.location.href = '/';
+      } else {
+        setError('Session set nahi hua. Dobara try karo.');
+      }
     } catch (err) {
       setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
     } finally {
@@ -108,7 +116,6 @@ export default function LoginPage() {
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* HEADER */}
         <div style={{
           backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`,
           padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -125,7 +132,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* SEBI */}
         <div style={{ backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`, padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
           <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6 }}>
@@ -135,7 +141,6 @@ export default function LoginPage() {
 
         <div style={{ padding: '20px 20px 0' }}>
 
-          {/* HERO */}
           <div style={{ ...cardStyle, textAlign: 'center', padding: '28px 20px', background: `linear-gradient(135deg, #ffffff 0%, ${COLORS.goldLight} 100%)`, border: `1.5px solid #f0c040` }}>
             <div style={{ fontSize: 36, marginBottom: 8 }}>📈</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: '0 0 8px' }}>
@@ -152,7 +157,6 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* TRIAL */}
           <div style={{ ...cardStyle, border: `2px solid ${COLORS.gold}`, textAlign: 'center' }}>
             <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#FFF', backgroundColor: COLORS.red, padding: '4px 14px', borderRadius: 20, marginBottom: 10 }}>🔥 LIMITED TIME OFFER</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>5-Din FREE Trial 🎉</div>
@@ -162,7 +166,6 @@ export default function LoginPage() {
             <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
           </div>
 
-          {/* LOGIN CARD */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP — EMAIL SE</div>
 
@@ -223,7 +226,6 @@ export default function LoginPage() {
             )}
           </div>
 
-          {/* PLANS */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>💰 PLANS — TRIAL KE BAAD</div>
             {[
@@ -241,7 +243,6 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* FOOTER */}
           <div style={{ textAlign: 'center', paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
             <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
             <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
