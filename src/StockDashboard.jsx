@@ -707,12 +707,12 @@ export default function StockDashboard({ user, onChallenge }) {
                   <div style={cardStyle}>
                     <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                      {['BUY','SELL'].map(d => (
+                      {[['BUY','📈 Bullish Scenario'],['SELL','📉 Bearish Scenario']].map(([d, label]) => (
                         <button key={d} onClick={() => setDirection(d)} style={{
-                          flex: 1, padding: '9px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
+                          flex: 1, padding: '9px', fontSize: 12, fontWeight: 700, borderRadius: 10, border: 'none',
                           backgroundColor: direction===d ? (d==='BUY' ? C.green : C.red) : C.bg,
                           color: direction===d ? '#FFF' : C.muted, cursor: 'pointer',
-                        }}>{d}</button>
+                        }}>{label}</button>
                       ))}
                     </div>
                     {[
@@ -744,50 +744,7 @@ export default function StockDashboard({ user, onChallenge }) {
                     </div>
                   </div>
 
-                  {/* 📰 NEWS SECTION */}
-                  <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>📰 LATEST NEWS</div>
-                    <a
-                      href={`https://www.moneycontrol.com/stocks/cptmarket/compsearchnew.php?search_data=${stockName}&cid=&mbsearch_str=&topsearch_type=1&search_str=${stockName}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 16px', borderRadius: 12,
-                        backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-                        textDecoration: 'none', marginBottom: 10,
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 20 }}>📰</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{stockName} ki News</div>
-                          <div style={{ fontSize: 11, color: C.muted }}>Moneycontrol pe dekho</div>
-                        </div>
-                      </div>
-                      <span style={{ color: C.gold, fontSize: 16 }}>→</span>
-                    </a>
-                    <a
-                      href={`https://news.google.com/search?q=${stockName}+NSE+stock&hl=en-IN`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        padding: '12px 16px', borderRadius: 12,
-                        backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <span style={{ fontSize: 20 }}>🔍</span>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Google News</div>
-                          <div style={{ fontSize: 11, color: C.muted }}>Latest headlines</div>
-                        </div>
-                      </div>
-                      <span style={{ color: C.gold, fontSize: 16 }}>→</span>
-                    </a>
-                  </div>
+
                 </>
               )}
             </>
