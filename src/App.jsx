@@ -176,12 +176,12 @@ function App() {
       setLoadingSession(false);
     });
 
-    // Auth state change (magic link click, logout, etc.)
+    // Auth state change — handle ALL events including OTP verify
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) await setTrialIfNew(session.user);
+      if (session?.user) {
+        await setTrialIfNew(session.user);
         setSession(session);
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         setSession(null);
       }
       setLoadingSession(false);
