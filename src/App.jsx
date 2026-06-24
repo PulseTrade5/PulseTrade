@@ -1,263 +1,250 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import StockDashboard from './StockDashboard';
-import LoginPage from './LoginPage';
 
-const LIGHT = {
-  bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
-  goldLight: '#FEF3C7', goldDim: '#D97706',
-  text: '#0F172A', muted: '#64748B', green: '#059669',
-  greenLight: '#ECFDF5', red: '#DC2626', border: '#E2E8F0',
+const ADMIN_EMAIL = 'prabhat3300@gmail.com';
+
+const COLORS = {
+  bg: "#F4F6FA",
+  surface: "#FFFFFF",
+  surfaceBorder: "#E2E8F0",
+  gold: "#C8920A",
+  goldLight: "#FEF3C7",
+  goldDim: "#D97706",
+  green: "#059669",
+  greenLight: "#ECFDF5",
+  red: "#DC2626",
+  redLight: "#FEF2F2",
+  text: "#0F172A",
+  textSecondary: "#334155",
+  muted: "#64748B",
 };
 
-const DARK = {
-  bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
-  text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
-  red: '#D1453B', border: '#30363D',
-};
-
-function TermsPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Terms & Conditions</h1>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>1. Acceptance</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>By using PulseTrade (pulsetrade.in), you agree to these terms.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>2. Service Description</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade provides technical analysis tools for NSE/BSE listed securities. All information is for educational purposes only.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>3. Disclaimer</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is NOT a SEBI registered investment advisor. Users must consult a SEBI registered advisor before making any investment decisions.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>4. Subscription</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months via Cashfree Payments.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>5. Limitation of Liability</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade shall not be liable for any financial losses. Trading involves substantial risk of loss.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
+function getDaysLeft(trialStart) {
+  const diff = (new Date() - new Date(trialStart)) / (1000 * 60 * 60 * 24);
+  return Math.max(0, Math.ceil(5 - diff));
 }
 
-function RefundPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Refunds & Cancellations</h1>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>General Policy</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription is activated.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception — Technical Failure</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but subscription not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>How to Contact</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Email: <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Cancellations</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscription remains active till end of paid period. No partial refunds.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
+function getStatus(profile) {
+  if (profile.is_subscribed) {
+    if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
+    return 'paid';
+  }
+  const daysLeft = getDaysLeft(profile.trial_start_date);
+  if (daysLeft > 0) return 'trial';
+  return 'expired';
 }
 
-function ContactPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Contact Us</h1>
-      <div style={{ backgroundColor: DARK.surface, borderRadius: 12, padding: 24, marginBottom: 24 }}>
-        <p style={{ marginBottom: 12 }}>📧 <strong>Email:</strong> <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>🌐 <strong>Website:</strong> <span style={{ color: DARK.gold }}>pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>📍 <strong>Location:</strong> India</p>
-        <p style={{ marginBottom: 0 }}>⏰ <strong>Support Hours:</strong> Mon–Sat, 10 AM – 6 PM IST</p>
-      </div>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
-}
-
-function PaymentStatusPage() {
-  const [status, setStatus] = useState('loading');
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const order_id = params.get('order_id');
-    if (!order_id) { setStatus('error'); return; }
-    fetch(`/api/verify-payment?order_id=${order_id}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setStatus(d.status === 'PAID' ? 'success' : 'failed'); })
-      .catch(() => setStatus('error'));
-  }, []);
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
-        <div style={{ color: DARK.gold, fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
-        {status === 'loading' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div><p style={{ color: DARK.muted }}>Payment verify ho raha hai...</p></div>}
-        {status === 'success' && (
-          <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.green}`, borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-            <h2 style={{ color: DARK.green, marginBottom: 8 }}>Payment Successful!</h2>
-            <p style={{ color: DARK.muted, marginBottom: 16 }}>Tumhari subscription activate ho gayi hai.</p>
-            {data && (
-              <div style={{ backgroundColor: DARK.bg, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Order ID</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Amount</span><span style={{ fontWeight: 600, color: DARK.gold }}>₹{data.amount}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Email</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span></div>
-              </div>
-            )}
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
-          </div>
-        )}
-        {status === 'failed' && <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.red}`, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>❌</div><h2 style={{ color: DARK.red, marginBottom: 8 }}>Payment Failed</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
-        {status === 'error' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
-      </div>
-    </div>
-  );
-}
-
-// ── Trial Expired Page ──
-function TrialExpiredPage({ user, onLogout }) {
-  return (
-    <div style={{ backgroundColor: LIGHT.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: LIGHT.text }}>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
-
-        {/* Header */}
-        <div style={{ backgroundColor: LIGHT.surface, borderBottom: `1px solid ${LIGHT.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: LIGHT.gold }}>Trade</span></div>
-            <div style={{ fontSize: 10, color: LIGHT.muted }}>🔱 हर हर महादेव 🔱</div>
-          </div>
-          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
-        </div>
-
-        <div style={{ padding: '32px 20px' }}>
-          {/* Expired Card */}
-          <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
-            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>
-              Tera 5-din free trial khatam ho gaya.<br />
-              Dashboard access ke liye subscribe karo.
-            </p>
-            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>
-              📧 {user?.email}
-            </div>
-          </div>
-
-          {/* Plans */}
-          <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 PLANS CHOOSE KARO</div>
-            {[
-              { label: '1 Month', price: '₹599', months: 1, tag: '', popular: false },
-              { label: '2 Months', price: '₹1,049', months: 2, tag: '🔥 Popular', popular: true },
-              { label: '3 Months', price: '₹1,499', months: 3, tag: '💰 Best Value', popular: false },
-            ].map((plan) => (
-              <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? LIGHT.gold : LIGHT.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? LIGHT.goldLight : LIGHT.bg, boxShadow: plan.popular ? '0 2px 10px rgba(200,146,10,0.15)' : 'none' }}>
-                <div>
-                  <span style={{ fontWeight: 700, color: LIGHT.text, fontSize: 14 }}>{plan.label}</span>
-                  {plan.tag && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: LIGHT.goldDim }}>{plan.tag}</span>}
-                </div>
-                <span style={{ color: LIGHT.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
-              </div>
-            ))}
-            <a href="/#subscribe" style={{ display: 'block', width: '100%', marginTop: 16, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: LIGHT.gold, color: '#FFF', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', boxShadow: '0 2px 14px rgba(200,146,10,0.35)' }}>
-              🚀 Abhi Subscribe Karo
-            </a>
-          </div>
-
-          <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>
-            Support: support@pulsetrade.in
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function App() {
-  const [session, setSession] = useState(null);
-  const [loadingSession, setLoadingSession] = useState(true);
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session?.user ? session : null);
-      setLoadingSession(false);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session?.user ? session : null);
-      setLoadingSession(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Profile fetch karo jab session mile
-  useEffect(() => {
-    if (!session?.user) { setProfile(null); return; }
-    setLoadingProfile(true);
-    supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          // Profile nahi mili — create karo
-          supabase.from('profiles').insert({
-            id: session.user.id,
-            email: session.user.email,
-            trial_start_date: new Date().toISOString(),
-          }).then(() => {
-            setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
-          });
-        } else {
-          setProfile(data);
-        }
-        setLoadingProfile(false);
-      });
-  }, [session]);
-
-  const handleLogout = async () => { await supabase.auth.signOut(); };
-
-  // Trial check function
-  const checkAccess = () => {
-    if (!profile) return 'loading';
-    if (profile.is_subscribed) {
-      if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) {
-        return 'expired';
-      }
-      return 'active';
-    }
-    // Trial check
-    const trialStart = new Date(profile.trial_start_date);
-    const now = new Date();
-    const diffDays = (now - trialStart) / (1000 * 60 * 60 * 24);
-    if (diffDays <= 5) return 'trial';
-    return 'expired';
+function StatusBadge({ status }) {
+  const config = {
+    paid: { label: '💰 Paid', color: COLORS.green, bg: COLORS.greenLight },
+    trial: { label: '🎯 Trial', color: COLORS.gold, bg: COLORS.goldLight },
+    expired: { label: '❌ Expired', color: COLORS.red, bg: COLORS.redLight },
   };
+  const c = config[status] || config.expired;
+  return (
+    <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>
+      {c.label}
+    </span>
+  );
+}
 
-  const path = window.location.pathname;
-  if (path === '/terms') return <TermsPage />;
-  if (path === '/refund') return <RefundPage />;
-  if (path === '/contact') return <ContactPage />;
-  if (path === '/payment-status') return <PaymentStatusPage />;
+export default function AdminPanel({ user, onLogout }) {
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [editUser, setEditUser] = useState(null);
+  const [editMonths, setEditMonths] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
-  if (loadingSession || loadingProfile) {
+  // Admin check
+  if (user?.email !== ADMIN_EMAIL) {
     return (
-      <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A' }}>Pulse<span style={{ color: '#C8920A' }}>Trade</span></div>
-        <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
-        <div style={{ marginTop: 20, fontSize: 13, color: '#94A3B8' }}>⏳ Loading...</div>
+      <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center', color: COLORS.red, fontSize: 16, fontWeight: 700 }}>🚫 Access Denied</div>
       </div>
     );
   }
 
-  if (!session) return <LoginPage />;
+  const fetchProfiles = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    setProfiles(data || []);
+    setLoading(false);
+  };
 
-  const access = checkAccess();
-  if (access === 'loading') return (
-    <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ fontSize: 13, color: '#94A3B8' }}>⏳ Loading...</div>
+  useEffect(() => { fetchProfiles(); }, []);
+
+  const filtered = profiles.filter(p => {
+    const matchSearch = p.email?.toLowerCase().includes(search.toLowerCase());
+    const status = getStatus(p);
+    const matchFilter = filter === 'all' || status === filter;
+    return matchSearch && matchFilter;
+  });
+
+  const stats = {
+    total: profiles.length,
+    paid: profiles.filter(p => getStatus(p) === 'paid').length,
+    trial: profiles.filter(p => getStatus(p) === 'trial').length,
+    expired: profiles.filter(p => getStatus(p) === 'expired').length,
+  };
+
+  const handleSubscribe = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + editMonths);
+    await supabase.from('profiles').update({
+      is_subscribed: true,
+      subscription_end_date: endDate.toISOString(),
+    }).eq('id', editUser.id);
+    setSuccessMsg(`✅ ${editUser.email} ko ${editMonths} month subscription diya!`);
+    setEditUser(null);
+    fetchProfiles();
+    setSaving(false);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleExtendTrial = async (profile) => {
+    const newTrialStart = new Date();
+    await supabase.from('profiles').update({ trial_start_date: newTrialStart.toISOString() }).eq('id', profile.id);
+    setSuccessMsg(`✅ ${profile.email} ka trial 5 din extend kiya!`);
+    fetchProfiles();
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleBlock = async (profile) => {
+    if (!window.confirm(`${profile.email} ko block karna chahte ho?`)) return;
+    const pastDate = new Date('2020-01-01').toISOString();
+    await supabase.from('profiles').update({
+      is_subscribed: false,
+      trial_start_date: pastDate,
+      subscription_end_date: pastDate,
+    }).eq('id', profile.id);
+    setSuccessMsg(`🚫 ${profile.email} blocked!`);
+    fetchProfiles();
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const cardStyle = {
+    backgroundColor: COLORS.surface,
+    border: `1px solid ${COLORS.surfaceBorder}`,
+    borderRadius: 16, padding: 18, marginBottom: 16,
+    boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+  };
+
+  return (
+    <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 48px' }}>
+
+        {/* HEADER */}
+        <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>
+              Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 13, color: COLORS.muted, fontWeight: 600 }}>Admin</span>
+            </div>
+            <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
+          </div>
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+        </div>
+
+        <div style={{ padding: '20px 20px 0' }}>
+
+          {/* SUCCESS MSG */}
+          {successMsg && (
+            <div style={{ backgroundColor: COLORS.greenLight, border: `1.5px solid #bbf7d0`, borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>
+              {successMsg}
+            </div>
+          )}
+
+          {/* STATS */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            {[
+              ['Total', stats.total, COLORS.text, COLORS.bg],
+              ['Paid', stats.paid, COLORS.green, COLORS.greenLight],
+              ['Trial', stats.trial, COLORS.gold, COLORS.goldLight],
+              ['Expired', stats.expired, COLORS.red, COLORS.redLight],
+            ].map(([label, value, color, bg]) => (
+              <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
+                <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* SEARCH + FILTER */}
+          <div style={cardStyle}>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="🔍 Email se search karo..."
+              style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }}
+            />
+            <div style={{ display: 'flex', gap: 6 }}>
+              {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
+                <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* USERS LIST */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+              USERS ({filtered.length})
+            </div>
+
+            {loading ? (
+              <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+            ) : filtered.length === 0 ? (
+              <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>Koi user nahi mila.</div>
+            ) : filtered.map(p => {
+              const status = getStatus(p);
+              const daysLeft = getDaysLeft(p.trial_start_date);
+              return (
+                <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                    <div style={{ flex: 1, marginRight: 8 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{p.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
+                        Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
+                        {status === 'trial' && ` • ${daysLeft} din baaki`}
+                        {status === 'paid' && p.subscription_end_date && ` • Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
+                      </div>
+                    </div>
+                    <StatusBadge status={status} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
+                    <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
+                    <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* SUBSCRIBE MODAL */}
+      {editUser && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
+          <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 6 }}>💰 Subscription Do</div>
+            <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16, wordBreak: 'break-all' }}>{editUser.email}</div>
+            <div style={{ fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>MONTHS CHOOSE KARO</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {[1, 2, 3].map(m => (
+                <button key={m} onClick={() => setEditMonths(m)} style={{ flex: 1, padding: '12px 8px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: editMonths===m ? COLORS.gold : COLORS.bg, color: editMonths===m ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{m} Month</button>
+              ))}
+            </div>
+            <button onClick={handleSubscribe} disabled={saving} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10, boxShadow: '0 2px 12px rgba(200,146,10,0.3)' }}>
+              {saving ? '⏳ Save ho raha hai...' : '✅ Confirm Karo'}
+            </button>
+            <button onClick={() => setEditUser(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
-
-  if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
-
-  return <StockDashboard user={session.user} />;
-}
-
-export default App;
+                      }
