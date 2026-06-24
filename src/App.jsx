@@ -3,6 +3,13 @@ import { supabase } from './supabaseClient';
 import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
 
+const LIGHT = {
+  bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
+  goldLight: '#FEF3C7', goldDim: '#D97706',
+  text: '#0F172A', muted: '#64748B', green: '#059669',
+  greenLight: '#ECFDF5', red: '#DC2626', border: '#E2E8F0',
+};
+
 const DARK = {
   bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
   text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
@@ -101,24 +108,127 @@ function PaymentStatusPage() {
   );
 }
 
+// ── Trial Expired Page ──
+function TrialExpiredPage({ user, onLogout }) {
+  return (
+    <div style={{ backgroundColor: LIGHT.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: LIGHT.text }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
+
+        {/* Header */}
+        <div style={{ backgroundColor: LIGHT.surface, borderBottom: `1px solid ${LIGHT.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: LIGHT.gold }}>Trade</span></div>
+            <div style={{ fontSize: 10, color: LIGHT.muted }}>🔱 हर हर महादेव 🔱</div>
+          </div>
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+        </div>
+
+        <div style={{ padding: '32px 20px' }}>
+          {/* Expired Card */}
+          <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
+            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>
+              Tera 5-din free trial khatam ho gaya.<br />
+              Dashboard access ke liye subscribe karo.
+            </p>
+            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>
+              📧 {user?.email}
+            </div>
+          </div>
+
+          {/* Plans */}
+          <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 PLANS CHOOSE KARO</div>
+            {[
+              { label: '1 Month', price: '₹599', months: 1, tag: '', popular: false },
+              { label: '2 Months', price: '₹1,049', months: 2, tag: '🔥 Popular', popular: true },
+              { label: '3 Months', price: '₹1,499', months: 3, tag: '💰 Best Value', popular: false },
+            ].map((plan) => (
+              <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? LIGHT.gold : LIGHT.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? LIGHT.goldLight : LIGHT.bg, boxShadow: plan.popular ? '0 2px 10px rgba(200,146,10,0.15)' : 'none' }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: LIGHT.text, fontSize: 14 }}>{plan.label}</span>
+                  {plan.tag && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: LIGHT.goldDim }}>{plan.tag}</span>}
+                </div>
+                <span style={{ color: LIGHT.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
+              </div>
+            ))}
+            <a href="/#subscribe" style={{ display: 'block', width: '100%', marginTop: 16, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: LIGHT.gold, color: '#FFF', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', boxShadow: '0 2px 14px rgba(200,146,10,0.35)' }}>
+              🚀 Abhi Subscribe Karo
+            </a>
+          </div>
+
+          <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>
+            Support: support@pulsetrade.in
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth event:', event, session?.user?.email);
       setSession(session?.user ? session : null);
       setLoadingSession(false);
     });
-
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session?.user ? session : null);
       setLoadingSession(false);
     });
-
     return () => subscription.unsubscribe();
   }, []);
+
+  // Profile fetch karo jab session mile
+  useEffect(() => {
+    if (!session?.user) { setProfile(null); return; }
+    setLoadingProfile(true);
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          // Profile nahi mili — create karo
+          supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            trial_start_date: new Date().toISOString(),
+          }).then(() => {
+            setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
+          });
+        } else {
+          setProfile(data);
+        }
+        setLoadingProfile(false);
+      });
+  }, [session]);
+
+  const handleLogout = async () => { await supabase.auth.signOut(); };
+
+  // Trial check function
+  const checkAccess = () => {
+    if (!profile) return 'loading';
+    if (profile.is_subscribed) {
+      if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) {
+        return 'expired';
+      }
+      return 'active';
+    }
+    // Trial check
+    const trialStart = new Date(profile.trial_start_date);
+    const now = new Date();
+    const diffDays = (now - trialStart) / (1000 * 60 * 60 * 24);
+    if (diffDays <= 5) return 'trial';
+    return 'expired';
+  };
 
   const path = window.location.pathname;
   if (path === '/terms') return <TermsPage />;
@@ -126,7 +236,7 @@ function App() {
   if (path === '/contact') return <ContactPage />;
   if (path === '/payment-status') return <PaymentStatusPage />;
 
-  if (loadingSession) {
+  if (loadingSession || loadingProfile) {
     return (
       <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
         <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A' }}>Pulse<span style={{ color: '#C8920A' }}>Trade</span></div>
@@ -137,6 +247,16 @@ function App() {
   }
 
   if (!session) return <LoginPage />;
+
+  const access = checkAccess();
+  if (access === 'loading') return (
+    <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ fontSize: 13, color: '#94A3B8' }}>⏳ Loading...</div>
+    </div>
+  );
+
+  if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
+
   return <StockDashboard user={session.user} />;
 }
 
