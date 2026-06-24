@@ -53,7 +53,7 @@ export default function LoginPage() {
         options: { shouldCreateUser: true },
       });
       if (otpError) throw otpError;
-      setStep('otp'); // ✅ OTP step pe jao
+      setStep('otp');
     } catch (err) {
       setError('Kuch gadbad hui, dobara try karo.');
     } finally {
@@ -76,8 +76,13 @@ export default function LoginPage() {
         type: 'email',
       });
       if (verifyError) throw verifyError;
-      // ✅ Session confirm hone ka wait karo
-      await new Promise(r => setTimeout(r, 1000));
+      // ✅ Session manually set karo
+      if (data?.session) {
+        await supabase.auth.setSession({
+          access_token: data.session.access_token,
+          refresh_token: data.session.refresh_token,
+        });
+      }
       window.location.href = window.location.origin;
     } catch (err) {
       setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
@@ -157,7 +162,7 @@ export default function LoginPage() {
             <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
           </div>
 
-          {/* ✅ LOGIN CARD — OTP STEP FIXED */}
+          {/* LOGIN CARD */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP — EMAIL SE</div>
 
