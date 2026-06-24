@@ -4,6 +4,28 @@ import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
 import AdminPanel from './AdminPanel';
 
+
+function GreetingToast({ name, show }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
+  if (!show || !name) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+      backgroundColor: '#0F172A', color: '#FFF',
+      padding: '14px 24px', borderRadius: 16, zIndex: 9999,
+      fontSize: 15, fontWeight: 700, textAlign: 'center',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+      border: '1.5px solid #C8920A',
+      animation: 'toastIn 0.4s ease',
+      whiteSpace: 'nowrap',
+    }}>
+      <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
+      {greeting}, <span style={{ color: '#C8920A' }}>{name}</span>! 🔱
+    </div>
+  );
+}
+
 const LIGHT = {
   bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
   goldLight: '#FEF3C7', goldDim: '#D97706',
@@ -158,6 +180,7 @@ function App() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -186,6 +209,10 @@ function App() {
           });
         } else {
           setProfile(data);
+          if (data.name) {
+            setShowGreeting(true);
+            setTimeout(() => setShowGreeting(false), 4000);
+          }
         }
         setLoadingProfile(false);
       });
@@ -235,7 +262,12 @@ function App() {
 
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
-  return <StockDashboard user={session.user} />;
+  return (
+    <>
+      <GreetingToast name={profile?.name} show={showGreeting} />
+      <StockDashboard user={session.user} />
+    </>
+  );
 }
 
 export default App;
