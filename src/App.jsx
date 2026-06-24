@@ -182,7 +182,7 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
-  const [showLogin, setShowLogin] = useState(false); // ✅ NEW
+  const [showLogin, setShowLogin] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -211,6 +211,7 @@ function App() {
           });
         } else {
           setProfile(data);
+          setShowLogin(false); // ✅ FIX: greeting ke liye reset
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
         }
@@ -251,7 +252,6 @@ function App() {
     );
   }
 
-  // ✅ Agar logged in nahi hai
   if (!session) {
     if (showLogin) return <LoginPage />;
     return <LandingPage onLogin={() => setShowLogin(true)} />;
