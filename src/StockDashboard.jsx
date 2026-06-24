@@ -4,26 +4,22 @@ import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
 
-const COLORS = {
-  bg: "#F4F6FA",
-  surface: "#FFFFFF",
-  surfaceBorder: "#E2E8F0",
-  surfaceHover: "#F8FAFC",
-  gold: "#C8920A",
-  goldLight: "#FEF3C7",
-  goldDim: "#D97706",
-  green: "#059669",
-  greenLight: "#ECFDF5",
-  red: "#DC2626",
-  redLight: "#FEF2F2",
-  text: "#0F172A",
-  textSecondary: "#334155",
-  muted: "#64748B",
-  mutedLight: "#94A3B8",
-  headerBg: "#FFFFFF",
-  sebi: "#1E3A5F",
-  sebiBg: "#EFF6FF",
-  sebiBorder: "#BFDBFE",
+const LIGHT = {
+  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
+  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
+  green: "#059669", greenLight: "#ECFDF5",
+  red: "#DC2626", redLight: "#FEF2F2",
+  text: "#0F172A", textSecondary: "#334155", muted: "#64748B", mutedLight: "#94A3B8",
+  headerBg: "#FFFFFF", sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+};
+
+const DARK = {
+  bg: "#0D1117", surface: "#161B22", surfaceBorder: "#30363D", surfaceHover: "#1C2128",
+  gold: "#D8A33D", goldLight: "#2D2008", goldDim: "#F0B429",
+  green: "#3FAE7C", greenLight: "#0D2B1F",
+  red: "#F87171", redLight: "#2D1515",
+  text: "#E8E6E0", textSecondary: "#C9D1D9", muted: "#8B92A0", mutedLight: "#6E7681",
+  headerBg: "#161B22", sebi: "#93C5FD", sebiBg: "#0D1F3C", sebiBorder: "#1D4ED8",
 };
 
 const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "ICICIBANK", "ITC"];
@@ -47,44 +43,41 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
-/* ── 52W Progress Bar ── */
-function Week52Bar({ current, low, high }) {
+function Week52Bar({ current, low, high, C }) {
   const pct = Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
   return (
     <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: COLORS.muted, marginBottom: 4, fontWeight: 600 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.muted, marginBottom: 4, fontWeight: 600 }}>
         <span>52W Low {fmtINR(low)}</span>
         <span>52W High {fmtINR(high)}</span>
       </div>
-      <div style={{ position: 'relative', height: 8, backgroundColor: '#E2E8F0', borderRadius: 99 }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${COLORS.red}, ${COLORS.gold}, ${COLORS.green})`, borderRadius: 99 }} />
-        <div style={{ position: 'absolute', top: -3, left: `${pct}%`, transform: 'translateX(-50%)', width: 14, height: 14, backgroundColor: COLORS.gold, border: '2.5px solid white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
+      <div style={{ position: 'relative', height: 8, backgroundColor: C.surfaceBorder, borderRadius: 99 }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${C.red}, ${C.gold}, ${C.green})`, borderRadius: 99 }} />
+        <div style={{ position: 'absolute', top: -3, left: `${pct}%`, transform: 'translateX(-50%)', width: 14, height: 14, backgroundColor: C.gold, border: '2.5px solid white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
       </div>
-      <div style={{ textAlign: 'center', fontSize: 11, color: COLORS.goldDim, fontWeight: 700, marginTop: 5 }}>{pct.toFixed(0)}% of 52W range</div>
+      <div style={{ textAlign: 'center', fontSize: 11, color: C.goldDim, fontWeight: 700, marginTop: 5 }}>{pct.toFixed(0)}% of 52W range</div>
     </div>
   );
 }
 
-/* ── Indicator Progress Bar ── */
-function IndicatorBar({ label, value, max, color }) {
+function IndicatorBar({ label, value, max, color, C }) {
   const pct = Math.min(100, (value / max) * 100);
   return (
     <div style={{ marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: COLORS.muted, marginBottom: 4, fontWeight: 600 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 4, fontWeight: 600 }}>
         <span>{label}</span><span style={{ color, fontWeight: 700 }}>{value}</span>
       </div>
-      <div style={{ height: 6, backgroundColor: '#E2E8F0', borderRadius: 99, overflow: 'hidden' }}>
+      <div style={{ height: 6, backgroundColor: C.surfaceBorder, borderRadius: 99, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 99, transition: 'width 1s ease' }} />
       </div>
     </div>
   );
 }
 
-/* ── Trend Meter ── */
-function TrendMeter({ longScore, shortScore, trend }) {
+function TrendMeter({ longScore, shortScore, trend, C }) {
   const score = trend === 'Bullish' ? longScore : shortScore;
-  const color = trend === 'Bullish' ? COLORS.green : COLORS.red;
-  const colorLight = trend === 'Bullish' ? COLORS.greenLight : COLORS.redLight;
+  const color = trend === 'Bullish' ? C.green : C.red;
+  const colorLight = trend === 'Bullish' ? C.greenLight : C.redLight;
   const [animScore, setAnimScore] = useState(0);
   const [animPct, setAnimPct] = useState(0);
   const [showGlow, setShowGlow] = useState(false);
@@ -122,30 +115,29 @@ function TrendMeter({ longScore, shortScore, trend }) {
 
   return (
     <div style={{
-      backgroundColor: COLORS.surface,
-      border: `1.5px solid ${showGlow ? color : COLORS.surfaceBorder}`,
+      backgroundColor: C.surface, border: `1.5px solid ${showGlow ? color : C.surfaceBorder}`,
       borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center',
       boxShadow: showGlow ? `0 4px 24px ${color}22` : '0 1px 4px rgba(0,0,0,0.06)',
       transition: 'box-shadow 0.5s, border-color 0.5s',
     }}>
-      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 8, fontWeight: 700 }}>🎯 TREND METER</div>
+      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 8, fontWeight: 700 }}>🎯 TREND METER</div>
       <svg width="200" height="110" viewBox="0 0 200 110" style={{ overflow: 'visible' }}>
         <defs>
           <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
         </defs>
-        <path d={bgPath} fill="none" stroke="#E2E8F0" strokeWidth="14" strokeLinecap="round"/>
+        <path d={bgPath} fill="none" stroke={C.surfaceBorder} strokeWidth="14" strokeLinecap="round"/>
         <path d={`M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 0 1 ${ax(120)} ${ay(120)}`} fill="none" stroke="#DC2626" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
         <path d={`M ${ax(120)} ${ay(120)} A ${radius} ${radius} 0 0 1 ${ax(60)} ${ay(60)}`} fill="none" stroke="#C8920A" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
         <path d={`M ${ax(60)} ${ay(60)} A ${radius} ${radius} 0 0 1 ${ax(0)} ${ay(0)}`} fill="none" stroke="#059669" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
         {fillPath && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" filter={showGlow ? "url(#glow)" : "none"}/>}
-        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={COLORS.textSecondary} strokeWidth="2.5" strokeLinecap="round"/>
+        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={C.textSecondary} strokeWidth="2.5" strokeLinecap="round"/>
         <circle cx={cx} cy={cy} r="6" fill={color} filter={showGlow ? "url(#glow)" : "none"}/>
         <text x="18" y="108" fill="#DC2626" fontSize="9" fontWeight="700">BEARISH</text>
         <text x="152" y="108" fill="#059669" fontSize="9" fontWeight="700">BULLISH</text>
         <text x="82" y="18" fill="#C8920A" fontSize="9" fontWeight="700">NEUTRAL</text>
       </svg>
       <div style={{ fontSize: 32, fontWeight: 800, color, marginTop: -6 }}>
-        {animScore}<span style={{ fontSize: 14, color: COLORS.muted }}>/100</span>
+        {animScore}<span style={{ fontSize: 14, color: C.muted }}>/100</span>
       </div>
       <div style={{
         display: 'inline-block', fontSize: 13, fontWeight: 700, color,
@@ -159,6 +151,16 @@ function TrendMeter({ longScore, shortScore, trend }) {
 }
 
 export default function StockDashboard({ user }) {
+  // ✅ Dark mode — localStorage se save/load
+  const [dark, setDark] = useState(() => localStorage.getItem('pt_dark') === 'true');
+  const C = dark ? DARK : LIGHT;
+
+  const toggleDark = () => {
+    const next = !dark;
+    setDark(next);
+    localStorage.setItem('pt_dark', next);
+  };
+
   const [symbolInput, setSymbolInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -202,8 +204,7 @@ export default function StockDashboard({ user }) {
       if (analysis.atr) setSlPercent(Math.min(6, Math.max(1.5, (analysis.atr / analysis.lastClose * 100).toFixed(1))));
       setHistory(prev => [{ id: Date.now(), symbol: sym, trend: analysis.trend, price: analysis.lastClose, date: new Date().toISOString(), outcome: 'pending' }, ...prev].slice(0, 100));
       setPulseData({
-        symbol: sym,
-        companyName: data.stockInfo?.longName || sym,
+        symbol: sym, companyName: data.stockInfo?.longName || sym,
         currentPrice: data.stockInfo?.regularMarketPrice || analysis.lastClose,
         change: data.stockInfo?.regularMarketChange,
         changePercent: data.stockInfo?.regularMarketChangePercent?.toFixed(2),
@@ -247,95 +248,115 @@ export default function StockDashboard({ user }) {
   const lossAmount = Math.abs(ep - stopLossPrice) * qty;
   const tierResults = TIERS.map(t => { const price = direction === 'BUY' ? ep*(1+t/100) : ep*(1-t/100); return { percent: t, price, profit: Math.abs(price-ep)*qty }; });
   const riskReward = lossAmount > 0 ? (tierResults[2].profit / lossAmount).toFixed(1) : 0;
-  const trendColor = result?.trend === 'Bullish' ? COLORS.green : result?.trend === 'Bearish' ? COLORS.red : COLORS.gold;
+  const trendColor = result?.trend === 'Bullish' ? C.green : result?.trend === 'Bearish' ? C.red : C.gold;
 
   const inputStyle = {
     width: '100%', padding: '11px 14px', fontSize: 14,
-    backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`,
-    borderRadius: 10, color: COLORS.text, outline: 'none',
+    backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+    borderRadius: 10, color: C.text, outline: 'none',
     boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
   };
   const rowStyle = {
     display: 'flex', justifyContent: 'space-between',
-    fontSize: 13, padding: '7px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+    fontSize: 13, padding: '7px 0', borderBottom: `1px solid ${C.surfaceBorder}`,
   };
   const cardStyle = {
-    backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`,
-    borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+    backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
+    borderRadius: 16, padding: 18, marginBottom: 16,
+    boxShadow: dark ? '0 2px 16px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)',
+    transition: 'all 0.3s ease',
   };
 
   return (
-    <div style={{ backgroundColor: COLORS.bg, color: COLORS.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif' }}>
+    <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', transition: 'all 0.3s ease' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* ── STICKY HEADER ── */}
+        {/* HEADER */}
         <div style={{
-          backgroundColor: COLORS.headerBg, borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          backgroundColor: C.headerBg, borderBottom: `1px solid ${C.surfaceBorder}`,
           padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+          position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
+          transition: 'all 0.3s ease',
         }}>
           <div>
             <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-              Pulse<span style={{ color: COLORS.gold }}>Trade</span>
+              Pulse<span style={{ color: C.gold }}>Trade</span>
             </h1>
-            <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
+            <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+
+            {/* ✅ DARK/LIGHT TOGGLE */}
+            <button onClick={toggleDark} style={{
+              width: 52, height: 26, borderRadius: 99,
+              backgroundColor: dark ? C.gold : '#CBD5E1',
+              border: 'none', cursor: 'pointer',
+              position: 'relative', transition: 'background 0.3s ease',
+              display: 'flex', alignItems: 'center', padding: '0 3px',
+              flexShrink: 0,
+            }}>
+              <div style={{
+                width: 20, height: 20, borderRadius: '50%', backgroundColor: '#FFF',
+                transform: dark ? 'translateX(26px)' : 'translateX(0px)',
+                transition: 'transform 0.3s ease',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+              }}>
+                {dark ? '🌙' : '☀️'}
+              </div>
+            </button>
+
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
                 fontSize: 11, padding: '5px 14px', borderRadius: 20,
-                border: `1.5px solid ${COLORS.gold}`,
-                backgroundColor: COLORS.goldLight,
-                color: COLORS.goldDim,
-                cursor: 'pointer', fontWeight: 700,
-                textDecoration: 'none',
+                border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
+                color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
               }}>⚙️ Admin</a>
             )}
             <button onClick={handleLogout} style={{
               fontSize: 12, padding: '6px 14px', borderRadius: 20,
-              border: `1.5px solid ${COLORS.surfaceBorder}`,
-              backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600,
+              border: `1.5px solid ${C.surfaceBorder}`,
+              backgroundColor: 'transparent', color: C.muted, cursor: 'pointer', fontWeight: 600,
             }}>🚪 Logout</button>
           </div>
         </div>
 
-        {/* ── SEBI BANNER ── */}
+        {/* SEBI BANNER */}
         <div style={{
-          backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`,
+          backgroundColor: C.sebiBg, borderBottom: `2px solid ${C.sebiBorder}`,
           padding: '12px 20px', display: 'flex', gap: 10, alignItems: 'flex-start',
+          transition: 'all 0.3s ease',
         }}>
           <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>🛡️</span>
           <div>
-            <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.sebi, marginBottom: 3, letterSpacing: 0.2 }}>
-              SEBI DISCLAIMER — ZAROORI PADHE
-            </div>
-            <div style={{ fontSize: 11.5, color: COLORS.sebi, lineHeight: 1.6, opacity: 0.85 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.sebi, marginBottom: 3 }}>SEBI DISCLAIMER — ZAROORI PADHE</div>
+            <div style={{ fontSize: 11.5, color: C.sebi, lineHeight: 1.6, opacity: 0.85 }}>
               Yeh platform sirf <strong>technical trend analysis</strong> provide karta hai — yeh <strong>investment advice nahi hai</strong>. All outputs are algorithmic technical-analysis estimates for educational and informational purposes only. They are not investment recommendations. SEBI-registered advisor se salah zaroor lein.
             </div>
           </div>
         </div>
 
         <div style={{ padding: '20px 20px 0' }}>
-          <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
+          <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
 
-          {/* ── TABS ── */}
+          {/* TABS */}
           <div style={{
             display: 'flex', gap: 4, marginBottom: 20,
-            backgroundColor: COLORS.surface, padding: 4,
-            borderRadius: 14, border: `1px solid ${COLORS.surfaceBorder}`,
+            backgroundColor: C.surface, padding: 4,
+            borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
           }}>
             {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
                 borderRadius: 10, border: 'none',
-                backgroundColor: tab===key ? COLORS.gold : 'transparent',
-                color: tab===key ? '#FFF' : COLORS.muted,
+                backgroundColor: tab===key ? C.gold : 'transparent',
+                color: tab===key ? '#FFF' : C.muted,
                 cursor: 'pointer', transition: 'background 0.2s',
               }}>{label}</button>
             ))}
           </div>
 
-          {/* ── SUBSCRIBE ── */}
+          {/* SUBSCRIBE */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <SubscribeButton userEmail={user?.email} userId={user?.id} />
           </div>
@@ -344,15 +365,15 @@ export default function StockDashboard({ user }) {
             <>
               {/* SEARCH CARD */}
               <div style={cardStyle}>
-                <label style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
+                <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
                 <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                   {POPULAR.map(s => (
                     <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
                       fontSize: 11, padding: '5px 12px', borderRadius: 20,
-                      border: `1.5px solid ${symbolInput===s ? COLORS.gold : COLORS.surfaceBorder}`,
-                      backgroundColor: symbolInput===s ? COLORS.goldLight : 'transparent',
-                      color: symbolInput===s ? COLORS.goldDim : COLORS.muted,
+                      border: `1.5px solid ${symbolInput===s ? C.gold : C.surfaceBorder}`,
+                      backgroundColor: symbolInput===s ? C.goldLight : 'transparent',
+                      color: symbolInput===s ? C.goldDim : C.muted,
                       cursor: 'pointer', fontWeight: 600,
                     }}>{s}</button>
                   ))}
@@ -361,14 +382,14 @@ export default function StockDashboard({ user }) {
                 {/* Position Sizing */}
                 <div style={{ marginTop: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <label style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>POSITION SIZING</label>
+                    <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, fontWeight: 700 }}>POSITION SIZING</label>
                     <div style={{ display: 'flex', gap: 6 }}>
                       {[['risk','Risk ₹'],['manual','Qty']].map(([m,l]) => (
                         <button key={m} onClick={() => setSizingMode(m)} style={{
                           fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-                          border: `1.5px solid ${sizingMode===m ? COLORS.gold : COLORS.surfaceBorder}`,
-                          backgroundColor: sizingMode===m ? COLORS.goldLight : 'transparent',
-                          color: sizingMode===m ? COLORS.goldDim : COLORS.muted, cursor: 'pointer',
+                          border: `1.5px solid ${sizingMode===m ? C.gold : C.surfaceBorder}`,
+                          backgroundColor: sizingMode===m ? C.goldLight : 'transparent',
+                          color: sizingMode===m ? C.goldDim : C.muted, cursor: 'pointer',
                         }}>{l}</button>
                       ))}
                     </div>
@@ -377,8 +398,8 @@ export default function StockDashboard({ user }) {
                     <>
                       <input type="number" value={riskAmount} onChange={e => setRiskAmount(e.target.value)} placeholder="Risk amount e.g. 1000" style={inputStyle} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                        <span style={{ fontSize: 12, color: COLORS.muted }}>Calculated Qty</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold }}>{qty} shares</span>
+                        <span style={{ fontSize: 12, color: C.muted }}>Calculated Qty</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>{qty} shares</span>
                       </div>
                     </>
                   ) : (
@@ -389,37 +410,34 @@ export default function StockDashboard({ user }) {
                 <button onClick={() => handleSearch()} disabled={loading} style={{
                   width: '100%', marginTop: 14, padding: '12px',
                   fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
-                  backgroundColor: loading ? '#CBD5E1' : COLORS.gold,
-                  color: loading ? COLORS.muted : '#FFF',
+                  backgroundColor: loading ? C.surfaceBorder : C.gold,
+                  color: loading ? C.muted : '#FFF',
                   cursor: loading ? 'not-allowed' : 'pointer',
                   boxShadow: loading ? 'none' : '0 2px 12px rgba(200,146,10,0.3)',
-                  transition: 'background 0.2s, box-shadow 0.2s',
+                  transition: 'background 0.2s',
                 }}>
                   {loading ? '⏳ Check ho raha hai...' : '🔍 Trend Nikalo'}
                 </button>
-                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 8, fontWeight: 600 }}>{error}</p>}
+                {error && <p style={{ fontSize: 12, color: C.red, marginTop: 8, fontWeight: 600 }}>{error}</p>}
               </div>
 
               {result && (
                 <>
-                  {/* STOCK INFO CARD — with price badge + 52W bar */}
                   {stockInfo && (
                     <div style={cardStyle}>
-                      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 10, fontWeight: 700 }}>📊 STOCK INFO</div>
-
-                      {/* Company name + price + change badge */}
+                      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 10, fontWeight: 700 }}>📊 STOCK INFO</div>
                       {stockInfo.longName && (
                         <div style={{ marginBottom: 12 }}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>{stockInfo.longName}</div>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 6 }}>{stockInfo.longName}</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 26, fontWeight: 800, color: COLORS.text, letterSpacing: '-0.5px' }}>
+                            <span style={{ fontSize: 26, fontWeight: 800, color: C.text, letterSpacing: '-0.5px' }}>
                               {fmtINR(stockInfo.regularMarketPrice || result.lastClose)}
                             </span>
                             {stockInfo.regularMarketChange !== undefined && (
                               <span style={{
                                 fontSize: 12, fontWeight: 700,
-                                color: stockInfo.regularMarketChange >= 0 ? COLORS.green : COLORS.red,
-                                backgroundColor: stockInfo.regularMarketChange >= 0 ? COLORS.greenLight : COLORS.redLight,
+                                color: stockInfo.regularMarketChange >= 0 ? C.green : C.red,
+                                backgroundColor: stockInfo.regularMarketChange >= 0 ? C.greenLight : C.redLight,
                                 padding: '3px 10px', borderRadius: 20,
                               }}>
                                 {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'}{' '}
@@ -430,7 +448,6 @@ export default function StockDashboard({ user }) {
                           </div>
                         </div>
                       )}
-
                       {[
                         ['Market Cap', fmtCr(stockInfo.marketCap)],
                         ['P/E Ratio', stockInfo.trailingPE ? stockInfo.trailingPE.toFixed(2) : '—'],
@@ -439,52 +456,48 @@ export default function StockDashboard({ user }) {
                         ['Exchange', stockInfo.exchangeName || '—'],
                       ].map(([label, value]) => (
                         <div key={label} style={rowStyle}>
-                          <span style={{ color: COLORS.muted }}>{label}</span>
-                          <span style={{ fontWeight: 600, color: COLORS.text }}>{value}</span>
+                          <span style={{ color: C.muted }}>{label}</span>
+                          <span style={{ fontWeight: 600, color: C.text }}>{value}</span>
                         </div>
                       ))}
-
-                      {/* 52W bar */}
                       {result.week52High && result.week52Low && (
-                        <Week52Bar current={result.lastClose} low={result.week52Low} high={result.week52High} />
+                        <Week52Bar current={result.lastClose} low={result.week52Low} high={result.week52High} C={C} />
                       )}
                     </div>
                   )}
 
-                  <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} />
+                  <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} C={C} />
 
-                  {/* INDICATOR BARS */}
                   <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 14, fontWeight: 700 }}>📈 INDICATOR STRENGTH</div>
-                    <IndicatorBar label={`RSI — ${result.rsi > 70 ? 'Overbought' : result.rsi < 30 ? 'Oversold' : 'Neutral zone'}`} value={result.rsi} max={100} color={result.rsi > 70 ? COLORS.red : result.rsi < 30 ? COLORS.green : COLORS.gold} />
-                    <IndicatorBar label={`ADX — ${result.trendStrength}`} value={result.adx} max={60} color={result.adx >= 25 ? COLORS.green : COLORS.muted} />
-                    <IndicatorBar label="Long Score" value={result.longScore} max={100} color={COLORS.green} />
-                    <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={COLORS.red} />
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>📈 INDICATOR STRENGTH</div>
+                    <IndicatorBar label={`RSI — ${result.rsi > 70 ? 'Overbought' : result.rsi < 30 ? 'Oversold' : 'Neutral zone'}`} value={result.rsi} max={100} color={result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : C.gold} C={C} />
+                    <IndicatorBar label={`ADX — ${result.trendStrength}`} value={result.adx} max={60} color={result.adx >= 25 ? C.green : C.muted} C={C} />
+                    <IndicatorBar label="Long Score" value={result.longScore} max={100} color={C.green} C={C} />
+                    <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={C.red} C={C} />
                   </div>
 
                   {pulseData && <PulseBoltaHai stockData={pulseData} />}
 
-                  {/* ANALYSIS CARD */}
                   <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: COLORS.text }}>{stockName}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.surfaceBorder}` }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{stockName}</span>
                       <span style={{
                         fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-                        backgroundColor: trendColor === COLORS.green ? COLORS.greenLight : trendColor === COLORS.red ? COLORS.redLight : COLORS.goldLight,
+                        backgroundColor: trendColor === C.green ? C.greenLight : trendColor === C.red ? C.redLight : C.goldLight,
                         color: trendColor,
                       }}>{result.trend}</span>
                     </div>
                     {[
-                      ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? COLORS.green : COLORS.red],
-                      ['RSI', result.rsi, result.rsi > 70 ? COLORS.red : result.rsi < 30 ? COLORS.green : null],
+                      ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? C.green : C.red],
+                      ['RSI', result.rsi, result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : null],
                       ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
-                      ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? COLORS.green : COLORS.red],
-                      ['Long Score', `${result.longScore} / 100`, COLORS.green],
-                      ['Short Score', `${result.shortScore} / 100`, COLORS.red],
+                      ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? C.green : C.red],
+                      ['Long Score', `${result.longScore} / 100`, C.green],
+                      ['Short Score', `${result.shortScore} / 100`, C.red],
                     ].map(([label, value, color]) => (
                       <div key={label} style={rowStyle}>
-                        <span style={{ color: COLORS.muted }}>{label}</span>
-                        <span style={{ fontWeight: 700, color: color || COLORS.textSecondary }}>{value}</span>
+                        <span style={{ color: C.muted }}>{label}</span>
+                        <span style={{ fontWeight: 700, color: color || C.textSecondary }}>{value}</span>
                       </div>
                     ))}
                     <button onClick={() => {
@@ -493,25 +506,24 @@ export default function StockDashboard({ user }) {
                     }} style={{
                       width: '100%', marginTop: 14, padding: '9px',
                       fontSize: 13, fontWeight: 700, borderRadius: 10,
-                      border: `1.5px solid ${COLORS.gold}`,
-                      backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer',
+                      border: `1.5px solid ${C.gold}`,
+                      backgroundColor: 'transparent', color: C.gold, cursor: 'pointer',
                     }}>
                       {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
                     </button>
                   </div>
 
-                  {/* SIGNAL CARD */}
                   {result.signal ? (
                     <div style={{
-                      backgroundColor: COLORS.surface,
-                      border: `2px solid ${result.signal==='LONG' ? COLORS.green : COLORS.red}`,
+                      backgroundColor: C.surface,
+                      border: `2px solid ${result.signal==='LONG' ? C.green : C.red}`,
                       borderRadius: 16, padding: 18, marginBottom: 16,
-                      boxShadow: `0 4px 20px ${result.signal==='LONG' ? COLORS.green : COLORS.red}18`,
+                      boxShadow: `0 4px 20px ${result.signal==='LONG' ? C.green : C.red}18`,
                     }}>
                       <div style={{
                         fontSize: 15, fontWeight: 800,
-                        color: result.signal==='LONG' ? COLORS.green : COLORS.red,
-                        backgroundColor: result.signal==='LONG' ? COLORS.greenLight : COLORS.redLight,
+                        color: result.signal==='LONG' ? C.green : C.red,
+                        backgroundColor: result.signal==='LONG' ? C.greenLight : C.redLight,
                         padding: '8px 14px', borderRadius: 10, marginBottom: 14,
                       }}>
                         {result.signal==='LONG' ? '📈 Bullish Setup' : '📉 Bearish Setup'}
@@ -525,39 +537,37 @@ export default function StockDashboard({ user }) {
                         ['Suggested Hold', result.suggestedHold],
                       ].map(([label, value]) => (
                         <div key={label} style={rowStyle}>
-                          <span style={{ color: COLORS.muted }}>{label}</span>
-                          <span style={{ fontWeight: 700, color: COLORS.text }}>{value}</span>
+                          <span style={{ color: C.muted }}>{label}</span>
+                          <span style={{ fontWeight: 700, color: C.text }}>{value}</span>
                         </div>
                       ))}
                       <button onClick={handleSendAlert} disabled={alertSending || alertSent} style={{
                         width: '100%', marginTop: 14, padding: '12px',
                         fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
-                        backgroundColor: alertSent ? COLORS.green : COLORS.gold,
+                        backgroundColor: alertSent ? C.green : C.gold,
                         color: '#FFF', cursor: alertSent ? 'default' : 'pointer',
-                        boxShadow: alertSent ? 'none' : '0 2px 10px rgba(200,146,10,0.25)',
                       }}>
                         {alertSent ? '✅ Alert Bhej Diya!' : alertSending ? '📨 Bhej rahe hain...' : '📧 Email Alert Bhejo'}
                       </button>
                     </div>
                   ) : (
                     <div style={{
-                      backgroundColor: COLORS.surface, border: `1px dashed ${COLORS.surfaceBorder}`,
+                      backgroundColor: C.surface, border: `1px dashed ${C.surfaceBorder}`,
                       borderRadius: 16, padding: 18, marginBottom: 16,
-                      fontSize: 13, color: COLORS.muted, textAlign: 'center',
+                      fontSize: 13, color: C.muted, textAlign: 'center',
                     }}>
                       ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
                     </div>
                   )}
 
-                  {/* POSITION SIZING */}
                   <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
                     <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                       {['BUY','SELL'].map(d => (
                         <button key={d} onClick={() => setDirection(d)} style={{
                           flex: 1, padding: '9px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
-                          backgroundColor: direction===d ? (d==='BUY' ? COLORS.green : COLORS.red) : COLORS.bg,
-                          color: direction===d ? '#FFF' : COLORS.muted, cursor: 'pointer',
+                          backgroundColor: direction===d ? (d==='BUY' ? C.green : C.red) : C.bg,
+                          color: direction===d ? '#FFF' : C.muted, cursor: 'pointer',
                         }}>{d}</button>
                       ))}
                     </div>
@@ -569,20 +579,20 @@ export default function StockDashboard({ user }) {
                       ['Risk:Reward (10%)', `1 : ${riskReward}`],
                     ].map(([label, value]) => (
                       <div key={label} style={rowStyle}>
-                        <span style={{ color: COLORS.muted }}>{label}</span>
-                        <span style={{ fontWeight: 700, color: COLORS.textSecondary }}>{value}</span>
+                        <span style={{ color: C.muted }}>{label}</span>
+                        <span style={{ fontWeight: 700, color: C.textSecondary }}>{value}</span>
                       </div>
                     ))}
                     <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
                       {tierResults.map(t => (
                         <div key={t.percent} style={{
-                          flex: 1, backgroundColor: COLORS.goldLight, borderRadius: 12,
+                          flex: 1, backgroundColor: C.goldLight, borderRadius: 12,
                           padding: '12px 8px', textAlign: 'center',
-                          border: `1px solid ${COLORS.surfaceBorder}`,
+                          border: `1px solid ${C.surfaceBorder}`,
                         }}>
-                          <div style={{ fontSize: 10, color: COLORS.goldDim, fontWeight: 700 }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.gold, marginTop: 2 }}>{fmtINR(t.price)}</div>
-                          <div style={{ fontSize: 11, color: COLORS.green, fontWeight: 600 }}>+{fmtINR(t.profit)}</div>
+                          <div style={{ fontSize: 10, color: C.goldDim, fontWeight: 700 }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginTop: 2 }}>{fmtINR(t.price)}</div>
+                          <div style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>+{fmtINR(t.profit)}</div>
                         </div>
                       ))}
                     </div>
@@ -592,46 +602,42 @@ export default function StockDashboard({ user }) {
             </>
           )}
 
-          {/* ── WATCHLIST TAB ── */}
           {tab === 'watchlist' && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
               {watchlist.length === 0 ? (
-                <p style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
+                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
               ) : watchlist.map(w => (
-                <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
                   <div>
-                    <div style={{ fontWeight: 700, color: COLORS.text }}>{w.symbol}</div>
+                    <div style={{ fontWeight: 700, color: C.text }}>{w.symbol}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                      <span style={{ fontSize: 12, color: COLORS.muted }}>{fmtINR(w.lastPrice)}</span>
+                      <span style={{ fontSize: 12, color: C.muted }}>{fmtINR(w.lastPrice)}</span>
                       <span style={{
                         fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
-                        color: w.lastTrend === 'Bullish' ? COLORS.green : COLORS.red,
-                        backgroundColor: w.lastTrend === 'Bullish' ? COLORS.greenLight : COLORS.redLight,
+                        color: w.lastTrend === 'Bullish' ? C.green : C.red,
+                        backgroundColor: w.lastTrend === 'Bullish' ? C.greenLight : C.redLight,
                       }}>{w.lastTrend}</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
-                    <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                    <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: C.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
+                    <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ── TRACK RECORD TAB ── */}
           {tab === 'track' && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
-
-              {/* Win/Loss summary tiles */}
+              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
               {history.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                   {[
-                    ['Wins', history.filter(h=>h.outcome==='win').length, COLORS.green, COLORS.greenLight],
-                    ['Losses', history.filter(h=>h.outcome==='loss').length, COLORS.red, COLORS.redLight],
-                    ['Pending', history.filter(h=>h.outcome==='pending').length, COLORS.gold, COLORS.goldLight],
+                    ['Wins', history.filter(h=>h.outcome==='win').length, C.green, C.greenLight],
+                    ['Losses', history.filter(h=>h.outcome==='loss').length, C.red, C.redLight],
+                    ['Pending', history.filter(h=>h.outcome==='pending').length, C.gold, C.goldLight],
                   ].map(([l, v, c, bg]) => (
                     <div key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
                       <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
@@ -640,21 +646,20 @@ export default function StockDashboard({ user }) {
                   ))}
                 </div>
               )}
-
               {history.length === 0 ? (
-                <p style={{ color: COLORS.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi koi history nahi hai.</p>
+                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi koi history nahi hai.</p>
               ) : history.map(h => (
-                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
                   <div>
-                    <div style={{ fontWeight: 700, color: COLORS.text }}>{h.symbol}</div>
-                    <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{fmtINR(h.price)} • {h.trend}</div>
+                    <div style={{ fontWeight: 700, color: C.text }}>{h.symbol}</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{fmtINR(h.price)} • {h.trend}</div>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
                     {['win','loss','pending'].map(o => (
                       <button key={o} onClick={() => setHistory(prev => prev.map(x => x.id===h.id ? {...x, outcome: o} : x))} style={{
                         fontSize: 11, padding: '5px 10px', borderRadius: 8, border: 'none',
-                        backgroundColor: h.outcome===o ? (o==='win' ? COLORS.green : o==='loss' ? COLORS.red : COLORS.gold) : COLORS.bg,
-                        color: h.outcome===o ? '#FFF' : COLORS.muted,
+                        backgroundColor: h.outcome===o ? (o==='win' ? C.green : o==='loss' ? C.red : C.gold) : C.bg,
+                        color: h.outcome===o ? '#FFF' : C.muted,
                         cursor: 'pointer', fontWeight: 700,
                       }}>
                         {o==='win' ? '✓' : o==='loss' ? '✗' : '⏳'}
@@ -666,11 +671,10 @@ export default function StockDashboard({ user }) {
             </div>
           )}
 
-          {/* ── FOOTER ── */}
-          <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
-            <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
-            <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
-            <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
+          <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
+            <a href="/terms" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
+            <a href="/refund" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
+            <a href="/contact" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
           </div>
         </div>
       </div>
