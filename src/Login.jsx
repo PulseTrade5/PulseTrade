@@ -1,226 +1,386 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
-export default function Login() {
+const COLORS = {
+  bg: "#F4F6FA",
+  surface: "#FFFFFF",
+  surfaceBorder: "#E2E8F0",
+  gold: "#C8920A",
+  goldLight: "#FEF3C7",
+  goldDim: "#D97706",
+  green: "#059669",
+  greenLight: "#ECFDF5",
+  red: "#DC2626",
+  redLight: "#FEF2F2",
+  text: "#0F172A",
+  textSecondary: "#334155",
+  muted: "#64748B",
+  mutedLight: "#94A3B8",
+  sebi: "#1E3A5F",
+  sebiBg: "#EFF6FF",
+  sebiBorder: "#BFDBFE",
+};
+
+function getMsUntilMidnight() {
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  return midnight.getTime() - now.getTime();
+}
+
+function fmtCountdown(ms) {
+  if (ms <= 0) return "00:00:00";
+  const totalSec = Math.floor(ms / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
+}
+
+export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState('email'); // 'email' | 'otp'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [dots, setDots] = useState('');
+  const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
 
-  // Animated dots jab loading ho
   useEffect(() => {
-    if (!loading) return;
-    const interval = setInterval(() => {
-      setDots(d => d.length >= 3 ? '' : d + '.');
-    }, 400);
-    return () => clearInterval(interval);
-  }, [loading]);
+    const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!email.trim()) return;
+  // Step 1: Email daalo → OTP bhejo
+  const handleSendOtp = async () => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes('@')) {
+      setError('Sahi email daalo.');
+      return;
+    }
     setLoading(true);
     setError('');
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
-    });
-    setLoading(false);
-    if (error) {
-      setError('Error: ' + (error?.message || error?.error_description || JSON.stringify(error) || 'Unknown error'));
-    } else {
-      setSent(true);
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: trimmed,
+        options: { shouldCreateUser: true },
+      });
+      if (otpError) throw otpError;
+      setStep('otp');
+    } catch (err) {
+      setError('Kuch gadbad hui, dobara try karo.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const styles = {
-    container: {
-      minHeight: '100vh',
-      backgroundColor: '#0D1117',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontFamily: 'sans-serif',
-      padding: '20px',
-    },
-    card: {
-      width: '100%',
-      maxWidth: 380,
-      textAlign: 'center',
-    },
-    brand: {
-      color: '#D8A33D',
-      fontSize: 14,
-      letterSpacing: 2,
-      marginBottom: 8,
-    },
-    title: {
-      color: '#ffffff',
-      fontSize: 36,
-      fontWeight: 'bold',
-      margin: '0 0 8px 0',
-    },
-    titleGold: {
-      color: '#D8A33D',
-    },
-    subtitle: {
-      color: '#8B949E',
-      fontSize: 14,
-      marginBottom: 32,
-    },
-    input: {
-      width: '100%',
-      padding: '14px 16px',
-      fontSize: 15,
-      backgroundColor: '#161B22',
-      border: '1px solid #30363D',
-      borderRadius: 10,
-      color: '#ffffff',
-      outline: 'none',
-      boxSizing: 'border-box',
-      marginBottom: 12,
-    },
-    button: {
-      width: '100%',
-      padding: '14px',
-      fontSize: 16,
-      fontWeight: 'bold',
-      backgroundColor: '#D8A33D',
-      color: '#0D1117',
-      border: 'none',
-      borderRadius: 10,
-      cursor: 'pointer',
-      transition: 'opacity 0.2s',
-    },
-    buttonDisabled: {
-      opacity: 0.7,
-      cursor: 'not-allowed',
-    },
-    loadingBox: {
-      backgroundColor: '#161B22',
-      border: '1px solid #D8A33D',
-      borderRadius: 12,
-      padding: '28px 20px',
-      marginTop: 16,
-    },
-    spinner: {
-      width: 40,
-      height: 40,
-      border: '3px solid #30363D',
-      borderTop: '3px solid #D8A33D',
-      borderRadius: '50%',
-      margin: '0 auto 16px',
-      animation: 'spin 0.8s linear infinite',
-    },
-    loadingText: {
-      color: '#D8A33D',
-      fontSize: 16,
-      fontWeight: 'bold',
-      marginBottom: 6,
-    },
-    loadingSubtext: {
-      color: '#8B949E',
-      fontSize: 13,
-    },
-    successBox: {
-      backgroundColor: '#161B22',
-      border: '1px solid #238636',
-      borderRadius: 12,
-      padding: '32px 20px',
-    },
-    successIcon: {
-      fontSize: 48,
-      marginBottom: 12,
-    },
-    successTitle: {
-      color: '#3FB950',
-      fontSize: 20,
-      fontWeight: 'bold',
-      marginBottom: 8,
-    },
-    successText: {
-      color: '#8B949E',
-      fontSize: 14,
-      lineHeight: 1.5,
-    },
-    successEmail: {
-      color: '#D8A33D',
-      fontWeight: 'bold',
-    },
-    error: {
-      color: '#F85149',
-      fontSize: 13,
-      marginTop: 10,
-      padding: '10px',
-      backgroundColor: '#1C1010',
-      borderRadius: 8,
-      border: '1px solid #3D1C1C',
-    },
+  // Step 2: OTP daalo → verify karo
+  const handleVerifyOtp = async () => {
+    const trimmed = otp.trim();
+    if (!trimmed || trimmed.length !== 6) {
+      setError('6 digit OTP daalo.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: trimmed,
+        type: 'email',
+      });
+      if (verifyError) throw verifyError;
+      // Success — App.jsx ka onAuthStateChange handle karega
+    } catch (err) {
+      setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputStyle = {
+    width: '100%',
+    padding: '13px 16px',
+    fontSize: 15,
+    backgroundColor: COLORS.bg,
+    border: `1.5px solid ${COLORS.surfaceBorder}`,
+    borderRadius: 12,
+    color: COLORS.text,
+    outline: 'none',
+    boxSizing: 'border-box',
+    fontFamily: 'Inter, sans-serif',
+  };
+
+  const cardStyle = {
+    backgroundColor: COLORS.surface,
+    border: `1px solid ${COLORS.surfaceBorder}`,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: 14,
+    boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
   };
 
   return (
-    <div style={styles.container}>
-      <style>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in { animation: fadeIn 0.4s ease; }
-      `}</style>
+    <div style={{
+      backgroundColor: COLORS.bg,
+      minHeight: '100vh',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      color: COLORS.text,
+    }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-      <div style={styles.card}>
-        <div style={styles.brand}>🔱 हर हर महादेव 🔱</div>
-        <h1 style={styles.title}>
-          Pulse<span style={styles.titleGold}>Trade</span>
-        </h1>
-        <p style={styles.subtitle}>Bazaar ka pulse dekho, faisla khud karo.</p>
+        {/* HEADER */}
+        <div style={{
+          backgroundColor: COLORS.surface,
+          borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+          padding: '16px 20px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+          position: 'sticky', top: 0, zIndex: 100,
+        }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
+              Pulse<span style={{ color: COLORS.gold }}>Trade</span>
+            </h1>
+            <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
+          </div>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: COLORS.green,
+            backgroundColor: COLORS.greenLight, padding: '5px 12px',
+            borderRadius: 20, border: `1px solid #bbf7d0`,
+          }}>✅ NSE • BSE Live</div>
+        </div>
 
-        {/* SUCCESS STATE */}
-        {sent && (
-          <div style={styles.successBox} className="fade-in">
-            <div style={styles.successIcon}>✅</div>
-            <div style={styles.successTitle}>Link bhej diya!</div>
-            <p style={styles.successText}>
-              <span style={styles.successEmail}>{email}</span> pe login link gaya hai. Check karo.
+        {/* SEBI BANNER */}
+        <div style={{
+          backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`,
+          padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
+          <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6, opacity: 0.85 }}>
+            <strong>SEBI Disclaimer:</strong> Yeh platform sirf technical trend analysis provide karta hai — investment advice nahi hai. SEBI-registered advisor se salah zaroor lein.
+          </div>
+        </div>
+
+        <div style={{ padding: '20px 20px 0' }}>
+
+          {/* HERO */}
+          <div style={{
+            ...cardStyle, textAlign: 'center', padding: '28px 20px',
+            background: `linear-gradient(135deg, #ffffff 0%, ${COLORS.goldLight} 100%)`,
+            border: `1.5px solid #f0c040`,
+            boxShadow: '0 4px 24px rgba(200,146,10,0.12)',
+          }}>
+            <div style={{ fontSize: 36, marginBottom: 8 }}>📈</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: '0 0 8px', letterSpacing: '-0.5px' }}>
+              Bazaar ka pulse dekho,<br />
+              <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
+            </h2>
+            <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px', lineHeight: 1.6 }}>
+              NSE/BSE stocks ka technical analysis — AI-powered Hinglish mein.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+              {['🎯 Trend Analysis', '📊 RSI • MACD • ADX', '🔊 Pulse Bolta Hai', '⭐ Watchlist', '📧 Email Alerts'].map(f => (
+                <span key={f} style={{
+                  fontSize: 11, fontWeight: 700, color: COLORS.goldDim,
+                  backgroundColor: COLORS.goldLight, padding: '5px 12px',
+                  borderRadius: 20, border: `1px solid #f0c040`,
+                }}>{f}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* TRIAL OFFER */}
+          <div style={{
+            ...cardStyle, border: `2px solid ${COLORS.gold}`,
+            boxShadow: '0 4px 20px rgba(200,146,10,0.18)', textAlign: 'center',
+          }}>
+            <div style={{
+              display: 'inline-block', fontSize: 11, fontWeight: 800, letterSpacing: 1,
+              color: '#FFF', backgroundColor: COLORS.red,
+              padding: '4px 14px', borderRadius: 20, marginBottom: 10,
+            }}>🔥 LIMITED TIME OFFER</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>5-Din FREE Trial 🎉</div>
+            <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 12 }}>
+              Aaj signup karo — pura access 5 din ke liye bilkul free
+            </div>
+            <div style={{
+              fontSize: 14, fontWeight: 700, color: COLORS.goldDim,
+              backgroundColor: COLORS.goldLight, display: 'inline-block',
+              padding: '7px 18px', borderRadius: 10, marginBottom: 6,
+              fontFamily: 'monospace', letterSpacing: 1,
+            }}>⏳ Offer ends in {fmtCountdown(msLeft)}</div>
+            <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
+          </div>
+
+          {/* LOGIN CARD */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+              🔑 LOGIN / SIGNUP
+            </div>
+
+            {step === 'email' ? (
+              <>
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  Apna Email Daalo
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                  placeholder="tumhara@email.com"
+                  style={inputStyle}
+                />
+                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
+                <button
+                  onClick={handleSendOtp}
+                  disabled={loading}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '14px',
+                    fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
+                    backgroundColor: loading ? '#CBD5E1' : COLORS.gold,
+                    color: loading ? COLORS.muted : '#FFF',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)',
+                  }}
+                >
+                  {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
+                </button>
+                <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
+                  New user ho? Email daalo — account apne aap ban jayega aur 5-din trial shuru hoga. ✨
+                </p>
+              </>
+            ) : (
+              <>
+                {/* OTP Step */}
+                <div style={{
+                  backgroundColor: COLORS.greenLight, borderRadius: 10,
+                  padding: '10px 14px', marginBottom: 14,
+                  fontSize: 13, color: COLORS.green, fontWeight: 600,
+                }}>
+                  ✅ OTP bhej diya — <strong>{email}</strong> check karo!
+                </div>
+
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  6-Digit OTP Daalo
+                </label>
+                <input
+                  type="number"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
+                  placeholder="123456"
+                  style={{
+                    ...inputStyle,
+                    fontSize: 24,
+                    fontWeight: 800,
+                    letterSpacing: 8,
+                    textAlign: 'center',
+                  }}
+                />
+                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '14px',
+                    fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
+                    backgroundColor: loading ? '#CBD5E1' : COLORS.green,
+                    color: '#FFF',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: loading ? 'none' : '0 2px 14px rgba(5,150,105,0.3)',
+                  }}
+                >
+                  {loading ? '⏳ Verify ho raha hai...' : '✅ OTP Verify Karo — Login Karo'}
+                </button>
+
+                <button
+                  onClick={() => { setStep('email'); setOtp(''); setError(''); }}
+                  style={{
+                    width: '100%', marginTop: 10, padding: '10px',
+                    fontSize: 13, fontWeight: 600, borderRadius: 10,
+                    border: `1px solid ${COLORS.surfaceBorder}`,
+                    backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer',
+                  }}
+                >
+                  ← Wapas Email Change Karo
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* HOW IT WORKS */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+              ⚡ KAISE KAAM KARTA HAI
+            </div>
+            {[
+              { title: 'Stock symbol daalo', desc: 'RELIANCE, TCS, INFY — koi bhi NSE/BSE stock', emoji: '🔍' },
+              { title: 'AI analysis milega', desc: 'RSI, MACD, ADX, Supertrend — sab ek jagah', emoji: '📊' },
+              { title: 'Pulse Bolta Hai 🔊', desc: 'Hindi mein voice summary sunao — hands-free', emoji: '🎙️' },
+              { title: 'Faisla khud karo', desc: 'Entry, Stop Loss, Targets — sab calculate', emoji: '🎯' },
+            ].map((item) => (
+              <div key={item.title} style={{
+                display: 'flex', gap: 14, alignItems: 'flex-start',
+                padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+              }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  backgroundColor: COLORS.goldLight,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                }}>{item.emoji}</div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{item.title}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* PLANS */}
+          <div style={cardStyle}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+              💰 PLANS — TRIAL KE BAAD
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: '1 Month', price: '₹599', tag: '', popular: false },
+                { label: '2 Months', price: '₹1,049', tag: '🔥 Popular', popular: true },
+                { label: '3 Months', price: '₹1,499', tag: '💰 Best Value', popular: false },
+              ].map((plan) => (
+                <div key={plan.label} style={{
+                  border: `1.5px solid ${plan.popular ? COLORS.gold : COLORS.surfaceBorder}`,
+                  borderRadius: 12, padding: '12px 16px',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  backgroundColor: plan.popular ? COLORS.goldLight : COLORS.bg,
+                }}>
+                  <div>
+                    <span style={{ fontWeight: 700, color: COLORS.text, fontSize: 14 }}>{plan.label}</span>
+                    {plan.tag && <span style={{ display: 'inline-block', marginLeft: 8, fontSize: 10, fontWeight: 700, color: COLORS.goldDim }}>{plan.tag}</span>}
+                  </div>
+                  <span style={{ color: COLORS.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
+                </div>
+              ))}
+            </div>
+            <p style={{ fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 12 }}>
+              Pehle 5 din free trial karo — phir decide karo 😊
             </p>
           </div>
-        )}
 
-        {/* LOADING STATE */}
-        {loading && !sent && (
-          <div style={styles.loadingBox} className="fade-in">
-            <div style={styles.spinner}></div>
-            <div style={styles.loadingText}>📡 Bhej raha hoon{dots}</div>
-            <div style={styles.loadingSubtext}>Thoda ruko, link aa raha hai</div>
+          {/* FOOTER */}
+          <div style={{
+            textAlign: 'center', paddingTop: 16,
+            borderTop: `1px solid ${COLORS.surfaceBorder}`,
+            display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12,
+          }}>
+            <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
+            <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
+            <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
           </div>
-        )}
-
-        {/* FORM STATE */}
-        {!sent && !loading && (
-          <div className="fade-in">
-            <input
-              type="email"
-              placeholder="tumhara@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={styles.input}
-              onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
-            />
-            <button
-              onClick={handleLogin}
-              disabled={loading}
-              style={{ ...styles.button, ...(loading ? styles.buttonDisabled : {}) }}
-            >
-              🔑 Login Link Bhejo
-            </button>
-            {error && <div style={styles.error}>{error}</div>}
-          </div>
-        )}
+          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: COLORS.mutedLight }}>
+            🔱 हर हर महादेव 🔱
+          </p>
+        </div>
       </div>
     </div>
   );
