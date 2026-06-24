@@ -280,11 +280,23 @@ export default function StockDashboard({ user }) {
             </h1>
             <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
-          <button onClick={handleLogout} style={{
-            fontSize: 12, padding: '6px 14px', borderRadius: 20,
-            border: `1.5px solid ${COLORS.surfaceBorder}`,
-            backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600,
-          }}>🚪 Logout</button>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {user?.email === 'prabhat3300@gmail.com' && (
+              <a href="/admin" style={{
+                fontSize: 11, padding: '5px 14px', borderRadius: 20,
+                border: `1.5px solid ${COLORS.gold}`,
+                backgroundColor: COLORS.goldLight,
+                color: COLORS.goldDim,
+                cursor: 'pointer', fontWeight: 700,
+                textDecoration: 'none',
+              }}>⚙️ Admin</a>
+            )}
+            <button onClick={handleLogout} style={{
+              fontSize: 12, padding: '6px 14px', borderRadius: 20,
+              border: `1.5px solid ${COLORS.surfaceBorder}`,
+              backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600,
+            }}>🚪 Logout</button>
+          </div>
         </div>
 
         {/* ── SEBI BANNER ── */}
