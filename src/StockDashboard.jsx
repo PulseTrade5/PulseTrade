@@ -393,17 +393,22 @@ export default function StockDashboard({ user, onChallenge }) {
             </button>
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
-                fontSize: 11, padding: '5px 14px', borderRadius: 20,
+                fontSize: 11, padding: '5px 10px', borderRadius: 20,
                 border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
                 color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
-              }}>⚙️ Admin</a>
+              }}>⚙️</a>
             )}
             <button onClick={() => onChallenge && onChallenge()} style={{
-              fontSize: 11, padding: '5px 14px', borderRadius: 20,
+              fontSize: 11, padding: '5px 10px', borderRadius: 20,
               border: `1.5px solid ${C.gold}`,
               backgroundColor: C.goldLight,
               color: C.goldDim, cursor: 'pointer', fontWeight: 700,
-            }}>🎯 Challenge</button>
+            }}>🎯</button>
+            <button onClick={handleLogout} style={{
+              fontSize: 12, padding: '6px 14px', borderRadius: 20,
+              border: `1.5px solid ${C.surfaceBorder}`,
+              backgroundColor: 'transparent', color: C.muted, cursor: 'pointer', fontWeight: 600,
+            }}>🚪 Logout</button>
             <button onClick={handleLogout} style={{
               fontSize: 12, padding: '6px 14px', borderRadius: 20,
               border: `1.5px solid ${C.surfaceBorder}`,
