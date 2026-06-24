@@ -150,7 +150,6 @@ function TrendMeter({ longScore, shortScore, trend, C }) {
   );
 }
 
-// ✅ PULSE SCORE HERO BANNER COMPONENT
 function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   const isBullish = result.trend === 'Bullish';
   const score = isBullish ? result.longScore : result.shortScore;
@@ -167,7 +166,6 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
       border: `1.5px solid ${borderColor}`,
       boxShadow: `0 8px 32px ${accentColor}33`,
     }}>
-      {/* Top row — name + badge */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{stockName}</div>
@@ -182,8 +180,6 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
           {isBullish ? '🟢 BULLISH' : '🔴 BEARISH'}
         </div>
       </div>
-
-      {/* Price row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
           {fmtINR(stockInfo?.regularMarketPrice || result.lastClose)}
@@ -199,8 +195,6 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
           </span>
         )}
       </div>
-
-      {/* Pulse Score bar */}
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1 }}>
@@ -220,8 +214,6 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
           }} />
         </div>
       </div>
-
-      {/* Bottom label */}
       <div style={{
         fontSize: 13, fontWeight: 700,
         color: 'rgba(255,255,255,0.75)',
@@ -477,11 +469,6 @@ export default function StockDashboard({ user, onChallenge }) {
               border: `1.5px solid ${C.surfaceBorder}`,
               backgroundColor: 'transparent', color: C.muted, cursor: 'pointer', fontWeight: 600,
             }}>🚪 Logout</button>
-            <button onClick={handleLogout} style={{
-              fontSize: 12, padding: '6px 14px', borderRadius: 20,
-              border: `1.5px solid ${C.surfaceBorder}`,
-              backgroundColor: 'transparent', color: C.muted, cursor: 'pointer', fontWeight: 600,
-            }}>🚪 Logout</button>
           </div>
         </div>
 
@@ -582,7 +569,6 @@ export default function StockDashboard({ user, onChallenge }) {
 
               {result && (
                 <>
-                  {/* ✅ PULSE SCORE HERO BANNER */}
                   <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
 
                   {stockInfo && (
@@ -689,9 +675,9 @@ export default function StockDashboard({ user, onChallenge }) {
                       {[
                         ['Entry', fmtINR(result.entry)],
                         ['Stop Loss', fmtINR(result.stopLoss)],
-                        ['Target 1 (3%)', fmtINR(result.targets?.[0])],
-                        ['Target 2 (6%)', fmtINR(result.targets?.[1])],
-                        ['Target 3 (10%)', fmtINR(result.targets?.[2])],
+                        ['Safe Exit 🟢 (3%)', fmtINR(result.targets?.[0])],
+                        ['Sweet Spot 🎯 (6%)', fmtINR(result.targets?.[1])],
+                        ['Full Target 🚀 (10%)', fmtINR(result.targets?.[2])],
                         ['Suggested Hold', result.suggestedHold],
                       ].map(([label, value]) => (
                         <div key={label} style={rowStyle}>
@@ -742,18 +728,65 @@ export default function StockDashboard({ user, onChallenge }) {
                       </div>
                     ))}
                     <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-                      {tierResults.map(t => (
+                      {tierResults.map((t, i) => (
                         <div key={t.percent} style={{
                           flex: 1, backgroundColor: C.goldLight, borderRadius: 12,
                           padding: '12px 8px', textAlign: 'center',
                           border: `1px solid ${C.surfaceBorder}`,
                         }}>
-                          <div style={{ fontSize: 10, color: C.goldDim, fontWeight: 700 }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
+                          <div style={{ fontSize: 10, color: C.goldDim, fontWeight: 700 }}>
+                            {i === 0 ? 'Safe Exit 🟢' : i === 1 ? 'Sweet Spot 🎯' : 'Full Target 🚀'}
+                          </div>
                           <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginTop: 2 }}>{fmtINR(t.price)}</div>
                           <div style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>+{fmtINR(t.profit)}</div>
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  {/* 📰 NEWS SECTION */}
+                  <div style={cardStyle}>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>📰 LATEST NEWS</div>
+                    <a
+                      href={`https://www.moneycontrol.com/stocks/cptmarket/compsearchnew.php?search_data=${stockName}&cid=&mbsearch_str=&topsearch_type=1&search_str=${stockName}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', borderRadius: 12,
+                        backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+                        textDecoration: 'none', marginBottom: 10,
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 20 }}>📰</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{stockName} ki News</div>
+                          <div style={{ fontSize: 11, color: C.muted }}>Moneycontrol pe dekho</div>
+                        </div>
+                      </div>
+                      <span style={{ color: C.gold, fontSize: 16 }}>→</span>
+                    </a>
+                    <a
+                      href={`https://news.google.com/search?q=${stockName}+NSE+stock&hl=en-IN`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        padding: '12px 16px', borderRadius: 12,
+                        backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 20 }}>🔍</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Google News</div>
+                          <div style={{ fontSize: 11, color: C.muted }}>Latest headlines</div>
+                        </div>
+                      </div>
+                      <span style={{ color: C.gold, fontSize: 16 }}>→</span>
+                    </a>
                   </div>
                 </>
               )}
@@ -764,29 +797,29 @@ export default function StockDashboard({ user, onChallenge }) {
             <>
               <ReferralCard user={user} C={C} />
               <div style={cardStyle}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
-              {watchlist.length === 0 ? (
-                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
-              ) : watchlist.map(w => (
-                <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
-                  <div>
-                    <div style={{ fontWeight: 700, color: C.text }}>{w.symbol}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                      <span style={{ fontSize: 12, color: C.muted }}>{fmtINR(w.lastPrice)}</span>
-                      <span style={{
-                        fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
-                        color: w.lastTrend === 'Bullish' ? C.green : C.red,
-                        backgroundColor: w.lastTrend === 'Bullish' ? C.greenLight : C.redLight,
-                      }}>{w.lastTrend}</span>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
+                {watchlist.length === 0 ? (
+                  <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
+                ) : watchlist.map(w => (
+                  <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: C.text }}>{w.symbol}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <span style={{ fontSize: 12, color: C.muted }}>{fmtINR(w.lastPrice)}</span>
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
+                          color: w.lastTrend === 'Bullish' ? C.green : C.red,
+                          backgroundColor: w.lastTrend === 'Bullish' ? C.greenLight : C.redLight,
+                        }}>{w.lastTrend}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: C.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
+                      <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: C.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
-                    <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
             </>
           )}
 
