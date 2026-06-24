@@ -2,21 +2,11 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
 const COLORS = {
-  bg: "#F4F6FA",
-  surface: "#FFFFFF",
-  surfaceBorder: "#E2E8F0",
-  gold: "#C8920A",
-  goldLight: "#FEF3C7",
-  goldDim: "#D97706",
-  green: "#059669",
-  greenLight: "#ECFDF5",
-  red: "#DC2626",
-  redLight: "#FEF2F2",
-  text: "#0F172A",
-  muted: "#64748B",
-  mutedLight: "#94A3B8",
-  sebi: "#1E3A5F",
-  sebiBg: "#EFF6FF",
+  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
+  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
+  green: "#059669", greenLight: "#ECFDF5", red: "#DC2626",
+  redLight: "#FEF2F2", text: "#0F172A", muted: "#64748B",
+  mutedLight: "#94A3B8", sebi: "#1E3A5F", sebiBg: "#EFF6FF",
   sebiBorder: "#BFDBFE",
 };
 
@@ -63,7 +53,7 @@ export default function LoginPage() {
         options: { shouldCreateUser: true },
       });
       if (otpError) throw otpError;
-      setStep('otp');
+      setStep('otp'); // ✅ OTP step pe jao
     } catch (err) {
       setError('Kuch gadbad hui, dobara try karo.');
     } finally {
@@ -86,7 +76,8 @@ export default function LoginPage() {
         type: 'email',
       });
       if (verifyError) throw verifyError;
-      // Success — page reload karke session set karo
+      // ✅ Session confirm hone ka wait karo
+      await new Promise(r => setTimeout(r, 1000));
       window.location.href = window.location.origin;
     } catch (err) {
       setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
@@ -132,7 +123,7 @@ export default function LoginPage() {
         {/* SEBI */}
         <div style={{ backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`, padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
-          <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6, opacity: 0.85 }}>
+          <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6 }}>
             <strong>SEBI Disclaimer:</strong> Yeh platform sirf technical trend analysis provide karta hai — investment advice nahi hai.
           </div>
         </div>
@@ -166,15 +157,16 @@ export default function LoginPage() {
             <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
           </div>
 
-          {/* LOGIN */}
+          {/* ✅ LOGIN CARD — OTP STEP FIXED */}
           <div style={cardStyle}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP</div>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP — EMAIL SE</div>
 
             {step === 'email' ? (
-              <>
+              <div>
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo</label>
                 <input
-                  type="email" value={email}
+                  type="email"
+                  value={email}
                   onChange={e => { setEmail(e.target.value); setError(''); }}
                   onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   placeholder="tumhara@email.com"
@@ -193,15 +185,16 @@ export default function LoginPage() {
                 <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
                   New user? Email daalo — account + 5-din trial automatically shuru hoga ✨
                 </p>
-              </>
+              </div>
             ) : (
-              <>
+              <div>
                 <div style={{ backgroundColor: COLORS.greenLight, borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: COLORS.green, fontWeight: 600 }}>
                   ✅ OTP bheja — <strong>{email}</strong> check karo!
                 </div>
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>6-Digit OTP Daalo</label>
                 <input
-                  type="number" value={otp}
+                  type="number"
+                  value={otp}
                   onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }}
                   onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
                   placeholder="123456"
@@ -221,7 +214,7 @@ export default function LoginPage() {
                   borderRadius: 10, border: `1px solid ${COLORS.surfaceBorder}`,
                   backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer',
                 }}>← Wapas Email Change Karo</button>
-              </>
+              </div>
             )}
           </div>
 
