@@ -7,6 +7,15 @@ const COLORS = {
   text: "#0F172A", muted: "#64748B", mutedLight: "#94A3B8",
 };
 
+const FEATURES = [
+  { icon: '🎯', title: 'Trend Analysis', desc: 'Bullish ya Bearish — ek nazar mein pata chale.' },
+  { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish explanation ke saath.' },
+  { icon: '🔊', title: 'Pulse Bolta Hai', desc: 'AI summary sunao — padhne ki zarurat nahi!' },
+  { icon: '⭐', title: 'Watchlist', desc: 'Apne favorite stocks save karo, nazar rakho.' },
+  { icon: '📧', title: 'Email Alerts', desc: 'Important signals seedha inbox mein.' },
+  { icon: '🤖', title: 'AI Hinglish Summary', desc: 'Complex analysis simple bhasha mein.' },
+];
+
 export default function LandingPage({ onLogin }) {
   const [scrolled, setScrolled] = useState(false);
 
@@ -36,14 +45,11 @@ export default function LandingPage({ onLogin }) {
             </div>
             <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
           </div>
-          <button
-            onClick={onLogin}
-            style={{
-              padding: '8px 20px', fontSize: 13, fontWeight: 700,
-              borderRadius: 20, border: `1.5px solid ${COLORS.gold}`,
-              backgroundColor: 'transparent', color: COLORS.gold,
-              cursor: 'pointer',
-            }}>
+          <button onClick={onLogin} style={{
+            padding: '8px 20px', fontSize: 13, fontWeight: 700,
+            borderRadius: 20, border: `1.5px solid ${COLORS.gold}`,
+            backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer',
+          }}>
             Login →
           </button>
         </div>
@@ -55,7 +61,6 @@ export default function LandingPage({ onLogin }) {
           textAlign: 'center',
           borderBottom: `1px solid #f0c040`,
         }}>
-          {/* Badge */}
           <div style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800,
             color: COLORS.green, backgroundColor: COLORS.greenLight,
@@ -65,34 +70,85 @@ export default function LandingPage({ onLogin }) {
             ✅ NSE • BSE Live Data
           </div>
 
-          {/* Main heading */}
           <h1 style={{ fontSize: 32, fontWeight: 900, lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-1px' }}>
             Bazaar ka pulse dekho,<br />
             <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
           </h1>
 
-          {/* Subheading */}
           <p style={{ fontSize: 15, color: COLORS.muted, lineHeight: 1.7, margin: '0 0 28px' }}>
             NSE/BSE stocks ka AI-powered<br />technical analysis — Hinglish mein. 🇮🇳
           </p>
 
-          {/* CTA Button */}
-          <button
-            onClick={onLogin}
-            style={{
-              display: 'block', width: '100%',
-              padding: '16px', fontSize: 17, fontWeight: 800,
-              borderRadius: 14, border: 'none',
-              backgroundColor: COLORS.gold, color: '#FFF',
-              cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
-              marginBottom: 12,
-            }}>
+          <button onClick={onLogin} style={{
+            display: 'block', width: '100%',
+            padding: '16px', fontSize: 17, fontWeight: 800,
+            borderRadius: 14, border: 'none',
+            backgroundColor: COLORS.gold, color: '#FFF',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
+            marginBottom: 12,
+          }}>
             🚀 5-Din FREE Trial Shuru Karo
           </button>
 
           <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>
             No credit card • Instant access • Cancel anytime
+          </p>
+        </div>
+
+        {/* FEATURES SECTION */}
+        <div style={{ padding: '32px 20px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>
+              ✨ FEATURES
+            </div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>
+              Sab kuch ek jagah
+            </h2>
+            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>
+              Jo cheezein traders ko chahiye — sab yahan hai
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} style={{
+                backgroundColor: COLORS.surface,
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                borderRadius: 14, padding: '16px 18px',
+                display: 'flex', alignItems: 'center', gap: 16,
+                boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
+              }}>
+                <div style={{
+                  fontSize: 28, width: 52, height: 52, flexShrink: 0,
+                  backgroundColor: COLORS.goldLight, borderRadius: 14,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  {f.icon}
+                </div>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3 }}>{f.title}</div>
+                  <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5 }}>{f.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA BOTTOM */}
+        <div style={{ padding: '8px 20px 48px' }}>
+          <button onClick={onLogin} style={{
+            display: 'block', width: '100%',
+            padding: '16px', fontSize: 16, fontWeight: 800,
+            borderRadius: 14, border: 'none',
+            backgroundColor: COLORS.gold, color: '#FFF',
+            cursor: 'pointer',
+            boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
+          }}>
+            🚀 Abhi Sign Up Karo — Free Hai!
+          </button>
+          <p style={{ textAlign: 'center', fontSize: 12, color: COLORS.muted, marginTop: 12 }}>
+            🔱 हर हर महादेव 🔱
           </p>
         </div>
 
