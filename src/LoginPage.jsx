@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+   import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
 const COLORS = {
@@ -15,6 +15,7 @@ const COLORS = {
   text: "#0F172A",
   textSecondary: "#334155",
   muted: "#64748B",
+  mutedLight: "#94A3B8",
   sebi: "#1E3A5F",
   sebiBg: "#EFF6FF",
   sebiBorder: "#BFDBFE",
@@ -38,7 +39,8 @@ function fmtCountdown(ms) {
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState('email'); // 'email' | 'otp'
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
@@ -48,7 +50,8 @@ export default function LoginPage() {
     return () => clearInterval(t);
   }, []);
 
-  const handleLogin = async () => {
+  // Step 1: Email daalo → OTP bhejo
+  const handleSendOtp = async () => {
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !trimmed.includes('@')) {
       setError('Sahi email daalo.');
@@ -59,14 +62,36 @@ export default function LoginPage() {
     try {
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email: trimmed,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
+        options: { shouldCreateUser: true },
       });
       if (otpError) throw otpError;
-      setSent(true);
+      setStep('otp');
     } catch (err) {
       setError('Kuch gadbad hui, dobara try karo.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Step 2: OTP daalo → verify karo
+  const handleVerifyOtp = async () => {
+    const trimmed = otp.trim();
+    if (!trimmed || trimmed.length !== 6) {
+      setError('6 digit OTP daalo.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email: email.trim().toLowerCase(),
+        token: trimmed,
+        type: 'email',
+      });
+      if (verifyError) throw verifyError;
+      // Success — App.jsx ka onAuthStateChange handle karega
+    } catch (err) {
+      setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
     } finally {
       setLoading(false);
     }
@@ -103,18 +128,14 @@ export default function LoginPage() {
     }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <div style={{
           backgroundColor: COLORS.surface,
           borderBottom: `1px solid ${COLORS.surfaceBorder}`,
           padding: '16px 20px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
-          position: 'sticky',
-          top: 0,
-          zIndex: 100,
+          position: 'sticky', top: 0, zIndex: 100,
         }}>
           <div>
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
@@ -123,22 +144,16 @@ export default function LoginPage() {
             <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{
-            fontSize: 11, fontWeight: 700,
-            color: COLORS.green,
-            backgroundColor: COLORS.greenLight,
-            padding: '5px 12px', borderRadius: 20,
-            border: `1px solid #bbf7d0`,
-          }}>
-            ✅ NSE • BSE Live
-          </div>
+            fontSize: 11, fontWeight: 700, color: COLORS.green,
+            backgroundColor: COLORS.greenLight, padding: '5px 12px',
+            borderRadius: 20, border: `1px solid #bbf7d0`,
+          }}>✅ NSE • BSE Live</div>
         </div>
 
-        {/* ── SEBI BANNER ── */}
+        {/* SEBI BANNER */}
         <div style={{
-          backgroundColor: COLORS.sebiBg,
-          borderBottom: `2px solid ${COLORS.sebiBorder}`,
-          padding: '10px 20px',
-          display: 'flex', gap: 10, alignItems: 'flex-start',
+          backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`,
+          padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start',
         }}>
           <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
           <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6, opacity: 0.85 }}>
@@ -148,131 +163,77 @@ export default function LoginPage() {
 
         <div style={{ padding: '20px 20px 0' }}>
 
-          {/* ── HERO SECTION ── */}
+          {/* HERO */}
           <div style={{
-            ...cardStyle,
-            textAlign: 'center',
-            padding: '28px 20px',
+            ...cardStyle, textAlign: 'center', padding: '28px 20px',
             background: `linear-gradient(135deg, #ffffff 0%, ${COLORS.goldLight} 100%)`,
             border: `1.5px solid #f0c040`,
             boxShadow: '0 4px 24px rgba(200,146,10,0.12)',
           }}>
             <div style={{ fontSize: 36, marginBottom: 8 }}>📈</div>
-            <h2 style={{
-              fontSize: 22, fontWeight: 800, color: COLORS.text,
-              margin: '0 0 8px', letterSpacing: '-0.5px',
-            }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: '0 0 8px', letterSpacing: '-0.5px' }}>
               Bazaar ka pulse dekho,<br />
               <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
             </h2>
             <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px', lineHeight: 1.6 }}>
-              NSE/BSE stocks ka technical analysis — AI-powered Hinglish mein. Instant trend, entry, stop loss, targets.
+              NSE/BSE stocks ka technical analysis — AI-powered Hinglish mein.
             </p>
-
-            {/* Feature pills */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {[
-                '🎯 Trend Analysis',
-                '📊 RSI • MACD • ADX',
-                '🔊 Pulse Bolta Hai',
-                '⭐ Watchlist',
-                '📧 Email Alerts',
-              ].map(f => (
+              {['🎯 Trend Analysis', '📊 RSI • MACD • ADX', '🔊 Pulse Bolta Hai', '⭐ Watchlist', '📧 Email Alerts'].map(f => (
                 <span key={f} style={{
-                  fontSize: 11, fontWeight: 700,
-                  color: COLORS.goldDim,
-                  backgroundColor: COLORS.goldLight,
-                  padding: '5px 12px', borderRadius: 20,
-                  border: `1px solid #f0c040`,
+                  fontSize: 11, fontWeight: 700, color: COLORS.goldDim,
+                  backgroundColor: COLORS.goldLight, padding: '5px 12px',
+                  borderRadius: 20, border: `1px solid #f0c040`,
                 }}>{f}</span>
               ))}
             </div>
           </div>
 
-          {/* ── TRIAL OFFER CARD ── */}
+          {/* TRIAL OFFER */}
           <div style={{
-            ...cardStyle,
-            border: `2px solid ${COLORS.gold}`,
-            boxShadow: '0 4px 20px rgba(200,146,10,0.18)',
-            textAlign: 'center',
+            ...cardStyle, border: `2px solid ${COLORS.gold}`,
+            boxShadow: '0 4px 20px rgba(200,146,10,0.18)', textAlign: 'center',
           }}>
             <div style={{
-              display: 'inline-block',
-              fontSize: 11, fontWeight: 800, letterSpacing: 1,
+              display: 'inline-block', fontSize: 11, fontWeight: 800, letterSpacing: 1,
               color: '#FFF', backgroundColor: COLORS.red,
               padding: '4px 14px', borderRadius: 20, marginBottom: 10,
-            }}>
-              🔥 LIMITED TIME OFFER
-            </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>
-              5-Din FREE Trial 🎉
-            </div>
+            }}>🔥 LIMITED TIME OFFER</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>5-Din FREE Trial 🎉</div>
             <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 12 }}>
               Aaj signup karo — pura access 5 din ke liye bilkul free
             </div>
             <div style={{
               fontSize: 14, fontWeight: 700, color: COLORS.goldDim,
-              backgroundColor: COLORS.goldLight,
-              display: 'inline-block',
+              backgroundColor: COLORS.goldLight, display: 'inline-block',
               padding: '7px 18px', borderRadius: 10, marginBottom: 6,
               fontFamily: 'monospace', letterSpacing: 1,
-            }}>
-              ⏳ Offer ends in {fmtCountdown(msLeft)}
-            </div>
-            <div style={{ fontSize: 11, color: COLORS.muted }}>
-              Phir plans: ₹599 / ₹1,049 / ₹1,499
-            </div>
+            }}>⏳ Offer ends in {fmtCountdown(msLeft)}</div>
+            <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
           </div>
 
-          {/* ── LOGIN CARD ── */}
+          {/* LOGIN CARD */}
           <div style={cardStyle}>
-            <div style={{
-              fontSize: 10, letterSpacing: 2, color: COLORS.muted,
-              fontWeight: 700, marginBottom: 14,
-            }}>
-              🔑 LOGIN / SIGNUP — EMAIL SE
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
+              🔑 LOGIN / SIGNUP
             </div>
 
-            {sent ? (
-              <div style={{
-                backgroundColor: COLORS.greenLight,
-                border: `1.5px solid #bbf7d0`,
-                borderRadius: 12, padding: '18px 16px', textAlign: 'center',
-              }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>📧</div>
-                <div style={{ fontSize: 15, fontWeight: 800, color: COLORS.green, marginBottom: 6 }}>
-                  Login link bhej diya!
-                </div>
-                <div style={{ fontSize: 13, color: COLORS.muted, lineHeight: 1.6 }}>
-                  <strong>{email}</strong> pe ek magic link gaya hai.<br />
-                  Apna email check karo aur link pe click karo.
-                </div>
-                <button
-                  onClick={() => { setSent(false); setEmail(''); }}
-                  style={{
-                    marginTop: 14, fontSize: 12, color: COLORS.muted,
-                    background: 'transparent', border: 'none',
-                    cursor: 'pointer', textDecoration: 'underline',
-                  }}
-                >
-                  Doosra email try karo
-                </button>
-              </div>
-            ) : (
+            {step === 'email' ? (
               <>
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  Apna Email Daalo
+                </label>
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                  onChange={e => { setEmail(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                   placeholder="tumhara@email.com"
                   style={inputStyle}
                 />
-                {error && (
-                  <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>
-                )}
+                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
                 <button
-                  onClick={handleLogin}
+                  onClick={handleSendOtp}
                   disabled={loading}
                   style={{
                     width: '100%', marginTop: 12, padding: '14px',
@@ -281,42 +242,93 @@ export default function LoginPage() {
                     color: loading ? COLORS.muted : '#FFF',
                     cursor: loading ? 'not-allowed' : 'pointer',
                     boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)',
-                    transition: 'background 0.2s, box-shadow 0.2s',
                   }}
                 >
-                  {loading ? '⏳ Bhej rahe hain...' : '🔑 Login Link Bhejo'}
+                  {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
                 </button>
                 <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
                   New user ho? Email daalo — account apne aap ban jayega aur 5-din trial shuru hoga. ✨
                 </p>
               </>
+            ) : (
+              <>
+                {/* OTP Step */}
+                <div style={{
+                  backgroundColor: COLORS.greenLight, borderRadius: 10,
+                  padding: '10px 14px', marginBottom: 14,
+                  fontSize: 13, color: COLORS.green, fontWeight: 600,
+                }}>
+                  ✅ OTP bhej diya — <strong>{email}</strong> check karo!
+                </div>
+
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  6-Digit OTP Daalo
+                </label>
+                <input
+                  type="number"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
+                  placeholder="123456"
+                  style={{
+                    ...inputStyle,
+                    fontSize: 24,
+                    fontWeight: 800,
+                    letterSpacing: 8,
+                    textAlign: 'center',
+                  }}
+                />
+                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '14px',
+                    fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
+                    backgroundColor: loading ? '#CBD5E1' : COLORS.green,
+                    color: '#FFF',
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    boxShadow: loading ? 'none' : '0 2px 14px rgba(5,150,105,0.3)',
+                  }}
+                >
+                  {loading ? '⏳ Verify ho raha hai...' : '✅ OTP Verify Karo — Login Karo'}
+                </button>
+
+                <button
+                  onClick={() => { setStep('email'); setOtp(''); setError(''); }}
+                  style={{
+                    width: '100%', marginTop: 10, padding: '10px',
+                    fontSize: 13, fontWeight: 600, borderRadius: 10,
+                    border: `1px solid ${COLORS.surfaceBorder}`,
+                    backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer',
+                  }}
+                >
+                  ← Wapas Email Change Karo
+                </button>
+              </>
             )}
           </div>
 
-          {/* ── HOW IT WORKS ── */}
+          {/* HOW IT WORKS */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
               ⚡ KAISE KAAM KARTA HAI
             </div>
             {[
-              { step: '1', title: 'Stock symbol daalo', desc: 'RELIANCE, TCS, INFY — koi bhi NSE/BSE stock', emoji: '🔍' },
-              { step: '2', title: 'AI analysis milega', desc: 'RSI, MACD, ADX, Supertrend — sab ek jagah', emoji: '📊' },
-              { step: '3', title: 'Pulse Bolta Hai 🔊', desc: 'Hindi mein voice summary sunao — hands-free', emoji: '🎙️' },
-              { step: '4', title: 'Faisla khud karo', desc: 'Entry, Stop Loss, Targets — sab calculate', emoji: '🎯' },
+              { title: 'Stock symbol daalo', desc: 'RELIANCE, TCS, INFY — koi bhi NSE/BSE stock', emoji: '🔍' },
+              { title: 'AI analysis milega', desc: 'RSI, MACD, ADX, Supertrend — sab ek jagah', emoji: '📊' },
+              { title: 'Pulse Bolta Hai 🔊', desc: 'Hindi mein voice summary sunao — hands-free', emoji: '🎙️' },
+              { title: 'Faisla khud karo', desc: 'Entry, Stop Loss, Targets — sab calculate', emoji: '🎯' },
             ].map((item) => (
-              <div key={item.step} style={{
+              <div key={item.title} style={{
                 display: 'flex', gap: 14, alignItems: 'flex-start',
-                padding: '10px 0',
-                borderBottom: `1px solid ${COLORS.surfaceBorder}`,
+                padding: '10px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`,
               }}>
                 <div style={{
                   width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                   backgroundColor: COLORS.goldLight,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18,
-                }}>
-                  {item.emoji}
-                </div>
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                }}>{item.emoji}</div>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{item.title}</div>
                   <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2 }}>{item.desc}</div>
@@ -325,7 +337,7 @@ export default function LoginPage() {
             ))}
           </div>
 
-          {/* ── PLANS PREVIEW ── */}
+          {/* PLANS */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
               💰 PLANS — TRIAL KE BAAD
@@ -341,16 +353,10 @@ export default function LoginPage() {
                   borderRadius: 12, padding: '12px 16px',
                   display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                   backgroundColor: plan.popular ? COLORS.goldLight : COLORS.bg,
-                  boxShadow: plan.popular ? '0 2px 10px rgba(200,146,10,0.15)' : 'none',
                 }}>
                   <div>
                     <span style={{ fontWeight: 700, color: COLORS.text, fontSize: 14 }}>{plan.label}</span>
-                    {plan.tag && (
-                      <span style={{
-                        display: 'inline-block', marginLeft: 8,
-                        fontSize: 10, fontWeight: 700, color: COLORS.goldDim,
-                      }}>{plan.tag}</span>
-                    )}
+                    {plan.tag && <span style={{ display: 'inline-block', marginLeft: 8, fontSize: 10, fontWeight: 700, color: COLORS.goldDim }}>{plan.tag}</span>}
                   </div>
                   <span style={{ color: COLORS.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
                 </div>
@@ -361,7 +367,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ── FOOTER ── */}
+          {/* FOOTER */}
           <div style={{
             textAlign: 'center', paddingTop: 16,
             borderTop: `1px solid ${COLORS.surfaceBorder}`,
@@ -378,4 +384,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-        }
+}          
