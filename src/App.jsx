@@ -209,7 +209,6 @@ function App() {
           });
         } else {
           setProfile(data);
-          // ✅ FIX: condition hatao — greeting hamesha show hogi agar profile mile
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
         }
@@ -261,9 +260,16 @@ function App() {
 
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
+  // Email se naam nikalo: prabhat@gmail.com -> Prabhat
+  const nameFromEmail = session?.user?.email
+    ?.split('@')[0]
+    ?.split('.')[0]
+    ?.replace(/[0-9]/g, '')
+    ?.replace(/^./, c => c.toUpperCase()) || 'Trader';
+
   return (
     <>
-      <GreetingToast name={profile?.name} show={showGreeting} />
+      <GreetingToast name={nameFromEmail} show={showGreeting} />
       <StockDashboard user={session.user} />
     </>
   );
