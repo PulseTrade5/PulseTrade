@@ -33,6 +33,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
+  const [verifySuccess, setVerifySuccess] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
@@ -71,18 +72,17 @@ export default function LoginPage() {
       });
       if (verifyError) throw verifyError;
       if (data?.session) {
-        // Save name to profiles
+        setVerifySuccess(true);
         await supabase.from('profiles').upsert({
           id: data.session.user.id,
           email: email.trim().toLowerCase(),
           name: name.trim(),
         }, { onConflict: 'id' });
-
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
         window.location.href = '/';
       } else {
         setError('Session nahi mila. Dobara try karo.');
@@ -132,6 +132,28 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* ✅ SOCIAL PROOF BANNER */}
+        <div style={{
+          backgroundColor: COLORS.text,
+          padding: '12px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}>
+          <div style={{ display: 'flex', gap: -6 }}>
+            {['👨', '👩', '🧑', '👨', '👩'].map((e, i) => (
+              <div key={i} style={{
+                width: 28, height: 28, borderRadius: '50%',
+                backgroundColor: COLORS.goldLight,
+                border: `2px solid ${COLORS.text}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 14, marginLeft: i === 0 ? 0 : -8,
+              }}>{e}</div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: '#FFF', fontWeight: 600 }}>
+            <span style={{ color: COLORS.gold, fontWeight: 800 }}>500+</span> Indian traders already joined! 🚀
+          </div>
+        </div>
+
         <div style={{ padding: '20px 20px 0' }}>
 
           {/* HERO */}
@@ -167,7 +189,6 @@ export default function LoginPage() {
 
             {step === 'email' ? (
               <div>
-                {/* Name Field */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
                 <input
                   type="text"
@@ -177,8 +198,6 @@ export default function LoginPage() {
                   placeholder="e.g. Rahul, Priya"
                   style={{ ...inputStyle, marginBottom: 12 }}
                 />
-
-                {/* Email Field */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
                 <input
                   type="email"
@@ -202,11 +221,44 @@ export default function LoginPage() {
                   ✅ OTP bheja — <strong>{email}</strong> check karo!
                 </div>
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>6-Digit OTP Daalo</label>
-                <input type="number" value={otp} onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()} placeholder="123456" style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 8, textAlign: 'center' }} />
+                <input
+                  type="number"
+                  value={otp}
+                  onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
+                  placeholder="123456"
+                  style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 8, textAlign: 'center' }}
+                />
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
-                <button onClick={handleVerifyOtp} disabled={loading} style={{ width: '100%', marginTop: 12, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.green, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer' }}>
-                  {loading ? '⏳ Verify ho raha hai...' : '✅ OTP Verify Karo — Andar Jao!'}
+
+                {/* ✅ OTP VERIFY BUTTON WITH ANIMATION */}
+                <button
+                  onClick={handleVerifyOtp}
+                  disabled={loading || verifySuccess}
+                  style={{
+                    width: '100%', marginTop: 12, padding: '14px',
+                    fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
+                    backgroundColor: verifySuccess ? COLORS.green : loading ? '#CBD5E1' : COLORS.green,
+                    color: '#FFF',
+                    cursor: (loading || verifySuccess) ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: verifySuccess ? '0 2px 14px rgba(5,150,105,0.4)' : 'none',
+                  }}>
+                  {verifySuccess ? '🎉 Welcome! Dashboard khul raha hai...' : loading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                      <span style={{
+                        width: 16, height: 16, border: '2px solid #FFF',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        display: 'inline-block',
+                        animation: 'spin 0.8s linear infinite',
+                      }} />
+                      Verify ho raha hai...
+                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                    </span>
+                  ) : '✅ OTP Verify Karo — Andar Jao!'}
                 </button>
+
                 <button onClick={() => { setStep('email'); setOtp(''); setError(''); }} style={{ width: '100%', marginTop: 10, padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>
                   ← Wapas Email Change Karo
                 </button>
@@ -230,6 +282,15 @@ export default function LoginPage() {
                 <span style={{ color: COLORS.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
               </div>
             ))}
+          </div>
+
+          {/* TRUST BADGES */}
+          <div style={{ ...cardStyle, textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
+              {['🔒 Secure Login', '⚡ Instant Access', '🇮🇳 Made in India', '📊 Real Data'].map(b => (
+                <div key={b} style={{ fontSize: 11, fontWeight: 600, color: COLORS.muted }}>{b}</div>
+              ))}
+            </div>
           </div>
 
           <div style={{ textAlign: 'center', paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
