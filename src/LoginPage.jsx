@@ -73,16 +73,29 @@ export default function LoginPage() {
       if (verifyError) throw verifyError;
       if (data?.session) {
         setVerifySuccess(true);
-        await supabase.from('profiles').upsert({
-          id: data.session.user.id,
-          email: email.trim().toLowerCase(),
-          name: name.trim(),
-        }, { onConflict: 'id' });
+
+        // ✅ FIX: Pehle session set karo, phir naam save karo
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
-        await new Promise(r => setTimeout(r, 1000));
+
+        // ✅ naam save karo profiles mein
+        const { error: upsertError } = await supabase.from('profiles').upsert({
+          id: data.session.user.id,
+          email: email.trim().toLowerCase(),
+          name: name.trim(),
+          trial_start_date: new Date().toISOString(),
+        }, { onConflict: 'id', ignoreDuplicates: false });
+
+        if (upsertError) {
+          // Agar upsert fail ho toh sirf name update karo
+          await supabase.from('profiles')
+            .update({ name: name.trim() })
+            .eq('id', data.session.user.id);
+        }
+
+        await new Promise(r => setTimeout(r, 800));
         window.location.href = '/';
       } else {
         setError('Session nahi mila. Dobara try karo.');
@@ -132,21 +145,11 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* ✅ SOCIAL PROOF BANNER */}
-        <div style={{
-          backgroundColor: COLORS.text,
-          padding: '12px 20px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-        }}>
-          <div style={{ display: 'flex', gap: -6 }}>
+        {/* SOCIAL PROOF BANNER */}
+        <div style={{ backgroundColor: COLORS.text, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <div style={{ display: 'flex' }}>
             {['👨', '👩', '🧑', '👨', '👩'].map((e, i) => (
-              <div key={i} style={{
-                width: 28, height: 28, borderRadius: '50%',
-                backgroundColor: COLORS.goldLight,
-                border: `2px solid ${COLORS.text}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 14, marginLeft: i === 0 ? 0 : -8,
-              }}>{e}</div>
+              <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: COLORS.goldLight, border: `2px solid ${COLORS.text}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: i === 0 ? 0 : -8 }}>{e}</div>
             ))}
           </div>
           <div style={{ fontSize: 12, color: '#FFF', fontWeight: 600 }}>
@@ -231,28 +234,16 @@ export default function LoginPage() {
                 />
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
 
-                {/* ✅ OTP VERIFY BUTTON WITH ANIMATION */}
-                <button
-                  onClick={handleVerifyOtp}
-                  disabled={loading || verifySuccess}
-                  style={{
-                    width: '100%', marginTop: 12, padding: '14px',
-                    fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
-                    backgroundColor: verifySuccess ? COLORS.green : loading ? '#CBD5E1' : COLORS.green,
-                    color: '#FFF',
-                    cursor: (loading || verifySuccess) ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: verifySuccess ? '0 2px 14px rgba(5,150,105,0.4)' : 'none',
-                  }}>
+                <button onClick={handleVerifyOtp} disabled={loading || verifySuccess} style={{
+                  width: '100%', marginTop: 12, padding: '14px',
+                  fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
+                  backgroundColor: verifySuccess ? COLORS.green : loading ? '#CBD5E1' : COLORS.green,
+                  color: '#FFF', cursor: (loading || verifySuccess) ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                }}>
                   {verifySuccess ? '🎉 Welcome! Dashboard khul raha hai...' : loading ? (
                     <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      <span style={{
-                        width: 16, height: 16, border: '2px solid #FFF',
-                        borderTop: '2px solid transparent',
-                        borderRadius: '50%',
-                        display: 'inline-block',
-                        animation: 'spin 0.8s linear infinite',
-                      }} />
+                      <span style={{ width: 16, height: 16, border: '2px solid #FFF', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
                       Verify ho raha hai...
                       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
                     </span>
