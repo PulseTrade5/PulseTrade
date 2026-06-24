@@ -26,9 +26,29 @@ function fmtCountdown(ms) {
   return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
 }
 
+function getRashi(dob) {
+  if (!dob) return null;
+  const date = new Date(dob);
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return { name: 'Mesh', sign: '♈', en: 'Aries' };
+  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return { name: 'Vrishabh', sign: '♉', en: 'Taurus' };
+  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return { name: 'Mithun', sign: '♊', en: 'Gemini' };
+  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return { name: 'Kark', sign: '♋', en: 'Cancer' };
+  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return { name: 'Simha', sign: '♌', en: 'Leo' };
+  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return { name: 'Kanya', sign: '♍', en: 'Virgo' };
+  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return { name: 'Tula', sign: '♎', en: 'Libra' };
+  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return { name: 'Vrishchik', sign: '♏', en: 'Scorpio' };
+  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return { name: 'Dhanu', sign: '♐', en: 'Sagittarius' };
+  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return { name: 'Makar', sign: '♑', en: 'Capricorn' };
+  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return { name: 'Kumbh', sign: '♒', en: 'Aquarius' };
+  return { name: 'Meen', sign: '♓', en: 'Pisces' };
+}
+
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
+  const [dob, setDob] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('email');
   const [loading, setLoading] = useState(false);
@@ -39,12 +59,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
-    // ✅ Check referral code in URL
     const params = new URLSearchParams(window.location.search);
     const ref = params.get('ref');
     if (ref) setRefCode(ref);
     return () => clearInterval(t);
   }, []);
+
+  const rashi = getRashi(dob);
 
   const handleSendOtp = async () => {
     const trimmed = email.trim().toLowerCase();
@@ -85,14 +106,13 @@ export default function LoginPage() {
           refresh_token: data.session.refresh_token,
         });
 
-        // ✅ Generate referral code from name
         const userRefCode = name.trim().replace(/\s+/g, '').toLowerCase() + Math.floor(Math.random() * 100);
 
-        // ✅ Save profile with referral info
         const { error: upsertError } = await supabase.from('profiles').upsert({
           id: data.session.user.id,
           email: email.trim().toLowerCase(),
           name: name.trim(),
+          dob: dob || null,
           trial_start_date: new Date().toISOString(),
           referral_code: userRefCode,
           referred_by: refCode || null,
@@ -100,11 +120,10 @@ export default function LoginPage() {
 
         if (upsertError) {
           await supabase.from('profiles')
-            .update({ name: name.trim() })
+            .update({ name: name.trim(), dob: dob || null })
             .eq('id', data.session.user.id);
         }
 
-        // ✅ Agar referral code tha toh referrer ko points do
         if (refCode) {
           const { data: referrer } = await supabase
             .from('profiles')
@@ -113,7 +132,6 @@ export default function LoginPage() {
             .single();
 
           if (referrer) {
-            // Referrer ko +100 points
             const { data: pts } = await supabase
               .from('pulse_points')
               .select('total_points, referral_count')
@@ -122,18 +140,14 @@ export default function LoginPage() {
 
             if (pts) {
               await supabase.from('pulse_points')
-                .update({
-                  total_points: (pts.total_points || 0) + 100,
-                })
+                .update({ total_points: (pts.total_points || 0) + 100 })
                 .eq('user_id', referrer.id);
             }
 
-            // Referrer ka referral count update karo profiles mein
             await supabase.from('profiles')
               .update({ referral_count: supabase.rpc('increment', { row_id: referrer.id }) })
               .eq('id', referrer.id);
 
-            // Naye user ko bhi +50 points
             await supabase.from('pulse_points').upsert({
               user_id: data.session.user.id,
               total_points: 50,
@@ -193,22 +207,15 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* ✅ REFERRAL BANNER */}
+        {/* REFERRAL BANNER */}
         {refCode && (
-          <div style={{
-            background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
-            padding: '12px 20px', textAlign: 'center',
-          }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>
-              🎁 {refCode} ne tumhe invite kiya!
-            </div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
-              Join karo → Tumhe +50 Pulse Points milenge! 🎉
-            </div>
+          <div style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', padding: '12px 20px', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🎁 {refCode} ne tumhe invite kiya!</div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Join karo → Tumhe +50 Pulse Points milenge! 🎉</div>
           </div>
         )}
 
-        {/* SOCIAL PROOF BANNER */}
+        {/* SOCIAL PROOF */}
         <div style={{ backgroundColor: COLORS.text, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ display: 'flex' }}>
             {['👨', '👩', '🧑', '👨', '👩'].map((e, i) => (
@@ -233,7 +240,7 @@ export default function LoginPage() {
               NSE/BSE stocks ka AI-powered technical analysis — Hinglish mein.
             </p>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {['🎯 Trend Analysis', '📊 RSI • MACD • ADX', '🔊 Pulse Bolta Hai', '⭐ Watchlist', '📧 Email Alerts'].map(f => (
+              {['🎯 Trend Analysis', '📊 RSI • MACD • ADX', '🔊 Pulse Bolta Hai', '⭐ Watchlist', '📧 Email Alerts', '🪐 Pulse Astro'].map(f => (
                 <span key={f} style={{ fontSize: 11, fontWeight: 700, color: COLORS.goldDim, backgroundColor: COLORS.goldLight, padding: '5px 12px', borderRadius: 20, border: `1px solid #f0c040` }}>{f}</span>
               ))}
             </div>
@@ -255,12 +262,47 @@ export default function LoginPage() {
 
             {step === 'email' ? (
               <div>
+                {/* NAAM */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
                 <input type="text" value={name} onChange={e => { setName(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="e.g. Rahul, Priya" style={{ ...inputStyle, marginBottom: 12 }} />
+
+                {/* EMAIL */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
-                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={inputStyle} />
+                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={{ ...inputStyle, marginBottom: 12 }} />
+
+                {/* DOB */}
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
+                  Janam Tithi 🪐 <span style={{ fontSize: 10, color: COLORS.mutedLight, fontWeight: 400 }}>(optional — Pulse Astro ke liye)</span>
+                </label>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  max={new Date().toISOString().split('T')[0]}
+                  style={{ ...inputStyle, marginBottom: 8 }}
+                />
+
+                {/* RASHI PREVIEW */}
+                {rashi && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    backgroundColor: '#fdf4ff', border: '1.5px solid #e9d5ff',
+                    borderRadius: 10, padding: '10px 14px', marginBottom: 12,
+                  }}>
+                    <span style={{ fontSize: 22 }}>{rashi.sign}</span>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: '#7C3AED' }}>
+                        Teri Rashi: {rashi.name} ({rashi.en})
+                      </div>
+                      <div style={{ fontSize: 11, color: '#9333ea' }}>
+                        🪐 Personalized Pulse Astro milega!
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
-                <button onClick={handleSendOtp} disabled={loading} style={{ width: '100%', marginTop: 12, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.gold, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)' }}>
+                <button onClick={handleSendOtp} disabled={loading} style={{ width: '100%', marginTop: 4, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.gold, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)' }}>
                   {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
                 </button>
                 <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
@@ -318,7 +360,7 @@ export default function LoginPage() {
           {/* TRUST BADGES */}
           <div style={{ ...cardStyle, textAlign: 'center' }}>
             <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-              {['🔒 Secure Login', '⚡ Instant Access', '🇮🇳 Made in India', '📊 Real Data'].map(b => (
+              {['🔒 Secure Login', '⚡ Instant Access', '🇮🇳 Made in India', '📊 Real Data', '🪐 Pulse Astro'].map(b => (
                 <div key={b} style={{ fontSize: 11, fontWeight: 600, color: COLORS.muted }}>{b}</div>
               ))}
             </div>
