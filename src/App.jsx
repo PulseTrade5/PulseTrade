@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
+import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 
 
@@ -181,6 +182,7 @@ function App() {
   const [profile, setProfile] = useState(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
+  const [showLogin, setShowLogin] = useState(false); // ✅ NEW
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -216,7 +218,10 @@ function App() {
       });
   }, [session]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); };
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowLogin(false);
+  };
 
   const checkAccess = () => {
     if (!profile) return 'loading';
@@ -246,9 +251,12 @@ function App() {
     );
   }
 
-  if (!session) return <LoginPage />;
+  // ✅ Agar logged in nahi hai
+  if (!session) {
+    if (showLogin) return <LoginPage />;
+    return <LandingPage onLogin={() => setShowLogin(true)} />;
+  }
 
-  // ── ADMIN ROUTE ──
   if (path === '/admin') return <AdminPanel user={session.user} onLogout={handleLogout} />;
 
   const access = checkAccess();
@@ -260,16 +268,9 @@ function App() {
 
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
-  // Email se naam nikalo: prabhat@gmail.com -> Prabhat
-  const nameFromEmail = session?.user?.email
-    ?.split('@')[0]
-    ?.split('.')[0]
-    ?.replace(/[0-9]/g, '')
-    ?.replace(/^./, c => c.toUpperCase()) || 'Trader';
-
   return (
     <>
-      <GreetingToast name={nameFromEmail} show={showGreeting} />
+      <GreetingToast name={profile?.name} show={showGreeting} />
       <StockDashboard user={session.user} />
     </>
   );
