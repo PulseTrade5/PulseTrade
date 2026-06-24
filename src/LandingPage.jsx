@@ -61,6 +61,24 @@ export default function LandingPage({ onLogin }) {
           </button>
         </div>
 
+        {/* ✅ FOUNDING MEMBER BANNER */}
+        <div style={{
+          background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+          padding: '12px 20px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        }}>
+          <span style={{ fontSize: 18 }}>🏅</span>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#FFF' }}>
+              Founding Member Deal — Sirf 87 spots baaki!
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>
+              ₹599 mein 2 Months + OG Trader Badge 🎁
+            </div>
+          </div>
+          <span style={{ fontSize: 18 }}>🏅</span>
+        </div>
+
         {/* HERO */}
         <div style={{
           padding: '48px 24px 40px',
