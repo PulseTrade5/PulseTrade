@@ -102,19 +102,23 @@ function PaymentStatusPage() {
 }
 
 async function setTrialIfNew(user) {
-  const meta = user.user_metadata || {};
-  if (meta.trial_end_date || meta.is_paid) return;
-  const trialEnd = new Date();
-  trialEnd.setDate(trialEnd.getDate() + 5);
-  await supabase.auth.updateUser({ data: { trial_end_date: trialEnd.toISOString() } });
   try {
-    await fetch('/api/send-welcome', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: user.email, trialEndDate: trialEnd.toISOString() }),
-    });
+    const meta = user.user_metadata || {};
+    if (meta.trial_end_date || meta.is_paid) return;
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + 5);
+    await supabase.auth.updateUser({ data: { trial_end_date: trialEnd.toISOString() } });
+    try {
+      await fetch('/api/send-welcome', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, trialEndDate: trialEnd.toISOString() }),
+      });
+    } catch (err) {
+      console.error('Welcome email failed:', err);
+    }
   } catch (err) {
-    console.error('Welcome email failed:', err);
+    console.error('setTrialIfNew failed:', err);
   }
 }
 
