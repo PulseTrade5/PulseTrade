@@ -555,7 +555,7 @@ export default function StockDashboard({ user }) {
                     <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={C.red} C={C} />
                   </div>
 
-                  {pulseData && <PulseBoltaHai stockData={pulseData} />}
+                  {pulseData && <PulseBoltaHai stockData={pulseData} userName={user?.email?.split('@')[0]?.split('.')[0]?.replace(/[0-9]/g, '')?.replace(/^./, c => c.toUpperCase())} />}
 
                   <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.surfaceBorder}` }}>
