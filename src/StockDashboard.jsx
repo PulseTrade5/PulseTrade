@@ -240,7 +240,7 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   );
 }
 
-export default function StockDashboard({ user }) {
+export default function StockDashboard({ user, onChallenge }) {
   const [dark, setDark] = useState(() => localStorage.getItem('pt_dark') === 'true');
   const C = dark ? DARK : LIGHT;
 
@@ -398,6 +398,12 @@ export default function StockDashboard({ user }) {
                 color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
               }}>⚙️ Admin</a>
             )}
+            <button onClick={() => onChallenge && onChallenge()} style={{
+              fontSize: 11, padding: '5px 14px', borderRadius: 20,
+              border: `1.5px solid ${C.gold}`,
+              backgroundColor: C.goldLight,
+              color: C.goldDim, cursor: 'pointer', fontWeight: 700,
+            }}>🎯 Challenge</button>
             <button onClick={handleLogout} style={{
               fontSize: 12, padding: '6px 14px', borderRadius: 20,
               border: `1.5px solid ${C.surfaceBorder}`,
