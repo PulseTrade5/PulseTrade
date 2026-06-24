@@ -5,7 +5,6 @@ import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
-import TradingDiary from './TradingDiary';
 
 
 function GreetingToast({ name, show }) {
@@ -29,19 +28,23 @@ function GreetingToast({ name, show }) {
   );
 }
 
+// ✅ SPLASH SCREEN
 function SplashScreen() {
   const [dot, setDot] = useState(0);
+
   useEffect(() => {
     const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
     return () => clearInterval(t);
   }, []);
+
   return (
     <div style={{
       minHeight: '100vh',
       background: 'linear-gradient(160deg, #0D1117 0%, #0D2B1F 100%)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Inter, system-ui, sans-serif', gap: 20,
+      fontFamily: 'Inter, system-ui, sans-serif',
+      gap: 20,
     }}>
       <style>{`
         @keyframes pulse-glow {
@@ -53,13 +56,16 @@ function SplashScreen() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
+
       <div style={{
         width: 110, height: 110, borderRadius: '50%',
         background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
         border: '3px solid #3FAE7C',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 60, animation: 'pulse-glow 2s ease-in-out infinite',
+        fontSize: 60,
+        animation: 'pulse-glow 2s ease-in-out infinite',
       }}>🐼</div>
+
       <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
         <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
           Pulse<span style={{ color: '#C8920A' }}>Trade</span>
@@ -68,6 +74,7 @@ function SplashScreen() {
           Trade with Pulse, Profit with Discipline
         </div>
       </div>
+
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{
@@ -77,7 +84,10 @@ function SplashScreen() {
           }} />
         ))}
       </div>
-      <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>🔱 हर हर महादेव 🔱</div>
+
+      <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
+        🔱 हर हर महादेव 🔱
+      </div>
     </div>
   );
 }
@@ -231,76 +241,6 @@ function TrialExpiredPage({ user, onLogout }) {
   );
 }
 
-// ✅ BOTTOM NAV
-function BottomNav({ active, onChange }) {
-  const tabs = [
-    { id: 'check', icon: '🔍', label: 'Check' },
-    { id: 'watchlist', icon: '⭐', label: 'Watchlist' },
-    { id: 'challenge', icon: '🎯', label: 'Challenge' },
-    { id: 'diary', icon: '📒', label: 'Diary' },
-    { id: 'profile', icon: '👤', label: 'Profile' },
-  ];
-  return (
-    <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0,
-      background: 'rgba(13, 17, 23, 0.97)',
-      backdropFilter: 'blur(20px)',
-      borderTop: '1px solid #1e2d3d',
-      display: 'flex', padding: '8px 0 14px', zIndex: 1000,
-    }}>
-      {tabs.map((tab) => {
-        const isActive = active === tab.id;
-        return (
-          <button key={tab.id} onClick={() => onChange(tab.id)} style={{
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', gap: 3,
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: '4px 0', position: 'relative',
-          }}>
-            {isActive && (
-              <div style={{
-                position: 'absolute', top: -8, width: 28, height: 2,
-                background: '#C8920A', borderRadius: '0 0 4px 4px',
-              }} />
-            )}
-            <span style={{ fontSize: 19 }}>{tab.icon}</span>
-            <span style={{ fontSize: 10, fontWeight: isActive ? 700 : 500, color: isActive ? '#C8920A' : '#475569' }}>
-              {tab.label}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// ✅ PROFILE TAB
-function ProfileTab({ user, profile, onLogout }) {
-  const access = profile?.is_subscribed ? 'Subscribed' : 'Trial';
-  return (
-    <div style={{ padding: '20px 16px 100px', maxWidth: 480, margin: '0 auto' }}>
-      <h3 style={{ color: '#C8920A', fontWeight: 700, marginBottom: 16 }}>👤 Mera Profile</h3>
-      <div style={{ background: '#161B22', borderRadius: 16, padding: 20, border: '1px solid #1e2d3d', textAlign: 'center', marginBottom: 16 }}>
-        <div style={{ fontSize: 52 }}>🐼</div>
-        <div style={{ color: '#E8E6E0', fontWeight: 700, fontSize: 16, marginTop: 8 }}>{profile?.name || 'Pulse Trader'}</div>
-        <div style={{ color: '#8B92A0', fontSize: 12, marginTop: 4 }}>{user?.email}</div>
-        <div style={{ color: '#C8920A', fontSize: 12, marginTop: 4 }}>🔱 हर हर महादेव 🔱</div>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
-        {[['Plan', access], ['Points', '⚡ 5 pts']].map(([k, v]) => (
-          <div key={k} style={{ background: '#161B22', borderRadius: 12, padding: 14, border: '1px solid #1e2d3d', textAlign: 'center' }}>
-            <div style={{ color: '#64748b', fontSize: 11 }}>{k}</div>
-            <div style={{ color: '#E8E6E0', fontWeight: 700, fontSize: 15, marginTop: 4 }}>{v}</div>
-          </div>
-        ))}
-      </div>
-      <button onClick={onLogout} style={{ width: '100%', padding: 14, background: '#1e2d3d', color: '#E8E6E0', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
-        🚪 Logout
-      </button>
-    </div>
-  );
-}
-
 function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -309,7 +249,7 @@ function App() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [activeTab, setActiveTab] = useState('check');
+  const [showChallenge, setShowChallenge] = useState(false); // ✅ Challenge state
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
@@ -354,7 +294,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setShowLogin(false);
-    setActiveTab('check');
+    setShowChallenge(false);
   };
 
   const checkAccess = () => {
@@ -389,35 +329,21 @@ function App() {
   if (access === 'loading') return <SplashScreen />;
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
-  // ✅ MAIN APP WITH BOTTOM NAV
+  // ✅ Challenge page
+  if (showChallenge) return (
+    <ChallengeBoard
+      user={session.user}
+      onBack={() => setShowChallenge(false)}
+    />
+  );
+
   return (
     <>
       <GreetingToast name={profile?.name} show={showGreeting} />
-      <div style={{ paddingBottom: 70 }}>
-        {activeTab === 'check' && (
-          <StockDashboard
-            user={session.user}
-            profile={profile}
-            onChallenge={() => setActiveTab('challenge')}
-          />
-        )}
-        {activeTab === 'watchlist' && (
-          <StockDashboard
-            user={session.user}
-            profile={profile}
-            onChallenge={() => setActiveTab('challenge')}
-            defaultTab="watchlist"
-          />
-        )}
-        {activeTab === 'challenge' && (
-          <ChallengeBoard user={session.user} onBack={() => setActiveTab('check')} />
-        )}
-        {activeTab === 'diary' && <TradingDiary />}
-        {activeTab === 'profile' && (
-          <ProfileTab user={session.user} profile={profile} onLogout={handleLogout} />
-        )}
-      </div>
-      <BottomNav active={activeTab} onChange={setActiveTab} />
+      <StockDashboard
+        user={session.user}
+        onChallenge={() => setShowChallenge(true)}
+      />
     </>
   );
 }
