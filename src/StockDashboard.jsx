@@ -408,4 +408,355 @@ export default function StockDashboard({ user }) {
 
         {/* SEBI BANNER */}
         <div style={{
-          backgroundColor: C.s
+          backgroundColor: C.sebiBg, borderBottom: `2px solid ${C.sebiBorder}`,
+          padding: '12px 20px', display: 'flex', gap: 10, alignItems: 'flex-start',
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>🛡️</span>
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 800, color: C.sebi, marginBottom: 3 }}>SEBI DISCLAIMER — ZAROORI PADHE</div>
+            <div style={{ fontSize: 11.5, color: C.sebi, lineHeight: 1.6, opacity: 0.85 }}>
+              Yeh platform sirf <strong>technical trend analysis</strong> provide karta hai — yeh <strong>investment advice nahi hai</strong>. All outputs are algorithmic technical-analysis estimates for educational and informational purposes only. SEBI-registered advisor se salah zaroor lein.
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '20px 20px 0' }}>
+          <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
+
+          {/* TABS */}
+          <div style={{
+            display: 'flex', gap: 4, marginBottom: 20,
+            backgroundColor: C.surface, padding: 4,
+            borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
+          }}>
+            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
+              <button key={key} onClick={() => setTab(key)} style={{
+                flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
+                borderRadius: 10, border: 'none',
+                backgroundColor: tab===key ? C.gold : 'transparent',
+                color: tab===key ? '#FFF' : C.muted,
+                cursor: 'pointer', transition: 'background 0.2s',
+              }}>{label}</button>
+            ))}
+          </div>
+
+          {/* SUBSCRIBE */}
+          <div style={{ textAlign: 'center', marginBottom: 20 }}>
+            <SubscribeButton userEmail={user?.email} userId={user?.id} />
+          </div>
+
+          {tab === 'check' && (
+            <>
+              {/* SEARCH CARD */}
+              <div style={cardStyle}>
+                <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
+                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+                  {POPULAR.map(s => (
+                    <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
+                      fontSize: 11, padding: '5px 12px', borderRadius: 20,
+                      border: `1.5px solid ${symbolInput===s ? C.gold : C.surfaceBorder}`,
+                      backgroundColor: symbolInput===s ? C.goldLight : 'transparent',
+                      color: symbolInput===s ? C.goldDim : C.muted,
+                      cursor: 'pointer', fontWeight: 600,
+                    }}>{s}</button>
+                  ))}
+                </div>
+                <div style={{ marginTop: 16 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                    <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, fontWeight: 700 }}>POSITION SIZING</label>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {[['risk','Risk ₹'],['manual','Qty']].map(([m,l]) => (
+                        <button key={m} onClick={() => setSizingMode(m)} style={{
+                          fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
+                          border: `1.5px solid ${sizingMode===m ? C.gold : C.surfaceBorder}`,
+                          backgroundColor: sizingMode===m ? C.goldLight : 'transparent',
+                          color: sizingMode===m ? C.goldDim : C.muted, cursor: 'pointer',
+                        }}>{l}</button>
+                      ))}
+                    </div>
+                  </div>
+                  {sizingMode === 'risk' ? (
+                    <>
+                      <input type="number" value={riskAmount} onChange={e => setRiskAmount(e.target.value)} placeholder="Risk amount e.g. 1000" style={inputStyle} />
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+                        <span style={{ fontSize: 12, color: C.muted }}>Calculated Qty</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>{qty} shares</span>
+                      </div>
+                    </>
+                  ) : (
+                    <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="Qty e.g. 10" style={inputStyle} />
+                  )}
+                </div>
+                <button onClick={() => handleSearch()} disabled={loading} style={{
+                  width: '100%', marginTop: 14, padding: '12px',
+                  fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
+                  backgroundColor: loading ? C.surfaceBorder : C.gold,
+                  color: loading ? C.muted : '#FFF',
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  boxShadow: loading ? 'none' : '0 2px 12px rgba(200,146,10,0.3)',
+                }}>
+                  {loading ? '⏳ Check ho raha hai...' : '🔍 Trend Nikalo'}
+                </button>
+                {error && <p style={{ fontSize: 12, color: C.red, marginTop: 8, fontWeight: 600 }}>{error}</p>}
+              </div>
+
+              {result && (
+                <>
+                  {/* ✅ PULSE SCORE HERO BANNER */}
+                  <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
+
+                  {stockInfo && (
+                    <div style={cardStyle}>
+                      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 10, fontWeight: 700 }}>📊 STOCK INFO</div>
+                      {stockInfo.longName && (
+                        <div style={{ marginBottom: 12 }}>
+                          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 6 }}>{stockInfo.longName}</div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: 26, fontWeight: 800, color: C.text }}>{fmtINR(stockInfo.regularMarketPrice || result.lastClose)}</span>
+                            {stockInfo.regularMarketChange !== undefined && (
+                              <span style={{
+                                fontSize: 12, fontWeight: 700,
+                                color: stockInfo.regularMarketChange >= 0 ? C.green : C.red,
+                                backgroundColor: stockInfo.regularMarketChange >= 0 ? C.greenLight : C.redLight,
+                                padding: '3px 10px', borderRadius: 20,
+                              }}>
+                                {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'} {fmtINR(Math.abs(stockInfo.regularMarketChange))} ({Math.abs(stockInfo.regularMarketChangePercent || 0).toFixed(2)}%)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {[
+                        ['Market Cap', fmtCr(stockInfo.marketCap)],
+                        ['P/E Ratio', stockInfo.trailingPE ? stockInfo.trailingPE.toFixed(2) : '—'],
+                        ['Aaj ka Volume', fmtVol(stockInfo.regularMarketVolume)],
+                        ['Avg Volume (3M)', fmtVol(stockInfo.averageDailyVolume3Month)],
+                        ['Exchange', stockInfo.exchangeName || '—'],
+                      ].map(([label, value]) => (
+                        <div key={label} style={rowStyle}>
+                          <span style={{ color: C.muted }}>{label}</span>
+                          <span style={{ fontWeight: 600, color: C.text }}>{value}</span>
+                        </div>
+                      ))}
+                      {result.week52High && result.week52Low && (
+                        <Week52Bar current={result.lastClose} low={result.week52Low} high={result.week52High} C={C} />
+                      )}
+                    </div>
+                  )}
+
+                  <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} C={C} />
+
+                  <div style={cardStyle}>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>📈 INDICATOR STRENGTH</div>
+                    <IndicatorBar label={`RSI — ${result.rsi > 70 ? 'Overbought' : result.rsi < 30 ? 'Oversold' : 'Neutral zone'}`} value={result.rsi} max={100} color={result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : C.gold} C={C} />
+                    <IndicatorBar label={`ADX — ${result.trendStrength}`} value={result.adx} max={60} color={result.adx >= 25 ? C.green : C.muted} C={C} />
+                    <IndicatorBar label="Long Score" value={result.longScore} max={100} color={C.green} C={C} />
+                    <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={C.red} C={C} />
+                  </div>
+
+                  {pulseData && <PulseBoltaHai stockData={pulseData} />}
+
+                  <div style={cardStyle}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.surfaceBorder}` }}>
+                      <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{stockName}</span>
+                      <span style={{
+                        fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
+                        backgroundColor: trendColor === C.green ? C.greenLight : trendColor === C.red ? C.redLight : C.goldLight,
+                        color: trendColor,
+                      }}>{result.trend}</span>
+                    </div>
+                    {[
+                      ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? C.green : C.red],
+                      ['RSI', result.rsi, result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : null],
+                      ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
+                      ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? C.green : C.red],
+                      ['Long Score', `${result.longScore} / 100`, C.green],
+                      ['Short Score', `${result.shortScore} / 100`, C.red],
+                    ].map(([label, value, color]) => (
+                      <div key={label} style={rowStyle}>
+                        <span style={{ color: C.muted }}>{label}</span>
+                        <span style={{ fontWeight: 700, color: color || C.textSecondary }}>{value}</span>
+                      </div>
+                    ))}
+                    <button onClick={() => {
+                      const exists = watchlist.some(w => w.symbol === stockName);
+                      setWatchlist(prev => exists ? prev.filter(w => w.symbol !== stockName) : [{ symbol: stockName, lastTrend: result.trend, lastPrice: result.lastClose, lastChecked: new Date().toISOString() }, ...prev].slice(0, 30));
+                    }} style={{
+                      width: '100%', marginTop: 14, padding: '9px',
+                      fontSize: 13, fontWeight: 700, borderRadius: 10,
+                      border: `1.5px solid ${C.gold}`,
+                      backgroundColor: 'transparent', color: C.gold, cursor: 'pointer',
+                    }}>
+                      {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
+                    </button>
+                  </div>
+
+                  {result.signal ? (
+                    <div style={{
+                      backgroundColor: C.surface,
+                      border: `2px solid ${result.signal==='LONG' ? C.green : C.red}`,
+                      borderRadius: 16, padding: 18, marginBottom: 16,
+                      boxShadow: `0 4px 20px ${result.signal==='LONG' ? C.green : C.red}18`,
+                    }}>
+                      <div style={{
+                        fontSize: 15, fontWeight: 800,
+                        color: result.signal==='LONG' ? C.green : C.red,
+                        backgroundColor: result.signal==='LONG' ? C.greenLight : C.redLight,
+                        padding: '8px 14px', borderRadius: 10, marginBottom: 14,
+                      }}>
+                        {result.signal==='LONG' ? '📈 Bullish Setup' : '📉 Bearish Setup'}
+                      </div>
+                      {[
+                        ['Entry', fmtINR(result.entry)],
+                        ['Stop Loss', fmtINR(result.stopLoss)],
+                        ['Target 1 (3%)', fmtINR(result.targets?.[0])],
+                        ['Target 2 (6%)', fmtINR(result.targets?.[1])],
+                        ['Target 3 (10%)', fmtINR(result.targets?.[2])],
+                        ['Suggested Hold', result.suggestedHold],
+                      ].map(([label, value]) => (
+                        <div key={label} style={rowStyle}>
+                          <span style={{ color: C.muted }}>{label}</span>
+                          <span style={{ fontWeight: 700, color: C.text }}>{value}</span>
+                        </div>
+                      ))}
+                      <button onClick={handleSendAlert} disabled={alertSending || alertSent} style={{
+                        width: '100%', marginTop: 14, padding: '12px',
+                        fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
+                        backgroundColor: alertSent ? C.green : C.gold,
+                        color: '#FFF', cursor: alertSent ? 'default' : 'pointer',
+                      }}>
+                        {alertSent ? '✅ Alert Bhej Diya!' : alertSending ? '📨 Bhej rahe hain...' : '📧 Email Alert Bhejo'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{
+                      backgroundColor: C.surface, border: `1px dashed ${C.surfaceBorder}`,
+                      borderRadius: 16, padding: 18, marginBottom: 16,
+                      fontSize: 13, color: C.muted, textAlign: 'center',
+                    }}>
+                      ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
+                    </div>
+                  )}
+
+                  <div style={cardStyle}>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+                      {['BUY','SELL'].map(d => (
+                        <button key={d} onClick={() => setDirection(d)} style={{
+                          flex: 1, padding: '9px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
+                          backgroundColor: direction===d ? (d==='BUY' ? C.green : C.red) : C.bg,
+                          color: direction===d ? '#FFF' : C.muted, cursor: 'pointer',
+                        }}>{d}</button>
+                      ))}
+                    </div>
+                    {[
+                      ['Entry Price', fmtINR(ep)],
+                      ['Stop Loss Price', fmtINR(stopLossPrice)],
+                      ['Quantity', `${qty} shares`],
+                      ['Max Loss', fmtINR(lossAmount)],
+                      ['Risk:Reward (10%)', `1 : ${riskReward}`],
+                    ].map(([label, value]) => (
+                      <div key={label} style={rowStyle}>
+                        <span style={{ color: C.muted }}>{label}</span>
+                        <span style={{ fontWeight: 700, color: C.textSecondary }}>{value}</span>
+                      </div>
+                    ))}
+                    <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
+                      {tierResults.map(t => (
+                        <div key={t.percent} style={{
+                          flex: 1, backgroundColor: C.goldLight, borderRadius: 12,
+                          padding: '12px 8px', textAlign: 'center',
+                          border: `1px solid ${C.surfaceBorder}`,
+                        }}>
+                          <div style={{ fontSize: 10, color: C.goldDim, fontWeight: 700 }}>T{TIERS.indexOf(t.percent)+1} ({t.percent}%)</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginTop: 2 }}>{fmtINR(t.price)}</div>
+                          <div style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>+{fmtINR(t.profit)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+
+          {tab === 'watchlist' && (
+            <div style={cardStyle}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
+              {watchlist.length === 0 ? (
+                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
+              ) : watchlist.map(w => (
+                <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: C.text }}>{w.symbol}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                      <span style={{ fontSize: 12, color: C.muted }}>{fmtINR(w.lastPrice)}</span>
+                      <span style={{
+                        fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
+                        color: w.lastTrend === 'Bullish' ? C.green : C.red,
+                        backgroundColor: w.lastTrend === 'Bullish' ? C.greenLight : C.redLight,
+                      }}>{w.lastTrend}</span>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: C.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
+                    <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'track' && (
+            <div style={cardStyle}>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
+              {history.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                  {[
+                    ['Wins', history.filter(h=>h.outcome==='win').length, C.green, C.greenLight],
+                    ['Losses', history.filter(h=>h.outcome==='loss').length, C.red, C.redLight],
+                    ['Pending', history.filter(h=>h.outcome==='pending').length, C.gold, C.goldLight],
+                  ].map(([l, v, c, bg]) => (
+                    <div key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
+                      <div style={{ fontSize: 11, color: c, fontWeight: 700 }}>{l}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {history.length === 0 ? (
+                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi koi history nahi hai.</p>
+              ) : history.map(h => (
+                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: C.text }}>{h.symbol}</div>
+                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{fmtINR(h.price)} • {h.trend}</div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {['win','loss','pending'].map(o => (
+                      <button key={o} onClick={() => setHistory(prev => prev.map(x => x.id===h.id ? {...x, outcome: o} : x))} style={{
+                        fontSize: 11, padding: '5px 10px', borderRadius: 8, border: 'none',
+                        backgroundColor: h.outcome===o ? (o==='win' ? C.green : o==='loss' ? C.red : C.gold) : C.bg,
+                        color: h.outcome===o ? '#FFF' : C.muted,
+                        cursor: 'pointer', fontWeight: 700,
+                      }}>
+                        {o==='win' ? '✓' : o==='loss' ? '✗' : '⏳'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
+            <a href="/terms" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
+            <a href="/refund" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
+            <a href="/contact" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
