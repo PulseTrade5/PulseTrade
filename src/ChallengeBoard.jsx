@@ -454,5 +454,53 @@ export default function ChallengeBoard({ user, onBack }) {
                         <div style={{ fontSize: 11, color: COLORS.muted }}>{badge.desc}</div>
                       </div>
                       {unlocked ? (
-          
-COLORS.muted
+                        <div style={{ fontSize: 11, color: COLORS.green, fontWeight: 700 }}>✅ Unlocked</div>
+                      ) : (
+                        <div style={{ fontSize: 11, color: COLORS.muted }}>
+                          {badge.points - (myPoints?.total_points || 0)} pts baaki
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Rewards */}
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>🎁 REWARDS</div>
+                {[
+                  { pts: 1000, reward: '₹100 Discount', desc: 'Next subscription pe', unlocked: (myPoints?.total_points || 0) >= 1000 },
+                  { pts: 2000, reward: '1 Month FREE!', desc: 'Subscription gift', unlocked: (myPoints?.total_points || 0) >= 2000 },
+                ].map(r => (
+                  <div key={r.pts} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: 12, borderRadius: 10, marginBottom: 8,
+                    backgroundColor: r.unlocked ? `${COLORS.green}11` : `${COLORS.border}22`,
+                    border: `1px solid ${r.unlocked ? COLORS.green : COLORS.border}`,
+                  }}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: r.unlocked ? COLORS.green : COLORS.muted }}>{r.reward}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>{r.desc} — {r.pts} pts</div>
+                    </div>
+                    {r.unlocked ? (
+                      <button style={{
+                        padding: '6px 14px', borderRadius: 8, border: 'none',
+                        backgroundColor: COLORS.green, color: '#FFF',
+                        fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                      }}>Claim!</button>
+                    ) : (
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>
+                        {r.pts - (myPoints?.total_points || 0)} pts baaki
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
