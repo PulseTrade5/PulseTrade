@@ -1,4 +1,4 @@
-   import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 
 const COLORS = {
@@ -384,4 +384,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}          
+                  }
