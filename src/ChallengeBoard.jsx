@@ -455,3 +455,4 @@ export default function ChallengeBoard({ user, onBack }) {
                       </div>
                       {unlocked ? (
           
+COLORS.muted
