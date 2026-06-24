@@ -123,22 +123,17 @@ function App() {
   const [loadingSession, setLoadingSession] = useState(true);
 
   useEffect(() => {
-    // ✅ FIX: onAuthStateChange PEHLE register karo
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth event:', event, session?.user?.email);
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (session?.user) {
         await setTrialIfNew(session.user);
         setSession(session);
-        setLoadingSession(false);
-      } else if (event === 'SIGNED_OUT') {
+      } else {
         setSession(null);
-        setLoadingSession(false);
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        setSession(session);
       }
+      setLoadingSession(false);
     });
 
-    // Existing session check
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
         await setTrialIfNew(session.user);
@@ -150,7 +145,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // ✅ Routes AFTER hooks
   const path = window.location.pathname;
   if (path === '/terms') return <TermsPage />;
   if (path === '/refund') return <RefundPage />;
