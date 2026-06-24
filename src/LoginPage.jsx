@@ -7,6 +7,7 @@ const COLORS = {
   green: "#059669", greenLight: "#ECFDF5", red: "#DC2626",
   text: "#0F172A", muted: "#64748B", mutedLight: "#94A3B8",
   sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+  purple: "#7C3AED", purpleLight: "#EDE9FE",
 };
 
 function getMsUntilMidnight() {
@@ -34,9 +35,14 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [refCode, setRefCode] = useState('');
 
   useEffect(() => {
     const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
+    // ✅ Check referral code in URL
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) setRefCode(ref);
     return () => clearInterval(t);
   }, []);
 
@@ -74,25 +80,67 @@ export default function LoginPage() {
       if (data?.session) {
         setVerifySuccess(true);
 
-        // ✅ FIX: Pehle session set karo, phir naam save karo
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
         });
 
-        // ✅ naam save karo profiles mein
+        // ✅ Generate referral code from name
+        const userRefCode = name.trim().replace(/\s+/g, '').toLowerCase() + Math.floor(Math.random() * 100);
+
+        // ✅ Save profile with referral info
         const { error: upsertError } = await supabase.from('profiles').upsert({
           id: data.session.user.id,
           email: email.trim().toLowerCase(),
           name: name.trim(),
           trial_start_date: new Date().toISOString(),
+          referral_code: userRefCode,
+          referred_by: refCode || null,
         }, { onConflict: 'id', ignoreDuplicates: false });
 
         if (upsertError) {
-          // Agar upsert fail ho toh sirf name update karo
           await supabase.from('profiles')
             .update({ name: name.trim() })
             .eq('id', data.session.user.id);
+        }
+
+        // ✅ Agar referral code tha toh referrer ko points do
+        if (refCode) {
+          const { data: referrer } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('referral_code', refCode.toLowerCase())
+            .single();
+
+          if (referrer) {
+            // Referrer ko +100 points
+            const { data: pts } = await supabase
+              .from('pulse_points')
+              .select('total_points, referral_count')
+              .eq('user_id', referrer.id)
+              .single();
+
+            if (pts) {
+              await supabase.from('pulse_points')
+                .update({
+                  total_points: (pts.total_points || 0) + 100,
+                })
+                .eq('user_id', referrer.id);
+            }
+
+            // Referrer ka referral count update karo profiles mein
+            await supabase.from('profiles')
+              .update({ referral_count: supabase.rpc('increment', { row_id: referrer.id }) })
+              .eq('id', referrer.id);
+
+            // Naye user ko bhi +50 points
+            await supabase.from('pulse_points').upsert({
+              user_id: data.session.user.id,
+              total_points: 50,
+              streak_days: 0,
+              badges: [],
+            }, { onConflict: 'user_id' });
+          }
         }
 
         await new Promise(r => setTimeout(r, 800));
@@ -145,6 +193,21 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* ✅ REFERRAL BANNER */}
+        {refCode && (
+          <div style={{
+            background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
+            padding: '12px 20px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>
+              🎁 {refCode} ne tumhe invite kiya!
+            </div>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>
+              Join karo → Tumhe +50 Pulse Points milenge! 🎉
+            </div>
+          </div>
+        )}
+
         {/* SOCIAL PROOF BANNER */}
         <div style={{ backgroundColor: COLORS.text, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
           <div style={{ display: 'flex' }}>
@@ -193,23 +256,9 @@ export default function LoginPage() {
             {step === 'email' ? (
               <div>
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => { setName(e.target.value); setError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                  placeholder="e.g. Rahul, Priya"
-                  style={{ ...inputStyle, marginBottom: 12 }}
-                />
+                <input type="text" value={name} onChange={e => { setName(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="e.g. Rahul, Priya" style={{ ...inputStyle, marginBottom: 12 }} />
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={e => { setEmail(e.target.value); setError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
-                  placeholder="tumhara@email.com"
-                  style={inputStyle}
-                />
+                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={inputStyle} />
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
                 <button onClick={handleSendOtp} disabled={loading} style={{ width: '100%', marginTop: 12, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.gold, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)' }}>
                   {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
@@ -224,16 +273,8 @@ export default function LoginPage() {
                   ✅ OTP bheja — <strong>{email}</strong> check karo!
                 </div>
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>6-Digit OTP Daalo</label>
-                <input
-                  type="number"
-                  value={otp}
-                  onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }}
-                  onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
-                  placeholder="123456"
-                  style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 8, textAlign: 'center' }}
-                />
+                <input type="number" value={otp} onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()} placeholder="123456" style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 8, textAlign: 'center' }} />
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
-
                 <button onClick={handleVerifyOtp} disabled={loading || verifySuccess} style={{
                   width: '100%', marginTop: 12, padding: '14px',
                   fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
@@ -249,7 +290,6 @@ export default function LoginPage() {
                     </span>
                   ) : '✅ OTP Verify Karo — Andar Jao!'}
                 </button>
-
                 <button onClick={() => { setStep('email'); setOtp(''); setError(''); }} style={{ width: '100%', marginTop: 10, padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>
                   ← Wapas Email Change Karo
                 </button>
