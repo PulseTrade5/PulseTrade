@@ -240,6 +240,74 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   );
 }
 
+function ReferralCard({ user, C }) {
+  const [refCode, setRefCode] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [refCount, setRefCount] = useState(0);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('profiles').select('referral_code, referral_count').eq('id', user.id).single()
+      .then(({ data }) => {
+        if (data?.referral_code) {
+          setRefCode(data.referral_code);
+          setRefCount(data.referral_count || 0);
+        }
+      });
+  }, [user?.id]);
+
+  const refLink = refCode ? `pulsetrade.in?ref=${refCode}` : null;
+
+  const handleCopy = () => {
+    if (!refLink) return;
+    navigator.clipboard.writeText(`https://${refLink}`);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{
+      backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
+      borderRadius: 16, padding: 18, marginBottom: 16,
+      boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
+    }}>
+      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>
+        🔗 MERA REFERRAL LINK
+      </div>
+      <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, lineHeight: 1.6 }}>
+        Dost ko invite karo → <span style={{ color: C.gold, fontWeight: 700 }}>tujhe +100 pts</span>, unhe <span style={{ color: C.green, fontWeight: 700 }}>+50 pts</span>! 🎁
+      </div>
+      {refLink ? (
+        <>
+          <div style={{
+            backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+            borderRadius: 10, padding: '10px 14px', marginBottom: 10,
+            fontSize: 13, fontWeight: 700, color: C.text,
+            fontFamily: 'monospace', wordBreak: 'break-all',
+          }}>
+            {refLink}
+          </div>
+          <button onClick={handleCopy} style={{
+            width: '100%', padding: '11px', borderRadius: 10, border: 'none',
+            backgroundColor: copied ? C.green : C.gold,
+            color: '#FFF', fontWeight: 700, fontSize: 13, cursor: 'pointer',
+            transition: 'background 0.3s',
+          }}>
+            {copied ? '✅ Link Copy Ho Gaya!' : '📋 Link Copy Karo'}
+          </button>
+          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginTop: 10 }}>
+            🎯 <span style={{ color: C.gold, fontWeight: 700 }}>{refCount}</span> dost join kiya abhi tak!
+          </div>
+        </>
+      ) : (
+        <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, padding: '10px 0' }}>
+          ⏳ Referral code load ho raha hai...
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StockDashboard({ user, onChallenge }) {
   const [dark, setDark] = useState(() => localStorage.getItem('pt_dark') === 'true');
   const C = dark ? DARK : LIGHT;
@@ -693,7 +761,9 @@ export default function StockDashboard({ user, onChallenge }) {
           )}
 
           {tab === 'watchlist' && (
-            <div style={cardStyle}>
+            <>
+              <ReferralCard user={user} C={C} />
+              <div style={cardStyle}>
               <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
               {watchlist.length === 0 ? (
                 <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
@@ -717,6 +787,7 @@ export default function StockDashboard({ user, onChallenge }) {
                 </div>
               ))}
             </div>
+            </>
           )}
 
           {tab === 'track' && (
