@@ -27,6 +27,74 @@ function GreetingToast({ name, show }) {
   );
 }
 
+// ✅ SPLASH SCREEN
+function SplashScreen() {
+  const [dot, setDot] = useState(0);
+
+  useEffect(() => {
+    const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
+    return () => clearInterval(t);
+  }, []);
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(160deg, #0D1117 0%, #0D2B1F 100%)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      gap: 20,
+    }}>
+      <style>{`
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 40px rgba(63,174,124,0.4); }
+          50% { box-shadow: 0 0 80px rgba(63,174,124,0.8); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+
+      {/* PANDA LOGO */}
+      <div style={{
+        width: 110, height: 110, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
+        border: '3px solid #3FAE7C',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 60,
+        animation: 'pulse-glow 2s ease-in-out infinite',
+      }}>🐼</div>
+
+      {/* TEXT */}
+      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
+        <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
+          Pulse<span style={{ color: '#C8920A' }}>Trade</span>
+        </div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
+          Trade with Pulse, Profit with Discipline
+        </div>
+      </div>
+
+      {/* LOADING DOTS */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{
+            width: 8, height: 8, borderRadius: '50%',
+            backgroundColor: dot === i ? '#C8920A' : 'rgba(255,255,255,0.2)',
+            transition: 'background 0.3s ease',
+          }} />
+        ))}
+      </div>
+
+      {/* TAGLINE */}
+      <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
+        🔱 हर हर महादेव 🔱
+      </div>
+    </div>
+  );
+}
+
 const LIGHT = {
   bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
   goldLight: '#FEF3C7', goldDim: '#D97706',
@@ -183,6 +251,13 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
+  const [showSplash, setShowSplash] = useState(true); // ✅ Splash state
+
+  // ✅ Splash screen — 2.5 seconds
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -211,7 +286,7 @@ function App() {
           });
         } else {
           setProfile(data);
-          setShowLogin(false); // ✅ FIX: greeting ke liye reset
+          setShowLogin(false);
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
         }
@@ -242,15 +317,10 @@ function App() {
   if (path === '/contact') return <ContactPage />;
   if (path === '/payment-status') return <PaymentStatusPage />;
 
-  if (loadingSession || loadingProfile) {
-    return (
-      <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-        <div style={{ fontSize: 28, fontWeight: 800, color: '#0F172A' }}>Pulse<span style={{ color: '#C8920A' }}>Trade</span></div>
-        <div style={{ fontSize: 11, color: '#64748B', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
-        <div style={{ marginTop: 20, fontSize: 13, color: '#94A3B8' }}>⏳ Loading...</div>
-      </div>
-    );
-  }
+  // ✅ Splash Screen
+  if (showSplash) return <SplashScreen />;
+
+  if (loadingSession || loadingProfile) return <SplashScreen />;
 
   if (!session) {
     if (showLogin) return <LoginPage />;
@@ -260,12 +330,7 @@ function App() {
   if (path === '/admin') return <AdminPanel user={session.user} onLogout={handleLogout} />;
 
   const access = checkAccess();
-  if (access === 'loading') return (
-    <div style={{ backgroundColor: '#F4F6FA', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ fontSize: 13, color: '#94A3B8' }}>⏳ Loading...</div>
-    </div>
-  );
-
+  if (access === 'loading') return <SplashScreen />;
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
   return (
