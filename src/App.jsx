@@ -209,10 +209,9 @@ function App() {
           });
         } else {
           setProfile(data);
-          if (data.name) {
-            setShowGreeting(true);
-            setTimeout(() => setShowGreeting(false), 4000);
-          }
+          // ✅ FIX: condition hatao — greeting hamesha show hogi agar profile mile
+          setShowGreeting(true);
+          setTimeout(() => setShowGreeting(false), 4000);
         }
         setLoadingProfile(false);
       });
