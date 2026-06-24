@@ -86,7 +86,8 @@ export default function LoginPage() {
         type: 'email',
       });
       if (verifyError) throw verifyError;
-      // Success — App.jsx ka onAuthStateChange handle karega
+      // Success — page reload karke session set karo
+      window.location.href = window.location.origin;
     } catch (err) {
       setError('OTP galat hai ya expire ho gaya. Dobara try karo.');
     } finally {
