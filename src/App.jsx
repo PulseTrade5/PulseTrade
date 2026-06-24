@@ -4,6 +4,7 @@ import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
+import ChallengeBoard from './ChallengeBoard';
 
 
 function GreetingToast({ name, show }) {
@@ -56,7 +57,6 @@ function SplashScreen() {
         }
       `}</style>
 
-      {/* PANDA LOGO */}
       <div style={{
         width: 110, height: 110, borderRadius: '50%',
         background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
@@ -66,7 +66,6 @@ function SplashScreen() {
         animation: 'pulse-glow 2s ease-in-out infinite',
       }}>🐼</div>
 
-      {/* TEXT */}
       <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
         <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
           Pulse<span style={{ color: '#C8920A' }}>Trade</span>
@@ -76,7 +75,6 @@ function SplashScreen() {
         </div>
       </div>
 
-      {/* LOADING DOTS */}
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{
@@ -87,7 +85,6 @@ function SplashScreen() {
         ))}
       </div>
 
-      {/* TAGLINE */}
       <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
         🔱 हर हर महादेव 🔱
       </div>
@@ -251,9 +248,9 @@ function App() {
   const [loadingProfile, setLoadingProfile] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
-  const [showSplash, setShowSplash] = useState(true); // ✅ Splash state
+  const [showSplash, setShowSplash] = useState(true);
+  const [showChallenge, setShowChallenge] = useState(false); // ✅ Challenge state
 
-  // ✅ Splash screen — 2.5 seconds
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(t);
@@ -297,6 +294,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setShowLogin(false);
+    setShowChallenge(false);
   };
 
   const checkAccess = () => {
@@ -317,9 +315,7 @@ function App() {
   if (path === '/contact') return <ContactPage />;
   if (path === '/payment-status') return <PaymentStatusPage />;
 
-  // ✅ Splash Screen
   if (showSplash) return <SplashScreen />;
-
   if (loadingSession || loadingProfile) return <SplashScreen />;
 
   if (!session) {
@@ -333,10 +329,21 @@ function App() {
   if (access === 'loading') return <SplashScreen />;
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
+  // ✅ Challenge page
+  if (showChallenge) return (
+    <ChallengeBoard
+      user={session.user}
+      onBack={() => setShowChallenge(false)}
+    />
+  );
+
   return (
     <>
       <GreetingToast name={profile?.name} show={showGreeting} />
-      <StockDashboard user={session.user} />
+      <StockDashboard
+        user={session.user}
+        onChallenge={() => setShowChallenge(true)}
+      />
     </>
   );
 }
