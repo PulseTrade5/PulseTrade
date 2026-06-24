@@ -27,6 +27,7 @@ function fmtCountdown(ms) {
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('email');
   const [loading, setLoading] = useState(false);
@@ -40,6 +41,8 @@ export default function LoginPage() {
 
   const handleSendOtp = async () => {
     const trimmed = email.trim().toLowerCase();
+    const nameTrimmed = name.trim();
+    if (!nameTrimmed) { setError('Apna naam daalo.'); return; }
     if (!trimmed || !trimmed.includes('@')) { setError('Sahi email daalo.'); return; }
     setLoading(true); setError('');
     try {
@@ -68,6 +71,13 @@ export default function LoginPage() {
       });
       if (verifyError) throw verifyError;
       if (data?.session) {
+        // Save name to profiles
+        await supabase.from('profiles').upsert({
+          id: data.session.user.id,
+          email: email.trim().toLowerCase(),
+          name: name.trim(),
+        }, { onConflict: 'id' });
+
         await supabase.auth.setSession({
           access_token: data.session.access_token,
           refresh_token: data.session.refresh_token,
@@ -101,6 +111,7 @@ export default function LoginPage() {
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
+        {/* HEADER */}
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 100 }}>
           <div>
             <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
@@ -113,6 +124,7 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {/* SEBI */}
         <div style={{ backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`, padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
           <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
           <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6 }}>
@@ -122,6 +134,7 @@ export default function LoginPage() {
 
         <div style={{ padding: '20px 20px 0' }}>
 
+          {/* HERO */}
           <div style={{ ...cardStyle, textAlign: 'center', padding: '28px 20px', background: `linear-gradient(135deg, #ffffff 0%, ${COLORS.goldLight} 100%)`, border: `1.5px solid #f0c040` }}>
             <div style={{ fontSize: 36, marginBottom: 8 }}>📈</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: '0 0 8px' }}>
@@ -138,6 +151,7 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* TRIAL OFFER */}
           <div style={{ ...cardStyle, border: `2px solid ${COLORS.gold}`, textAlign: 'center' }}>
             <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#FFF', backgroundColor: COLORS.red, padding: '4px 14px', borderRadius: 20, marginBottom: 10 }}>🔥 LIMITED TIME OFFER</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>5-Din FREE Trial 🎉</div>
@@ -147,19 +161,39 @@ export default function LoginPage() {
             <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
           </div>
 
+          {/* LOGIN CARD */}
           <div style={cardStyle}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP — EMAIL SE</div>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP</div>
 
             {step === 'email' ? (
               <div>
-                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo</label>
-                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={inputStyle} />
+                {/* Name Field */}
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={e => { setName(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                  placeholder="e.g. Rahul, Priya"
+                  style={{ ...inputStyle, marginBottom: 12 }}
+                />
+
+                {/* Email Field */}
+                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setError(''); }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
+                  placeholder="tumhara@email.com"
+                  style={inputStyle}
+                />
                 {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
                 <button onClick={handleSendOtp} disabled={loading} style={{ width: '100%', marginTop: 12, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.gold, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)' }}>
                   {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
                 </button>
                 <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
-                  New user? Email daalo — account + 5-din trial automatically shuru hoga ✨
+                  New user? Naam + Email daalo — account + 5-din trial automatically shuru hoga ✨
                 </p>
               </div>
             ) : (
@@ -180,6 +214,7 @@ export default function LoginPage() {
             )}
           </div>
 
+          {/* PLANS */}
           <div style={cardStyle}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>💰 PLANS — TRIAL KE BAAD</div>
             {[
