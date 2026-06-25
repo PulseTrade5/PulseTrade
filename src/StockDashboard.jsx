@@ -1,4 +1,4 @@
-         import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
@@ -826,4 +826,4 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       )}
     </div>
   );
-}               <
+}
