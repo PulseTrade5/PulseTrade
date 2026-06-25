@@ -11,7 +11,7 @@ const COURSES = [
     pages: "30+ pages",
     level: "Beginner",
     available: true,
-    pdfKey: "candlestick_patterns.pdf",
+    pdfKey: "candlestick_course.pdf",
   },
   {
     id: "rsi-mastery",
