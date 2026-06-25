@@ -396,7 +396,7 @@ function AITradeCoach({ stockData, C, isDark }) {
                   backgroundColor: C.gold, color: '#FFF', fontSize: 11, fontWeight: 700, cursor: 'pointer',
                 }}>🔊 Suno</button>
               </div>
-              <div>{chartAnalysis}</div>
+              <div>{chartAnalysis.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '').replace(/^\s+/gm, '')}</div>
             </div>
           )}
         </div>
