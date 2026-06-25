@@ -805,10 +805,14 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             </div>
           )}
 
-
           {tab === 'screener' && (
-            <PulseScreener isDark={dark} />
+            <PulseScreener
+              isDark={dark}
+              userDob={userDob}
+              userName={user?.email?.split('@')[0]}
+            />
           )}
+
           <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
             <a href="/terms" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
             <a href="/refund" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
