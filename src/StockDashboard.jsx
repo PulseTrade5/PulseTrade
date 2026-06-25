@@ -4,6 +4,7 @@ import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
+import SupportChat from './SupportChat';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -288,6 +289,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
   const [userDob, setUserDob] = useState(null);
+  const [showSupport, setShowSupport] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -769,6 +771,25 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           </div>
         </div>
       </div>
+
+      {/* FLOATING SUPPORT BUTTON */}
+      <button
+        onClick={() => setShowSupport(true)}
+        style={{
+          position: 'fixed', bottom: 24, right: 20, width: 56, height: 56,
+          borderRadius: '50%', border: 'none', backgroundColor: C.gold,
+          color: '#FFF', fontSize: 24, cursor: 'pointer', zIndex: 500,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 4px 16px rgba(200,146,10,0.45)',
+        }}
+        aria-label="Support Center"
+      >
+        🛟
+      </button>
+
+      {showSupport && (
+        <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
+      )}
     </div>
   );
 }
