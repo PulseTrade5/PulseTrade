@@ -46,6 +46,10 @@ export default function AdminPanel({ user, onLogout, onBack }) {
   const [successMsg, setSuccessMsg] = useState('');
   const [activeTab, setActiveTab] = useState('users');
   const [referrals, setReferrals] = useState([]);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -64,10 +68,19 @@ export default function AdminPanel({ user, onLogout, onBack }) {
     setReferrals(data || []);
   };
 
+  const fetchSupportMessages = async () => {
+    const { data } = await supabase
+      .from('support_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setSupportMessages(data || []);
+  };
+
   useEffect(() => {
     if (isAdmin) {
       fetchProfiles();
       fetchReferrals();
+      fetchSupportMessages();
     }
   }, [isAdmin]);
 
@@ -95,6 +108,26 @@ export default function AdminPanel({ user, onLogout, onBack }) {
   const referralStats = {
     totalReferrals: referrals.filter(r => r.referred_by).length,
     topReferrer: [...referrals].sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0))[0],
+  };
+
+  const uniqueUsers = [...new Map(supportMessages.map(m => [m.user_id, m])).values()];
+
+  const userMessages = selectedUser
+    ? supportMessages.filter(m => m.user_id === selectedUser.user_id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    : [];
+
+  const handleReply = async () => {
+    if (!replyText.trim() || !selectedUser) return;
+    setReplying(true);
+    await supabase.from('support_messages').insert([{
+      user_id: selectedUser.user_id,
+      user_email: selectedUser.user_email,
+      message: replyText.trim(),
+      sender: 'admin',
+    }]);
+    setReplyText('');
+    await fetchSupportMessages();
+    setReplying(false);
   };
 
   const handleSubscribe = async () => {
@@ -136,13 +169,7 @@ export default function AdminPanel({ user, onLogout, onBack }) {
         {/* HEADER */}
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* ✅ DASHBOARD BACK BUTTON */}
-            <button onClick={() => window.location.href = '/'} style={{
-              fontSize: 12, padding: '6px 12px', borderRadius: 20,
-              border: `1.5px solid ${COLORS.surfaceBorder}`,
-              backgroundColor: 'transparent', color: COLORS.muted,
-              cursor: 'pointer', fontWeight: 600,
-            }}>← Dashboard</button>
+            <button onClick={() => window.location.href = '/'} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>← Dashboard</button>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800 }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 12, color: COLORS.muted }}>Admin</span></div>
               <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
@@ -153,8 +180,8 @@ export default function AdminPanel({ user, onLogout, onBack }) {
 
         {/* TABS */}
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals']].map(([key, label]) => (
-            <button key={key} onClick={() => setActiveTab(key)} style={{
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support']].map(([key, label]) => (
+            <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
               borderRadius: 10, border: 'none',
               backgroundColor: activeTab === key ? COLORS.gold : 'transparent',
@@ -201,7 +228,6 @@ export default function AdminPanel({ user, onLogout, onBack }) {
                     <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                         <div style={{ flex: 1, marginRight: 8 }}>
-                          {/* ✅ NAAM DIKHAO */}
                           {p.name && <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{p.name}</div>}
                           <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
                           <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
@@ -240,77 +266,9 @@ export default function AdminPanel({ user, onLogout, onBack }) {
                   <div style={{ fontSize: 11, color: COLORS.gold, fontWeight: 700 }}>Top Referrer</div>
                 </div>
               </div>
-
-              {/* Who referred whom */}
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
-                  🔗 KIS KE LINK SE AAYA
-                </div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔗 KIS KE LINK SE AAYA</div>
                 {referrals.filter(r => r.referred_by).length === 0 ? (
-                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
-                    Abhi koi referral nahi aaya.
-                  </p>
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi referral nahi aaya.</p>
                 ) : referrals.filter(r => r.referred_by).map((r, i) => (
-                  <div key={i} style={rowStyle}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: COLORS.text, fontSize: 13 }}>{r.name || r.email}</div>
-                      <div style={{ fontSize: 11, color: COLORS.muted }}>{r.email}</div>
-                      <div style={{ fontSize: 11, color: COLORS.muted }}>{new Date(r.created_at).toLocaleDateString('en-IN')}</div>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: 12, color: COLORS.purple, fontWeight: 700, backgroundColor: COLORS.purpleLight, padding: '3px 10px', borderRadius: 20 }}>
-                        via {r.referred_by}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Top referrers */}
-              <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>
-                  🏆 TOP REFERRERS
-                </div>
-                {referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).length === 0 ? (
-                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>
-                    Abhi koi referral nahi.
-                  </p>
-                ) : referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).map((r, i) => (
-                  <div key={i} style={rowStyle}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: COLORS.text }}>{r.name || r.email}</div>
-                      <div style={{ fontSize: 11, color: COLORS.muted }}>Code: {r.referral_code}</div>
-                    </div>
-                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 18 }}>
-                      {r.referral_count} 🔗
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      {editUser && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
-          <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>💰 Subscription Do</div>
-            {editUser.name && <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, marginBottom: 2 }}>{editUser.name}</div>}
-            <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16, wordBreak: 'break-all' }}>{editUser.email}</div>
-            <div style={{ fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>MONTHS CHOOSE KARO</div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-              {[1, 2, 3].map(m => (
-                <button key={m} onClick={() => setEditMonths(m)} style={{ flex: 1, padding: '12px 8px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: editMonths===m ? COLORS.gold : COLORS.bg, color: editMonths===m ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{m} Month</button>
-              ))}
-            </div>
-            <button onClick={handleSubscribe} disabled={saving} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10, boxShadow: '0 2px 12px rgba(200,146,10,0.3)' }}>
-              {saving ? '⏳ Save ho raha hai...' : '✅ Confirm Karo'}
-            </button>
-            <button onClick={() => setEditUser(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                  <div key={i} styl
