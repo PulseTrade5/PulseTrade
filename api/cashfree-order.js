@@ -1,19 +1,19 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { planName, amount, userEmail, userId } = req.body;
+  const { planName, amount, userEmail, userId, orderId, returnUrl } = req.body;
 
   const payload = {
     order_amount: amount,
     order_currency: "INR",
-    order_id: `PT_${Date.now()}`,
+    order_id: orderId || `PT_${Date.now()}`,
     customer_details: {
       customer_id: userId || `guest_${Date.now()}`,
       customer_email: userEmail || "test@pulsetrade.in",
       customer_phone: "9999999999",
     },
     order_meta: {
-      return_url: `https://pulsetrade.in/payment-status?order_id={order_id}`,
+      return_url: returnUrl || `https://pulsetrade.in/payment-status?order_id={order_id}`,
     },
     order_note: `PulseTrade ${planName || 'Monthly'} Plan`,
   };
