@@ -6,6 +6,7 @@ import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
+import WelcomeScreen from './WelcomeScreen';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -258,11 +259,7 @@ function ProfileTab({ profile, session, isDark }) {
           <div style={{ fontSize: 11, color: '#C8920A', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
         </div>
 
-        <div style={{
-          backgroundColor: isDark ? DARK.surface : LIGHT.surface,
-          borderRadius: 16, padding: 20, marginBottom: 16,
-          border: `1px solid ${isDark ? DARK.border : LIGHT.border}`,
-        }}>
+        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>📋 ACCOUNT STATUS</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
             <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
@@ -273,9 +270,7 @@ function ProfileTab({ profile, session, isDark }) {
           {!profile?.is_subscribed && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
               <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Trial Bacha</span>
-              <span style={{ fontWeight: 700, fontSize: 13, color: daysLeft <= 1 ? '#DC2626' : '#C8920A' }}>
-                {daysLeft} din
-              </span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: daysLeft <= 1 ? '#DC2626' : '#C8920A' }}>{daysLeft} din</span>
             </div>
           )}
           {profile?.is_subscribed && profile?.subscription_end_date && (
@@ -294,50 +289,22 @@ function ProfileTab({ profile, session, isDark }) {
           </div>
         </div>
 
-        <div style={{
-          borderRadius: 16, padding: 20, marginBottom: 16,
-          border: '1.5px solid #C8920A',
-          background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)',
-        }}>
+        <div style={{ borderRadius: 16, padding: 20, marginBottom: 16, border: '1.5px solid #C8920A', background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 6 }}>⚡ PULSE POINTS</div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#C8920A' }}>
-                {profile?.pulse_points || 0}
-              </div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#C8920A' }}>{profile?.pulse_points || 0}</div>
             </div>
             <div style={{ fontSize: 44 }}>🏆</div>
           </div>
         </div>
 
-        <div style={{
-          backgroundColor: isDark ? DARK.surface : LIGHT.surface,
-          borderRadius: 16, padding: 20, marginBottom: 16,
-          border: `1px solid ${isDark ? DARK.border : LIGHT.border}`,
-        }}>
+        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>🔗 REFERRAL CODE</div>
-          <div style={{
-            backgroundColor: isDark ? DARK.bg : LIGHT.bg,
-            borderRadius: 10, padding: '12px 16px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          }}>
-            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#C8920A' }}>
-              {profile?.referral_code || '------'}
-            </span>
-            <button
-              onClick={() => {
-                if (profile?.referral_code) {
-                  navigator.clipboard.writeText(profile.referral_code);
-                  alert('Referral code copied! 🎉');
-                }
-              }}
-              style={{
-                padding: '6px 14px', borderRadius: 8,
-                backgroundColor: '#C8920A', color: '#FFF',
-                border: 'none', cursor: 'pointer',
-                fontSize: 12, fontWeight: 700,
-              }}
-            >
+          <div style={{ backgroundColor: isDark ? DARK.bg : LIGHT.bg, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#C8920A' }}>{profile?.referral_code || '------'}</span>
+            <button onClick={() => { if (profile?.referral_code) { navigator.clipboard.writeText(profile.referral_code); alert('Referral code copied! 🎉'); } }}
+              style={{ padding: '6px 14px', borderRadius: 8, backgroundColor: '#C8920A', color: '#FFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>
               Copy
             </button>
           </div>
@@ -360,6 +327,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
@@ -390,12 +358,14 @@ function App() {
             trial_start_date: new Date().toISOString(),
           }).then(() => {
             setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
+            setShowWelcome(true);
           });
         } else {
           setProfile(data);
           setShowLogin(false);
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
+          if (!data.onboarding_done) setShowWelcome(true);
         }
         setLoadingProfile(false);
       });
@@ -405,6 +375,13 @@ function App() {
     await supabase.auth.signOut();
     setShowLogin(false);
     setActiveTab('check');
+  };
+
+  const handleWelcomeDone = async () => {
+    setShowWelcome(false);
+    if (session?.user?.id) {
+      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
+    }
   };
 
   const checkAccess = () => {
@@ -465,35 +442,24 @@ function App() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
                 <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>🌙 Dark Mode</span>
-                <button
-                  onClick={() => setIsDark(d => !d)}
-                  style={{
-                    width: 52, height: 28, borderRadius: 14,
-                    backgroundColor: isDark ? '#C8920A' : '#E2E8F0',
-                    border: 'none', cursor: 'pointer', position: 'relative',
-                    transition: 'background 0.3s',
-                  }}
-                >
+                <button onClick={() => setIsDark(d => !d)} style={{
+                  width: 52, height: 28, borderRadius: 14,
+                  backgroundColor: isDark ? '#C8920A' : '#E2E8F0',
+                  border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.3s',
+                }}>
                   <div style={{
-                    position: 'absolute', top: 3,
-                    left: isDark ? 26 : 3,
-                    width: 22, height: 22, borderRadius: '50%',
-                    backgroundColor: '#FFF',
-                    transition: 'left 0.3s',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                    position: 'absolute', top: 3, left: isDark ? 26 : 3,
+                    width: 22, height: 22, borderRadius: '50%', backgroundColor: '#FFF',
+                    transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
                   }} />
                 </button>
               </div>
               <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    width: '100%', padding: '12px', borderRadius: 12,
-                    backgroundColor: '#DC2626', color: '#FFF',
-                    border: 'none', cursor: 'pointer',
-                    fontWeight: 700, fontSize: 14,
-                  }}
-                >
+                <button onClick={handleLogout} style={{
+                  width: '100%', padding: '12px', borderRadius: 12,
+                  backgroundColor: '#DC2626', color: '#FFF',
+                  border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14,
+                }}>
                   🚪 Logout
                 </button>
               </div>
@@ -509,6 +475,7 @@ function App() {
 
   return (
     <>
+      {showWelcome && <WelcomeScreen onDone={handleWelcomeDone} />}
       <GreetingToast name={profile?.name} show={showGreeting} />
       <div style={{ paddingBottom: 70 }}>
         {renderTab()}
