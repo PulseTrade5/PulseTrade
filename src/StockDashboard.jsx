@@ -4,7 +4,7 @@ import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
-import SupportChat from './SupportChat';
+import GlobalMarkets from './GlobalMarkets';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -163,22 +163,15 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
 
   return (
     <div style={{
-      background: gradientBg,
-      borderRadius: 20, padding: '24px 20px', marginBottom: 16,
-      border: `1.5px solid ${borderColor}`,
-      boxShadow: `0 8px 32px ${accentColor}33`,
+      background: gradientBg, borderRadius: 20, padding: '24px 20px', marginBottom: 16,
+      border: `1.5px solid ${borderColor}`, boxShadow: `0 8px 32px ${accentColor}33`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{stockName}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-            {stockInfo?.longName || stockName}
-          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{stockInfo?.longName || stockName}</div>
         </div>
-        <div style={{
-          fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20,
-          backgroundColor: accentColor, color: '#FFF',
-        }}>
+        <div style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20, backgroundColor: accentColor, color: '#FFF' }}>
           {isBullish ? '🟢 BULLISH' : '🔴 BEARISH'}
         </div>
       </div>
@@ -289,7 +282,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
   const [userDob, setUserDob] = useState(null);
-  const [showSupport, setShowSupport] = useState(false);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -391,21 +383,14 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           backgroundColor: C.headerBg, borderBottom: `1px solid ${C.surfaceBorder}`,
           padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-          transition: 'all 0.3s ease',
         }}>
           <div>
-            <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
             <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: C.gold }}>Trade</span>
             </h1>
             <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button onClick={() => setShowSupport(true)} style={{
-              fontSize: 11, padding: '5px 10px', borderRadius: 20,
-              border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent',
-              color: C.muted, cursor: 'pointer', fontWeight: 700,
-            }}>💬 Hum Se Baat Karo</button>
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
                 fontSize: 11, padding: '5px 10px', borderRadius: 20,
@@ -457,6 +442,9 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
 
           {tab === 'check' && (
             <>
+              {/* GLOBAL MARKETS */}
+              <GlobalMarkets isDark={dark} />
+
               <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
                 <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
@@ -513,7 +501,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               {result && (
                 <>
                   <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
-
                   <MoodTracker isDark={dark} />
 
                   {stockInfo && (
@@ -776,10 +763,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           </div>
         </div>
       </div>
-
-      {showSupport && (
-        <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
-      )}
     </div>
   );
 }
