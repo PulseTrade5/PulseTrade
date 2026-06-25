@@ -247,6 +247,40 @@ function AITradeCoach({ stockData, C, isDark }) {
   const [loading, setLoading] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [chartMode, setChartMode] = useState('text');
+  const [chartImage, setChartImage] = useState(null);
+  const [chartAnalysis, setChartAnalysis] = useState('');
+  const [chartLoading, setChartLoading] = useState(false);
+
+  const handleChartUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target.result.split(',')[1];
+      setChartImage(base64);
+      setChartAnalysis('');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const analyzeChart = async () => {
+    if (!chartImage) return;
+    setChartLoading(true);
+    setChartAnalysis('');
+    try {
+      const response = await fetch('/api/ai-vision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageData: chartImage })
+      });
+      const data = await response.json();
+      setChartAnalysis(data.analysis || 'Analysis nahi ho saki');
+    } catch {
+      setChartAnalysis('Network error — dobara try karo!');
+    }
+    setChartLoading(false);
+  };
 
   const speakAnswer = (text) => {
     if (!text) return;
@@ -309,6 +343,67 @@ function AITradeCoach({ stockData, C, isDark }) {
         <button onClick={() => setShowCoach(false)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>✕</button>
       </div>
 
+      {/* MODE SWITCHER */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        {[['text', '💬 Sawaal Pucho'], ['chart', '📸 Chart Analyze']].map(([m, l]) => (
+          <button key={m} onClick={() => setChartMode(m)} style={{
+            flex: 1, padding: '8px', borderRadius: 10, border: 'none',
+            backgroundColor: chartMode === m ? C.gold : C.bg,
+            color: chartMode === m ? '#FFF' : C.muted,
+            fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            border: `1.5px solid ${chartMode === m ? C.gold : C.surfaceBorder}`,
+          }}>{l}</button>
+        ))}
+      </div>
+
+      {chartMode === 'chart' && (
+        <div>
+          <label style={{
+            display: 'block', width: '100%', padding: '20px',
+            border: `2px dashed ${C.gold}`, borderRadius: 12,
+            textAlign: 'center', cursor: 'pointer', marginBottom: 12,
+            backgroundColor: C.bg,
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>Chart Screenshot Upload Karo</div>
+            <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>TradingView ya koi bhi chart</div>
+            <input type="file" accept="image/*" onChange={handleChartUpload} style={{ display: 'none' }} />
+          </label>
+          {chartImage && (
+            <>
+              <img src={`data:image/jpeg;base64,${chartImage}`} style={{ width: '100%', borderRadius: 10, marginBottom: 10 }} alt="chart" />
+              <button onClick={analyzeChart} disabled={chartLoading} style={{
+                width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+                backgroundColor: chartLoading ? C.surfaceBorder : C.gold,
+                color: chartLoading ? C.muted : '#FFF',
+                fontWeight: 700, fontSize: 14, cursor: chartLoading ? 'not-allowed' : 'pointer',
+              }}>
+                {chartLoading ? '⏳ AI Analyze kar raha hai...' : '🔍 Chart Analyze Karo'}
+              </button>
+            </>
+          )}
+          {chartAnalysis && (
+            <div style={{
+              marginTop: 12, padding: '12px 14px', borderRadius: 12,
+              backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
+              border: `1px solid ${C.gold}44`,
+              fontSize: 13, color: C.text, lineHeight: 1.7,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ color: C.gold, fontWeight: 700 }}>🤖 AI Analysis:</span>
+                <button onClick={() => speakAnswer(chartAnalysis)} style={{
+                  padding: '4px 10px', borderRadius: 20, border: 'none',
+                  backgroundColor: C.gold, color: '#FFF', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                }}>🔊 Suno</button>
+              </div>
+              <div>{chartAnalysis}</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {chartMode === 'text' && (
+        <div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
         {['Aaj entry loon?', 'Stop loss kahan?', 'Risk kitna?', 'Trend kitna strong?'].map(q => (
           <button key={q} onClick={() => setQuestion(q)} style={{
@@ -361,6 +456,9 @@ function AITradeCoach({ stockData, C, isDark }) {
             </button>
           </div>
           <div>{answer.replace(/\*\*/g, '').replace(/\*/g, '')}</div>
+        </div>
+      )}
+
         </div>
       )}
 
