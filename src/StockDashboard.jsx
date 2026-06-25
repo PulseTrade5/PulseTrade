@@ -240,6 +240,118 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   );
 }
 
+
+function AITradeCoach({ stockData, C, isDark }) {
+  const [question, setQuestion] = useState('');
+  const [answer, setAnswer] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [showCoach, setShowCoach] = useState(false);
+
+  const askCoach = async () => {
+    if (!question.trim()) return;
+    setLoading(true);
+    setAnswer('');
+    try {
+      const context = stockData ? `Stock: ${stockData.symbol}, Trend: ${stockData.trend}, RSI: ${stockData.rsi}, ADX: ${stockData.adx}, Pulse Score: ${stockData.trend === 'Bullish' ? stockData.longScore : stockData.shortScore}/100, Price: ₹${stockData.currentPrice}` : '';
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 300,
+          messages: [{
+            role: 'user',
+            content: `Tu ek expert Indian stock market trader hai. Hinglish mein jawab de — simple, clear aur actionable. 2-3 lines mein.
+
+Stock info: ${context}
+
+User ka sawaal: ${question}`
+          }]
+        })
+      });
+      const data = await response.json();
+      setAnswer(data.content?.[0]?.text || 'Kuch gadbad ho gayi — dobara try karo!');
+    } catch {
+      setAnswer('Network error — dobara try karo!');
+    }
+    setLoading(false);
+  };
+
+  if (!showCoach) return (
+    <button onClick={() => setShowCoach(true)} style={{
+      width: '100%', padding: '12px', marginBottom: 16,
+      background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)',
+      border: `1.5px solid ${C.gold}`, borderRadius: 14,
+      fontSize: 14, fontWeight: 700, color: C.gold,
+      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+    }}>
+      🤖 AI Trade Coach Se Pucho
+    </button>
+  );
+
+  return (
+    <div style={{
+      backgroundColor: C.surface, border: `1.5px solid ${C.gold}`,
+      borderRadius: 16, padding: 18, marginBottom: 16,
+      boxShadow: `0 4px 20px ${C.gold}22`,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800 }}>🤖 AI TRADE COACH</div>
+        <button onClick={() => setShowCoach(false)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>✕</button>
+      </div>
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+        {['Aaj entry loon?', 'Stop loss kahan?', 'Risk kitna?', 'Trend kitna strong?'].map(q => (
+          <button key={q} onClick={() => setQuestion(q)} style={{
+            fontSize: 11, padding: '5px 12px', borderRadius: 20,
+            border: `1px solid ${C.surfaceBorder}`,
+            backgroundColor: question === q ? C.goldLight : 'transparent',
+            color: question === q ? C.goldDim : C.muted,
+            cursor: 'pointer', fontWeight: 600,
+          }}>{q}</button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <input
+          value={question}
+          onChange={e => setQuestion(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && askCoach()}
+          placeholder="Kuch bhi pucho — Hinglish mein!"
+          style={{
+            flex: 1, padding: '10px 14px', fontSize: 13,
+            backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+            borderRadius: 10, color: C.text, outline: 'none',
+          }}
+        />
+        <button onClick={askCoach} disabled={loading} style={{
+          padding: '10px 16px', borderRadius: 10, border: 'none',
+          backgroundColor: C.gold, color: '#FFF',
+          fontWeight: 700, fontSize: 13, cursor: 'pointer',
+          opacity: loading ? 0.7 : 1,
+        }}>
+          {loading ? '⏳' : '➤'}
+        </button>
+      </div>
+
+      {answer && (
+        <div style={{
+          padding: '12px 14px', borderRadius: 12,
+          backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
+          border: `1px solid ${C.gold}44`,
+          fontSize: 13, color: C.text, lineHeight: 1.7,
+        }}>
+          <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach: </span>{answer}
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, color: C.muted, marginTop: 10, textAlign: 'center' }}>
+        ⚠️ Sirf educational — investment advice nahi
+      </div>
+    </div>
+  );
+}
+
 function ReferralCard({ user, C }) {
   const [refCode, setRefCode] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -591,6 +703,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                 <>
                   <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
                   <MoodTracker isDark={dark} />
+                  <AITradeCoach stockData={pulseData} C={C} isDark={dark} />
 
                   {stockInfo && (
                     <div style={cardStyle}>
