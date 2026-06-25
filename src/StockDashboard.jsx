@@ -776,9 +776,9 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       <button
         onClick={() => setShowSupport(true)}
         style={{
-          position: 'fixed', bottom: 24, right: 20, width: 56, height: 56,
+          position: 'fixed', bottom: 90, right: 20, width: 56, height: 56,
           borderRadius: '50%', border: 'none', backgroundColor: C.gold,
-          color: '#FFF', fontSize: 24, cursor: 'pointer', zIndex: 500,
+          color: '#FFF', fontSize: 24, cursor: 'pointer', zIndex: 9999,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 16px rgba(200,146,10,0.45)',
         }}
