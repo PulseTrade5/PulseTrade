@@ -6,7 +6,6 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
-import PulseScreener from './PulseScreener.jsx';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -473,7 +472,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             backgroundColor: C.surface, padding: 4,
             borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
           }}>
-            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record'],['screener','🚀 Screener']].map(([key,label]) => (
+            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
                 borderRadius: 10, border: 'none',
@@ -803,14 +802,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                 </div>
               ))}
             </div>
-          )}
-
-          {tab === 'screener' && (
-            <PulseScreener
-              isDark={dark}
-              userDob={userDob}
-              userName={user?.email?.split('@')[0]}
-            />
           )}
 
           <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
