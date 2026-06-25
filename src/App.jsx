@@ -324,6 +324,10 @@ function App() {
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
   const renderTab = () => {
+    const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : null;
+    const trialEnd = trialStart ? new Date(trialStart.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
+    const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+
     switch (activeTab) {
       case 'check':
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
@@ -352,93 +356,4 @@ function App() {
                 <button
                   onClick={() => setIsDark(d => !d)}
                   style={{
-                    width: 52, height: 28, borderRadius: 14,
-                    backgroundColor: isDark ? '#C8920A' : '#E2E8F0',
-                    border: 'none', cursor: 'pointer', position: 'relative',
-                    transition: 'background 0.3s',
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute', top: 3,
-                    left: isDark ? 26 : 3,
-                    width: 22, height: 22, borderRadius: '50%',
-                    backgroundColor: '#FFF',
-                    transition: 'left 0.3s',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                  }} />
-                </button>
-              </div>
-              <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
-                <button
-                  onClick={handleLogout}
-                  style={{
-                    width: '100%', padding: '12px', borderRadius: 12,
-                    backgroundColor: '#DC2626', color: '#FFF',
-                    border: 'none', cursor: 'pointer',
-                    fontWeight: 700, fontSize: 14,
-                  }}
-                >
-                  🚪 Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      case 'profile':
-        return (
-          <div style={{
-            minHeight: '100vh',
-            backgroundColor: isDark ? DARK.bg : LIGHT.bg,
-            display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center',
-            gap: 16, padding: 24,
-          }}>
-            <div style={{ fontSize: 56 }}>👤</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>
-              {profile?.name || 'Trader'}
-            </div>
-            <div style={{ fontSize: 13, color: isDark ? DARK.muted : LIGHT.muted }}>
-              {session.user.email}
-            </div>
-            <div style={{
-              backgroundColor: isDark ? DARK.surface : LIGHT.surface,
-              borderRadius: 16, padding: 20, width: '100%', maxWidth: 360,
-              border: `1px solid ${isDark ? DARK.border : LIGHT.border}`,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-                <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
-                <span style={{ fontWeight: 700, color: profile?.is_subscribed ? '#059669' : '#C8920A', fontSize: 13 }}>
-                  {profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
-                <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Member Since</span>
-                <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>
-                  {profile?.trial_start_date ? new Date(profile.trial_start_date).toLocaleDateString('en-IN') : '-'}
-                </span>
-              </div>
-            </div>
-            <div style={{ fontSize: 12, color: '#C8920A', marginTop: 8 }}>🔱 हर हर महादेव 🔱</div>
-          </div>
-        );
-      default:
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
-    }
-  };
-
-  return (
-    <>
-      <GreetingToast name={profile?.name} show={showGreeting} />
-      <div style={{ paddingBottom: 70 }}>
-        {renderTab()}
-      </div>
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        isDark={isDark}
-      />
-    </>
-  );
-}
-
-export default App;
+                  
