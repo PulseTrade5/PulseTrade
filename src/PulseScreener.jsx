@@ -59,10 +59,8 @@ export default function PulseScreener({ isDark }) {
     setScanDone(false);
     setProgress(0);
     setTotalCount(NIFTY20.length);
-
     const batchSize = 5;
     const allResults = [];
-
     for (let i = 0; i < NIFTY20.length; i += batchSize) {
       const batch = NIFTY20.slice(i, i + batchSize);
       const batchResults = await Promise.all(batch.map(scanStock));
@@ -71,7 +69,6 @@ export default function PulseScreener({ isDark }) {
       setProgress(Math.min(i + batchSize, NIFTY20.length));
       setResults([...allResults].sort((a, b) => b.longScore - a.longScore));
     }
-
     setScanning(false);
     setScanDone(true);
   };
@@ -105,21 +102,16 @@ export default function PulseScreener({ isDark }) {
     <div style={{ backgroundColor: C.bg, minHeight: '100vh', padding: '16px 16px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* TITLE */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: C.text }}>
             🔍 Pulse<span style={{ color: C.gold }}>Screener</span>
           </div>
-          <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>
-            Top stocks dhundo — ek tap mein!
-          </div>
+          <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Top stocks dhundo — ek tap mein!</div>
         </div>
 
         {/* CUSTOM SEARCH */}
         <div style={cardStyle}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>
-            🔎 CUSTOM STOCK SEARCH
-          </div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>🔎 CUSTOM STOCK SEARCH</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <input
               value={customInput}
@@ -143,9 +135,7 @@ export default function PulseScreener({ isDark }) {
             </button>
           </div>
 
-          {customError && (
-            <div style={{ fontSize: 12, color: C.red, marginTop: 8, fontWeight: 600 }}>{customError}</div>
-          )}
+          {customError && <div style={{ fontSize: 12, color: C.red, marginTop: 8, fontWeight: 600 }}>{customError}</div>}
 
           {customResult && (
             <div style={{
@@ -160,8 +150,7 @@ export default function PulseScreener({ isDark }) {
                 </div>
                 <div style={{
                   fontSize: 12, fontWeight: 800, padding: '5px 12px', borderRadius: 20,
-                  backgroundColor: customResult.trend === 'Bullish' ? C.green : C.red,
-                  color: '#FFF',
+                  backgroundColor: customResult.trend === 'Bullish' ? C.green : C.red, color: '#FFF',
                 }}>
                   {customResult.trend === 'Bullish' ? '🟢 BULLISH' : '🔴 BEARISH'}
                 </div>
@@ -184,15 +173,12 @@ export default function PulseScreener({ isDark }) {
 
         {/* AUTO SCREENER */}
         <div style={cardStyle}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>
-            🚀 AUTO SCREENER — NIFTY TOP 20
-          </div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>🚀 AUTO SCREENER — NIFTY TOP 20</div>
 
-          {/* FILTERS */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
             {[['all', '📊 Sab'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '💪 Strong']].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)} style={{
-                padding: '6px 12px', borderRadius: 20, border: 'none',
+                padding: '6px 12px', borderRadius: 20,
                 backgroundColor: filter === key ? C.gold : C.bg,
                 color: filter === key ? '#FFF' : C.muted,
                 fontSize: 11, fontWeight: 700, cursor: 'pointer',
@@ -201,7 +187,6 @@ export default function PulseScreener({ isDark }) {
             ))}
           </div>
 
-          {/* SCAN BUTTON */}
           <button onClick={runScreener} disabled={scanning} style={{
             width: '100%', padding: '14px',
             backgroundColor: scanning ? C.border : C.gold,
@@ -214,13 +199,11 @@ export default function PulseScreener({ isDark }) {
             {scanning ? `⏳ Scanning... ${progress}/${totalCount}` : '🚀 Top Stocks Nikalo!'}
           </button>
 
-          {/* PROGRESS BAR */}
           {scanning && (
             <div style={{ marginBottom: 14 }}>
               <div style={{ height: 6, backgroundColor: C.border, borderRadius: 99, overflow: 'hidden' }}>
                 <div style={{
-                  height: '100%', borderRadius: 99,
-                  backgroundColor: C.gold,
+                  height: '100%', borderRadius: 99, backgroundColor: C.gold,
                   width: `${(progress / totalCount) * 100}%`,
                   transition: 'width 0.5s ease',
                 }} />
@@ -231,11 +214,10 @@ export default function PulseScreener({ isDark }) {
             </div>
           )}
 
-          {/* RESULTS */}
           {filteredResults.length > 0 && (
             <>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 10, fontWeight: 600 }}>
-                {scanDone ? `✅ Scan complete — ` : '🔄 Scanning — '}
+                {scanDone ? '✅ Scan complete — ' : '🔄 Scanning — '}
                 <span style={{ color: C.green, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bullish').length} Bullish</span>
                 {' • '}
                 <span style={{ color: C.red, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bearish').length} Bearish</span>
@@ -266,18 +248,16 @@ export default function PulseScreener({ isDark }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                        backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
-                        color: stock.trend === 'Bullish' ? C.green : C.red,
-                      }}>
-                        {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
-                      </div>
-                      <div style={{ fontSize: 10, color: C.muted, marginTop: 3, textAlign: 'right' }}>
-                        ADX {stock.adx} • {stock.trendStrength}
-                      </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                      backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
+                      color: stock.trend === 'Bullish' ? C.green : C.red,
+                    }}>
+                      {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
+                    </div>
+                    <div style={{ fontSize: 10, color: C.muted, marginTop: 3 }}>
+                      ADX {stock.adx} • {stock.trendStrength}
                     </div>
                   </div>
                 </div>
