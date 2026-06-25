@@ -19,6 +19,86 @@ const LIGHT_C = {
   green: '#059669', red: '#DC2626', greenBg: '#ECFDF5', redBg: '#FEF2F2',
 };
 
+const ASTRO = {
+  0: { day: "Raviwar", planet: "☀️ Surya", vibe: "Leadership energy — large cap stocks dekho", sectors: "Energy, Govt PSU", color: "#F59E0B", caution: false },
+  1: { day: "Somwar", planet: "🌙 Chandra", vibe: "Calm market expected — FMCG aur Pharma best", sectors: "FMCG, Pharma, Healthcare", color: "#94A3B8", caution: false },
+  2: { day: "Mangalwar", planet: "🔴 Mangal", vibe: "High energy — Defense aur Infra strong", sectors: "Defense, Infrastructure, Steel", color: "#EF4444", caution: false },
+  3: { day: "Budhwar", planet: "💚 Budh", vibe: "IT aur Communication best din hai aaj", sectors: "IT, Telecom, Media", color: "#10B981", caution: false },
+  4: { day: "Guruwar", planet: "🟡 Guru", vibe: "Jupiter ka ashirwad — Banking aur Finance", sectors: "Banking, Finance, Gold", color: "#F59E0B", caution: false },
+  5: { day: "Shukrawar", planet: "✨ Shukra", vibe: "Luxury aur Auto stocks shine karenge", sectors: "Auto, Luxury, Consumer", color: "#EC4899", caution: false },
+  6: { day: "Shaniwar", planet: "⚫ Shani", vibe: "Shani ki nazar — cautious raho aaj", sectors: "Avoid risky trades", color: "#6B7280", caution: true },
+};
+
+const FESTIVALS = {
+  "2025-10-18": { name: "Dhanteras", msg: "🪔 Dhanteras Mubarak! Gold aur Silver stocks pe nazar rakho!", special: true },
+  "2025-10-20": { name: "Diwali Muhurat", msg: "🎆 Muhurat Trading! Aaj ka pehla trade shubh hoga!", special: true },
+  "2026-03-14": { name: "Holi", msg: "🎨 Holi hai! Market thoda volatile ho sakta hai!", special: false },
+  "2026-01-14": { name: "Makar Sankranti", msg: "🪁 Makar Sankranti! Naye quarter ki shuruat — fresh positions lo!", special: false },
+};
+
+function getAstroData() {
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const dateStr = today.toISOString().split('T')[0];
+  const festival = FESTIVALS[dateStr] || null;
+  return { ...ASTRO[dayOfWeek], festival };
+}
+
+function AstroCard() {
+  const [showAstro, setShowAstro] = useState(true);
+  const astro = getAstroData();
+  if (!showAstro) return null;
+
+  return (
+    <div style={{
+      background: `linear-gradient(135deg, #0D1117 0%, ${astro.color}22 100%)`,
+      border: `1.5px solid ${astro.color}`,
+      borderRadius: 16, padding: 16, marginBottom: 16,
+      boxShadow: `0 4px 20px ${astro.color}22`,
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: astro.color, fontWeight: 800 }}>
+          🪐 PULSE ASTRO
+        </div>
+        <button onClick={() => setShowAstro(false)} style={{ background: 'none', border: 'none', color: '#6E7681', cursor: 'pointer', fontSize: 14 }}>✕</button>
+      </div>
+
+      {astro.festival && (
+        <div style={{
+          backgroundColor: astro.festival.special ? '#7C3AED22' : '#065F4622',
+          border: `1px solid ${astro.festival.special ? '#7C3AED' : '#059669'}`,
+          borderRadius: 8, padding: '8px 12px', marginBottom: 10,
+          fontSize: 12, color: astro.festival.special ? '#A78BFA' : '#3FAE7C', fontWeight: 700,
+        }}>
+          {astro.festival.msg}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <div style={{ fontSize: 32 }}>{astro.planet.split(' ')[0]}</div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#E8E6E0' }}>
+            Aaj {astro.day} hai
+          </div>
+          <div style={{ fontSize: 12, color: astro.color, fontWeight: 600, marginTop: 2 }}>
+            {astro.vibe}
+          </div>
+        </div>
+      </div>
+
+      <div style={{
+        backgroundColor: astro.caution ? '#2D151522' : '#0D2B1F',
+        borderRadius: 8, padding: '8px 12px',
+        fontSize: 12,
+        color: astro.caution ? '#F87171' : '#3FAE7C',
+        fontWeight: 600,
+      }}>
+        {astro.caution ? '⚠️ Aaj cautious raho — SL tight rakho!' : `💡 Focus sectors: ${astro.sectors}`}
+      </div>
+    </div>
+  );
+}
+
 export default function PulseScreener({ isDark }) {
   const C = isDark ? DARK_C : LIGHT_C;
   const [results, setResults] = useState([]);
@@ -115,6 +195,9 @@ export default function PulseScreener({ isDark }) {
           </div>
         </div>
 
+        {/* ASTRO CARD */}
+        <AstroCard />
+
         {/* CUSTOM SEARCH */}
         <div style={cardStyle}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>
@@ -188,11 +271,10 @@ export default function PulseScreener({ isDark }) {
             🚀 AUTO SCREENER — NIFTY TOP 20
           </div>
 
-          {/* FILTERS */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
             {[['all', '📊 Sab'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '💪 Strong']].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)} style={{
-                padding: '6px 12px', borderRadius: 20, border: 'none',
+                padding: '6px 12px', borderRadius: 20,
                 backgroundColor: filter === key ? C.gold : C.bg,
                 color: filter === key ? '#FFF' : C.muted,
                 fontSize: 11, fontWeight: 700, cursor: 'pointer',
@@ -201,7 +283,6 @@ export default function PulseScreener({ isDark }) {
             ))}
           </div>
 
-          {/* SCAN BUTTON */}
           <button onClick={runScreener} disabled={scanning} style={{
             width: '100%', padding: '14px',
             backgroundColor: scanning ? C.border : C.gold,
@@ -214,7 +295,6 @@ export default function PulseScreener({ isDark }) {
             {scanning ? `⏳ Scanning... ${progress}/${totalCount}` : '🚀 Top Stocks Nikalo!'}
           </button>
 
-          {/* PROGRESS BAR */}
           {scanning && (
             <div style={{ marginBottom: 14 }}>
               <div style={{ height: 6, backgroundColor: C.border, borderRadius: 99, overflow: 'hidden' }}>
@@ -231,7 +311,6 @@ export default function PulseScreener({ isDark }) {
             </div>
           )}
 
-          {/* RESULTS */}
           {filteredResults.length > 0 && (
             <>
               <div style={{ fontSize: 11, color: C.muted, marginBottom: 10, fontWeight: 600 }}>
@@ -266,18 +345,16 @@ export default function PulseScreener({ isDark }) {
                       </div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{
-                        fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                        backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
-                        color: stock.trend === 'Bullish' ? C.green : C.red,
-                      }}>
-                        {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
-                      </div>
-                      <div style={{ fontSize: 10, color: C.muted, marginTop: 3, textAlign: 'right' }}>
-                        ADX {stock.adx} • {stock.trendStrength}
-                      </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                      backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
+                      color: stock.trend === 'Bullish' ? C.green : C.red,
+                    }}>
+                      {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
+                    </div>
+                    <div style={{ fontSize: 10, color: C.muted, marginTop: 3 }}>
+                      ADX {stock.adx} • {stock.trendStrength}
                     </div>
                   </div>
                 </div>
