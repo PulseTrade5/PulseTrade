@@ -59,7 +59,7 @@ export default function SupportChat({ user, isDark, onClose }) {
     }}>
       <div style={{
         backgroundColor: C.surface, width: '100%', maxWidth: 480,
-        height: '85vh', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column',
+        height: '80vh', maxHeight: '640px', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         boxShadow: '0 -4px 30px rgba(0,0,0,0.2)',
       }}>
         {/* HEADER */}
@@ -115,7 +115,7 @@ export default function SupportChat({ user, isDark, onClose }) {
         </div>
 
         {/* INPUT */}
-        <div style={{ padding: '14px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8 }}>
+        <div style={{ padding: '14px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, flexShrink: 0 }}>
           <input
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}
