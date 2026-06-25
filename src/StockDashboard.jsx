@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
+import MoodTracker from './MoodTracker';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -504,6 +505,8 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               {result && (
                 <>
                   <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
+
+                  <MoodTracker isDark={dark} />
 
                   {stockInfo && (
                     <div style={cardStyle}>
