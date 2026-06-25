@@ -6,6 +6,7 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
+import PulseScreener from './PulseScreener';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
