@@ -5,7 +5,7 @@ import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
-
+import BottomNav from './BottomNav';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -28,15 +28,12 @@ function GreetingToast({ name, show }) {
   );
 }
 
-// ✅ SPLASH SCREEN
 function SplashScreen() {
   const [dot, setDot] = useState(0);
-
   useEffect(() => {
     const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
     return () => clearInterval(t);
   }, []);
-
   return (
     <div style={{
       minHeight: '100vh',
@@ -56,7 +53,6 @@ function SplashScreen() {
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-
       <div style={{
         width: 110, height: 110, borderRadius: '50%',
         background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
@@ -65,7 +61,6 @@ function SplashScreen() {
         fontSize: 60,
         animation: 'pulse-glow 2s ease-in-out infinite',
       }}>🐼</div>
-
       <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
         <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
           Pulse<span style={{ color: '#C8920A' }}>Trade</span>
@@ -74,7 +69,6 @@ function SplashScreen() {
           Trade with Pulse, Profit with Discipline
         </div>
       </div>
-
       <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{
@@ -84,7 +78,6 @@ function SplashScreen() {
           }} />
         ))}
       </div>
-
       <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
         🔱 हर हर महादेव 🔱
       </div>
@@ -249,7 +242,8 @@ function App() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [showChallenge, setShowChallenge] = useState(false); // ✅ Challenge state
+  const [activeTab, setActiveTab] = useState('check');
+  const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
@@ -294,7 +288,7 @@ function App() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setShowLogin(false);
-    setShowChallenge(false);
+    setActiveTab('check');
   };
 
   const checkAccess = () => {
@@ -329,20 +323,119 @@ function App() {
   if (access === 'loading') return <SplashScreen />;
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
 
-  // ✅ Challenge page
-  if (showChallenge) return (
-    <ChallengeBoard
-      user={session.user}
-      onBack={() => setShowChallenge(false)}
-    />
-  );
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'check':
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+      case 'challenge':
+        return <ChallengeBoard user={session.user} onBack={() => setActiveTab('check')} />;
+      case 'watchlist':
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
+      case 'settings':
+        return (
+          <div style={{
+            minHeight: '100vh',
+            backgroundColor: isDark ? DARK.bg : LIGHT.bg,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 20, padding: 24,
+          }}>
+            <div style={{ fontSize: 48 }}>⚙️</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>Settings</div>
+            <div style={{
+              backgroundColor: isDark ? DARK.surface : LIGHT.surface,
+              borderRadius: 16, padding: 24, width: '100%', maxWidth: 360,
+              border: `1px solid ${isDark ? DARK.border : LIGHT.border}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>🌙 Dark Mode</span>
+                <button
+                  onClick={() => setIsDark(d => !d)}
+                  style={{
+                    width: 52, height: 28, borderRadius: 14,
+                    backgroundColor: isDark ? '#C8920A' : '#E2E8F0',
+                    border: 'none', cursor: 'pointer', position: 'relative',
+                    transition: 'background 0.3s',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute', top: 3,
+                    left: isDark ? 26 : 3,
+                    width: 22, height: 22, borderRadius: '50%',
+                    backgroundColor: '#FFF',
+                    transition: 'left 0.3s',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                  }} />
+                </button>
+              </div>
+              <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
+                <button
+                  onClick={handleLogout}
+                  style={{
+                    width: '100%', padding: '12px', borderRadius: 12,
+                    backgroundColor: '#DC2626', color: '#FFF',
+                    border: 'none', cursor: 'pointer',
+                    fontWeight: 700, fontSize: 14,
+                  }}
+                >
+                  🚪 Logout
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      case 'profile':
+        return (
+          <div style={{
+            minHeight: '100vh',
+            backgroundColor: isDark ? DARK.bg : LIGHT.bg,
+            display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center',
+            gap: 16, padding: 24,
+          }}>
+            <div style={{ fontSize: 56 }}>👤</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>
+              {profile?.name || 'Trader'}
+            </div>
+            <div style={{ fontSize: 13, color: isDark ? DARK.muted : LIGHT.muted }}>
+              {session.user.email}
+            </div>
+            <div style={{
+              backgroundColor: isDark ? DARK.surface : LIGHT.surface,
+              borderRadius: 16, padding: 20, width: '100%', maxWidth: 360,
+              border: `1px solid ${isDark ? DARK.border : LIGHT.border}`,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+                <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
+                <span style={{ fontWeight: 700, color: profile?.is_subscribed ? '#059669' : '#C8920A', fontSize: 13 }}>
+                  {profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}
+                </span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+                <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Member Since</span>
+                <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>
+                  {profile?.trial_start_date ? new Date(profile.trial_start_date).toLocaleDateString('en-IN') : '-'}
+                </span>
+              </div>
+            </div>
+            <div style={{ fontSize: 12, color: '#C8920A', marginTop: 8 }}>🔱 हर हर महादेव 🔱</div>
+          </div>
+        );
+      default:
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+    }
+  };
 
   return (
     <>
       <GreetingToast name={profile?.name} show={showGreeting} />
-      <StockDashboard
-        user={session.user}
-        onChallenge={() => setShowChallenge(true)}
+      <div style={{ paddingBottom: 70 }}>
+        {renderTab()}
+      </div>
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isDark={isDark}
       />
     </>
   );
