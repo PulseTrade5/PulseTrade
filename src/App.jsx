@@ -435,7 +435,11 @@ function App() {
       <div style={{ paddingBottom: 70 }}>
         {renderTab()}
       </div>
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} isDark={isDark} />
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isDark={isDark}
+      />
     </>
   );
 }
