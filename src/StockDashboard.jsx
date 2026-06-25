@@ -469,6 +469,114 @@ function AITradeCoach({ stockData, C, isDark }) {
   );
 }
 
+
+function PulseOracle({ userDob, isDark, C }) {
+  const [oracle, setOracle] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+  const [shown, setShown] = useState(false);
+
+  const getOracle = async () => {
+    if (!userDob) { alert('Pehle profile mein DOB add karo!'); return; }
+    setLoading(true);
+    try {
+      const today = new Date();
+      const dayName = ['Raviwar','Somwar','Mangalwar','Budhwar','Guruwar','Shukrawar','Shaniwar'][today.getDay()];
+      const digits = userDob.replace(/-/g, '').split('').map(Number);
+      let lp = digits.reduce((a,b) => a+b, 0);
+      while (lp > 9 && lp !== 11 && lp !== 22) lp = String(lp).split('').map(Number).reduce((a,b)=>a+b,0);
+      
+      const response = await fetch('/api/ai-coach', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: `Aaj ${dayName} hai. Mera Life Path Number ${lp} hai. Aaj ${today.toLocaleDateString('en-IN')} ko mera trading din kaisa rahega? 3-4 lines mein Hinglish mein bata: 1) Din kaisa hai (Excellent/Good/Average/Avoid) 2) Best trading time 3) Lucky sector 4) Ek warning. Fun aur motivating rakho!`,
+          context: `Life Path: ${lp}, Day: ${dayName}, Date: ${today.toLocaleDateString('en-IN')}`
+        })
+      });
+      const data = await response.json();
+      setOracle(data.answer || 'Oracle ne jawab nahi diya!');
+      setShown(true);
+    } catch {
+      setOracle('Network error — dobara try karo!');
+    }
+    setLoading(false);
+  };
+
+  const speakOracle = () => {
+    if (!oracle) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(oracle.replace(/\*\*/g, '').replace(/\*/g, ''));
+    utterance.lang = 'hi-IN';
+    utterance.rate = 0.9;
+    setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+
+  return (
+    <div style={{
+      background: isDark
+        ? 'linear-gradient(135deg, #0D0A1A, #1A0D2E)'
+        : 'linear-gradient(135deg, #F5F0FF, #FFFFFF)',
+      border: '1.5px solid #7C3AED',
+      borderRadius: 16, padding: 18, marginBottom: 16,
+      boxShadow: '0 4px 20px rgba(124,58,237,0.15)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: '#7C3AED', fontWeight: 800 }}>🔮 PULSE ORACLE</div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{dateStr}</div>
+        </div>
+        {oracle && (
+          <button onClick={speakOracle} style={{
+            padding: '5px 12px', borderRadius: 20, border: 'none',
+            backgroundColor: speaking ? '#DC2626' : '#7C3AED',
+            color: '#FFF', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+          }}>
+            {speaking ? '⏹️ Roko' : '🔊 Suno'}
+          </button>
+        )}
+      </div>
+
+      {!shown ? (
+        <button onClick={getOracle} disabled={loading} style={{
+          width: '100%', padding: '14px', borderRadius: 12, border: 'none',
+          background: loading ? C.surfaceBorder : 'linear-gradient(135deg, #7C3AED, #A78BFA)',
+          color: loading ? C.muted : '#FFF',
+          fontSize: 14, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: loading ? 'none' : '0 4px 20px rgba(124,58,237,0.3)',
+        }}>
+          {loading ? '🔮 Oracle dekh raha hai...' : '🔮 Aaj Ka Prediction Dekho'}
+        </button>
+      ) : (
+        <div>
+          <div style={{
+            padding: '14px', borderRadius: 12,
+            backgroundColor: isDark ? 'rgba(124,58,237,0.1)' : 'rgba(124,58,237,0.06)',
+            border: '1px solid rgba(124,58,237,0.2)',
+            fontSize: 13, color: C.text, lineHeight: 1.8,
+          }}>
+            {oracle.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '')}
+          </div>
+          <button onClick={() => { setShown(false); setOracle(null); }} style={{
+            width: '100%', marginTop: 10, padding: '8px',
+            backgroundColor: 'transparent', border: `1px solid rgba(124,58,237,0.3)`,
+            borderRadius: 8, color: '#7C3AED', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          }}>🔄 Dobara Dekho</button>
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, color: C.muted, marginTop: 10, textAlign: 'center' }}>
+        ✨ Sirf entertainment — investment advice nahi
+      </div>
+    </div>
+  );
+}
+
 function ReferralCard({ user, C }) {
   const [refCode, setRefCode] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -751,6 +859,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <>
               {/* GLOBAL MARKETS */}
               <GlobalMarkets isDark={dark} />
+              <PulseOracle userDob={userDob} isDark={dark} C={C} />
 
               <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
