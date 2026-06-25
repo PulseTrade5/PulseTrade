@@ -141,38 +141,18 @@ export default function Academy({ isDark }) {
 
       if (insertError) throw insertError;
 
-      // Cashfree payment — same flow as subscription
-      const cashfreeEnv = import.meta.env.VITE_CASHFREE_ENV || "production";
-      const appId = import.meta.env.VITE_CASHFREE_APP_ID;
-      const secretKey = import.meta.env.VITE_CASHFREE_SECRET_KEY;
+      // Cashfree payment — via backend API (same as subscription)
 
-      const orderRes = await fetch(
-        cashfreeEnv === "sandbox"
-          ? "https://sandbox.cashfree.com/pg/orders"
-          : "https://api.cashfree.com/pg/orders",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-api-version": "2023-08-01",
-            "x-client-id": appId,
-            "x-client-secret": secretKey,
-          },
-          body: JSON.stringify({
-            order_id: orderId,
-            order_amount: course.price,
-            order_currency: "INR",
-            customer_details: {
-              customer_id: user.id,
-              customer_email: user.email,
-              customer_phone: "9999999999",
-            },
-            order_meta: {
-              return_url: `${window.location.origin}/academy?order_id=${orderId}&course=${course.id}`,
-            },
-          }),
-        }
-      );
+      const orderRes = await fetch("/api/cashfree-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planName: course.title,
+          amount: course.price,
+          userEmail: user.email,
+          userId: user.id,
+        }),
+      });
 
       const orderData = await orderRes.json();
       if (!orderData.payment_session_id) throw new Error("Payment session failed");
@@ -188,7 +168,7 @@ export default function Academy({ isDark }) {
         });
       }
 
-      const cashfree = window.Cashfree({ mode: cashfreeEnv === "sandbox" ? "sandbox" : "production" });
+      const cashfree = window.Cashfree({ mode: "production" });
       cashfree.checkout({
         paymentSessionId: orderData.payment_session_id,
         redirectTarget: "_self",
