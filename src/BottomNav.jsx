@@ -1,4 +1,4 @@
-// src/BottomNav.jsx
+   // src/BottomNav.jsx
 import { useState } from 'react';
 
 const DARK = {
@@ -25,6 +25,7 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
   const tabs = [
     { id: 'check', icon: '📊', label: 'Check' },
     { id: 'watchlist', icon: '⭐', label: 'Watchlist' },
+    { id: 'screener', icon: '🚀', label: 'Screener' },
     { id: 'challenge', icon: '🎯', label: 'Challenge' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
     { id: 'profile', icon: '👤', label: 'Profile' },
@@ -61,7 +62,7 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '4px 12px',
+              padding: '4px 8px',
               borderRadius: 12,
               transition: 'all 0.2s ease',
             }}
@@ -96,4 +97,4 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
       })}
     </div>
   );
-}
+}           
