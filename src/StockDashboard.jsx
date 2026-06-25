@@ -253,24 +253,13 @@ function AITradeCoach({ stockData, C, isDark }) {
     setAnswer('');
     try {
       const context = stockData ? `Stock: ${stockData.symbol}, Trend: ${stockData.trend}, RSI: ${stockData.rsi}, ADX: ${stockData.adx}, Pulse Score: ${stockData.trend === 'Bullish' ? stockData.longScore : stockData.shortScore}/100, Price: ₹${stockData.currentPrice}` : '';
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/ai-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 300,
-          messages: [{
-            role: 'user',
-            content: `Tu ek expert Indian stock market trader hai. Hinglish mein jawab de — simple, clear aur actionable. 2-3 lines mein.
-
-Stock info: ${context}
-
-User ka sawaal: ${question}`
-          }]
-        })
+        body: JSON.stringify({ question, context })
       });
       const data = await response.json();
-      setAnswer(data.content?.[0]?.text || 'Kuch gadbad ho gayi — dobara try karo!');
+      setAnswer(data.answer || 'Kuch gadbad ho gayi — dobara try karo!');
     } catch {
       setAnswer('Network error — dobara try karo!');
     }
