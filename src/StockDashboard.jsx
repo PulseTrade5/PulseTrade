@@ -6,6 +6,7 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
+import FearGreedMeter from './FearGreedMeter';
 import PulseScreener from './PulseScreener.jsx';
 
 const LIGHT = {
@@ -859,6 +860,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <>
               {/* GLOBAL MARKETS */}
               <GlobalMarkets isDark={dark} />
+              <FearGreedMeter isDark={dark} />
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
 
               <div style={cardStyle}>
