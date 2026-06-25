@@ -6,6 +6,7 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
+import PulseScreener from './PulseScreener.jsx';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -307,6 +308,35 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const [pulseData, setPulseData] = useState(null);
   const [userDob, setUserDob] = useState(null);
   const [showSupport, setShowSupport] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const startVoiceSearch = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Tera browser voice search support nahi karta — Chrome use karo!');
+      return;
+    }
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'hi-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 3;
+    setIsListening(true);
+    recognition.start();
+    recognition.onresult = (event) => {
+      const results = event.results[0];
+      let transcript = '';
+      for (let i = 0; i < results.length; i++) {
+        transcript = results[i].transcript.toUpperCase();
+        const stockMatch = transcript.match(/\b(RELIANCE|TCS|INFY|HDFCBANK|SBIN|TATAMOTORS|ICICIBANK|ITC|WIPRO|AXISBANK|KOTAKBANK|LT|SUNPHARMA|BAJFINANCE|MARUTI|ULTRACEMCO|TITAN|NESTLEIND|POWERGRID|ONGC|[A-Z]{2,10})\b/);
+        if (stockMatch) { transcript = stockMatch[1]; break; }
+      }
+      setSymbolInput(transcript.trim());
+      handleSearch(transcript.trim());
+      setIsListening(false);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+  };
 
   useEffect(() => {
     if (!user?.id) return;
@@ -472,7 +502,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             backgroundColor: C.surface, padding: 4,
             borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
           }}>
-            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
+            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record'],['screener','🚀 Screener']].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
                 borderRadius: 10, border: 'none',
@@ -495,7 +525,18 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
 
               <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
-                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
+                <div style={{ position: 'relative', display: 'flex', gap: 8 }}>
+                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={{...inputStyle, flex: 1}} />
+                <button onClick={startVoiceSearch} style={{
+                  padding: '11px 14px', borderRadius: 10, border: 'none', flexShrink: 0,
+                  backgroundColor: isListening ? '#DC2626' : C.gold,
+                  color: '#FFF', cursor: 'pointer', fontSize: 18,
+                  boxShadow: isListening ? '0 0 12px rgba(220,38,38,0.5)' : 'none',
+                  transition: 'all 0.3s',
+                }}>
+                  {isListening ? '🔴' : '🎙️'}
+                </button>
+              </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                   {POPULAR.map(s => (
                     <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
@@ -802,6 +843,14 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                 </div>
               ))}
             </div>
+          )}
+
+          {tab === 'screener' && (
+            <PulseScreener
+              isDark={dark}
+              userDob={userDob}
+              userName={user?.email?.split('@')[0]}
+            />
           )}
 
           <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
