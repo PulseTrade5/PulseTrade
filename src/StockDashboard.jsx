@@ -46,6 +46,33 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
+// ✅ WAVE COMPONENT
+function WaveBar({ dark }) {
+  const goldColor = dark ? '#D8A33D' : '#C8920A';
+  const greenColor = dark ? '#3FAE7C' : '#059669';
+  const bgColor = dark ? '#161B22' : '#FFFFFF';
+  return (
+    <div style={{ backgroundColor: bgColor, overflow: 'hidden', height: 32, lineHeight: 0 }}>
+      <style>{`@keyframes wave-move { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }`}</style>
+      <svg viewBox="0 0 2880 32" preserveAspectRatio="none" style={{ display: 'block', width: '200%', height: 32, animation: 'wave-move 4s linear infinite' }}>
+        <path d="M0,16 C180,32 360,0 540,16 C720,32 900,0 1080,16 C1260,32 1440,0 1440,16 C1620,32 1800,0 1980,16 C2160,32 2340,0 2520,16 C2700,32 2880,0 2880,16 L2880,32 L0,32 Z" fill={goldColor} opacity="0.15"/>
+        <path d="M0,20 C180,4 360,28 540,20 C720,4 900,28 1080,20 C1260,4 1440,28 1440,20 C1620,4 1800,28 1980,20 C2160,4 2340,28 2520,20 C2700,4 2880,28 2880,20 L2880,32 L0,32 Z" fill={greenColor} opacity="0.1"/>
+      </svg>
+    </div>
+  );
+}
+
+// ✅ LIVE DOT
+function LiveDot({ C }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+      <style>{`@keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }`}</style>
+      <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#059669', animation: 'live-pulse 1.5s ease-in-out infinite', boxShadow: '0 0 6px #059669' }} />
+      <span style={{ fontSize: 10, fontWeight: 700, color: '#059669' }}>Live</span>
+    </div>
+  );
+}
+
 function Week52Bar({ current, low, high, C }) {
   const pct = Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
   return (
@@ -164,22 +191,15 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
 
   return (
     <div style={{
-      background: gradientBg,
-      borderRadius: 20, padding: '24px 20px', marginBottom: 16,
-      border: `1.5px solid ${borderColor}`,
-      boxShadow: `0 8px 32px ${accentColor}33`,
+      background: gradientBg, borderRadius: 20, padding: '24px 20px', marginBottom: 16,
+      border: `1.5px solid ${borderColor}`, boxShadow: `0 8px 32px ${accentColor}33`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{stockName}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-            {stockInfo?.longName || stockName}
-          </div>
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{stockInfo?.longName || stockName}</div>
         </div>
-        <div style={{
-          fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20,
-          backgroundColor: accentColor, color: '#FFF',
-        }}>
+        <div style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20, backgroundColor: accentColor, color: '#FFF' }}>
           {isBullish ? '🟢 BULLISH' : '🔴 BEARISH'}
         </div>
       </div>
@@ -211,11 +231,7 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
           }} />
         </div>
       </div>
-      <div style={{
-        fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)',
-        textAlign: 'center', marginTop: 16, padding: '8px 12px',
-        backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10,
-      }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 16, padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10 }}>
         {isBullish ? score >= 70 ? '🔥 Strong Bullish — Momentum bahut strong hai!' : '⚡ Moderate Bullish — Cautiously optimistic raho'
           : score >= 70 ? '❄️ Strong Bearish — Selling pressure strong hai!' : '⚡ Moderate Bearish — Dhyan se dekho'}
       </div>
@@ -389,7 +405,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
 
         {/* HEADER */}
         <div style={{
-          backgroundColor: C.headerBg, borderBottom: `1px solid ${C.surfaceBorder}`,
+          background: dark
+            ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
+            : 'linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%)',
+          borderBottom: `1px solid ${C.surfaceBorder}`,
           padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
           transition: 'all 0.3s ease',
@@ -402,6 +421,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <LiveDot C={C} />
             <button onClick={() => setShowSupport(true)} style={{
               fontSize: 11, padding: '5px 10px', borderRadius: 20,
               border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent',
@@ -416,6 +436,18 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             )}
           </div>
         </div>
+
+        {/* WAVE */}
+        <WaveBar dark={dark} />
+
+        {/* TOP GRADIENT LINE */}
+        <style>{`@keyframes shimmer-line { 0%{background-position:-200% center} 100%{background-position:200% center} }`}</style>
+        <div style={{
+          height: 3,
+          background: 'linear-gradient(90deg, #C8920A, #3FAE7C, #C8920A)',
+          backgroundSize: '200% auto',
+          animation: 'shimmer-line 3s linear infinite',
+        }} />
 
         {/* SEBI BANNER */}
         <div style={{
