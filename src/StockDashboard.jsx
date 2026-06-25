@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+         import { useState, useEffect, useRef } from 'react';
 import { supabase } from './supabaseClient';
 import { analyzeStock } from './technicalAnalysis';
 import SubscribeButton from './SubscribeButton';
@@ -6,7 +6,7 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
-import PulseScreener from './PulseScreener';
+import PulseScreener from './PulseScreener.jsx';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -826,4 +826,4 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       )}
     </div>
   );
-}
+}               <
