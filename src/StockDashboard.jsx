@@ -1019,6 +1019,33 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                     }}>
                       {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
                     </button>
+                    <button onClick={() => {
+                      const score = result.trend === 'Bullish' ? result.longScore : result.shortScore;
+                      const price = stockInfo?.regularMarketPrice || result.lastClose;
+                      const change = stockInfo?.regularMarketChangePercent ? `${stockInfo.regularMarketChangePercent >= 0 ? '▲' : '▼'} ${Math.abs(stockInfo.regularMarketChangePercent).toFixed(2)}%` : '';
+                      const msg = `🔱 *PulseTrade Analysis*
+
+📊 *${stockName}* — ${result.trend === 'Bullish' ? '🟢 BULLISH' : '🔴 BEARISH'}
+💰 Price: ₹${Number(price).toLocaleString('en-IN', {maximumFractionDigits: 2})} ${change}
+⚡ Pulse Score: ${score}/100
+📈 RSI: ${result.rsi} | ADX: ${result.adx}
+🎯 Trend: ${result.trendStrength}
+
+${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠️ Bearish Trend — Cautious raho!'}
+
+🔍 Khud check karo: pulsetrade.in
+🔱 हर हर महादेव 🔱`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+                    }} style={{
+                      width: '100%', marginTop: 8, padding: '9px',
+                      fontSize: 13, fontWeight: 700, borderRadius: 10,
+                      border: 'none',
+                      background: 'linear-gradient(135deg, #25D366, #128C7E)',
+                      color: '#FFF', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                    }}>
+                      <span style={{fontSize: 16}}>📱</span> WhatsApp Pe Share Karo
+                    </button>
                   </div>
 
                   {result.signal ? (
