@@ -5,7 +5,6 @@ const BG_CARD = "#161B22";
 const BORDER = "#30363D";
 const PANDA_URL = "https://raw.githubusercontent.com/PulseTrade5/PulseTrade/main/file_00000000e4dc7208a1fbd212fdf49fb3.png";
 
-// ✅ PULSE ASTRO DATA
 const ASTRO = {
   0: { day: "Raviwar", planet: "☀️ Surya", vibe: "Leadership energy — large cap stocks dekho", sectors: "Energy, Govt PSU", color: "#F59E0B", caution: false },
   1: { day: "Somwar", planet: "🌙 Chandra", vibe: "Calm market expected — FMCG aur Pharma best", sectors: "FMCG, Pharma, Healthcare", color: "#94A3B8", caution: false },
@@ -24,6 +23,35 @@ const FESTIVALS = {
   "2026-01-14": { name: "Makar Sankranti", msg: "🪁 Makar Sankranti! Naye quarter ki shuruat — fresh positions lo!", special: false },
 };
 
+// ✅ NUMEROLOGY FUNCTIONS
+function getLifePathNumber(dob) {
+  if (!dob) return null;
+  const digits = dob.replace(/-/g, '').split('').map(Number);
+  let sum = digits.reduce((a, b) => a + b, 0);
+  while (sum > 9 && sum !== 11 && sum !== 22 && sum !== 33) {
+    sum = sum.toString().split('').map(Number).reduce((a, b) => a + b, 0);
+  }
+  return sum;
+}
+
+function getNumerologyData(lifePathNumber) {
+  const data = {
+    1: { luckyNumber: 1, luckyColor: "🔴 Red", luckyDay: "Raviwar (Sunday)", trait: "The Leader", desc: "Tu ek natural leader hai — confident aur decisive." },
+    2: { luckyNumber: 2, luckyColor: "🟠 Orange", luckyDay: "Somwar (Monday)", trait: "The Diplomat", desc: "Teri strength patience aur balance hai — sahi timing ka intezaar kar." },
+    3: { luckyNumber: 3, luckyColor: "💛 Yellow", luckyDay: "Guruwar (Thursday)", trait: "The Creative", desc: "Tera intuition strong hai — creative thinking se kaam le." },
+    4: { luckyNumber: 4, luckyColor: "🟢 Green", luckyDay: "Shaniwar (Saturday)", trait: "The Strategist", desc: "Tu disciplined aur systematic hai — planning teri superpower hai." },
+    5: { luckyNumber: 5, luckyColor: "🩵 Sky Blue", luckyDay: "Budhwar (Wednesday)", trait: "The Adventurer", desc: "Tu fearless hai — naye opportunities explore karna tera nature hai." },
+    6: { luckyNumber: 6, luckyColor: "💙 Blue", luckyDay: "Shukrawar (Friday)", trait: "The Guardian", desc: "Tera risk management naturally strong hai — capital protection teri priority hai." },
+    7: { luckyNumber: 7, luckyColor: "🟣 Violet", luckyDay: "Somwar (Monday)", trait: "The Analyst", desc: "Teri research aur analysis ki power exceptional hai — data se dost ban." },
+    8: { luckyNumber: 8, luckyColor: "⬛ Black/Gold", luckyDay: "Shaniwar (Saturday)", trait: "The Powerhouse", desc: "Tu bada sochta hai — high conviction trades tera style hai." },
+    9: { luckyNumber: 9, luckyColor: "🟤 Brown/Gold", luckyDay: "Mangalwar (Tuesday)", trait: "The Visionary", desc: "Tera long-term vision exceptional hai — patience se bade results aate hain." },
+    11: { luckyNumber: 11, luckyColor: "🤍 Silver/White", luckyDay: "Somwar (Monday)", trait: "The Intuitive Master", desc: "Tera sixth sense strong hai — gut feeling pe trust kar." },
+    22: { luckyNumber: 22, luckyColor: "🌟 Gold", luckyDay: "Shaniwar (Saturday)", trait: "The Master Builder", desc: "Tu exceptional discipline wala trader hai — bade goals set karta hai aur achieve karta hai." },
+    33: { luckyNumber: 33, luckyColor: "✨ White/Gold", luckyDay: "Guruwar (Thursday)", trait: "The Master Teacher", desc: "Teri wisdom aur clarity exceptional hai — sahi decision naturally aate hain tujhe." },
+  };
+  return data[lifePathNumber] || data[1];
+}
+
 function getAstroData() {
   const today = new Date();
   const dayOfWeek = today.getDay();
@@ -32,11 +60,8 @@ function getAstroData() {
   return { ...ASTRO[dayOfWeek], festival, date: today };
 }
 
-// ✅ IMPROVED VOICE SELECTION
 function getBestVoice() {
   const voices = window.speechSynthesis.getVoices();
-  
-  // Priority order — best voices pehle
   const preferred = [
     v => v.lang === 'hi-IN' && v.name.includes('Google'),
     v => v.lang === 'hi-IN' && v.name.includes('Female'),
@@ -47,7 +72,6 @@ function getBestVoice() {
     v => v.name.includes('Google') && v.lang.startsWith('en'),
     v => v.default,
   ];
-
   for (const check of preferred) {
     const found = voices.find(check);
     if (found) return found;
@@ -55,7 +79,92 @@ function getBestVoice() {
   return null;
 }
 
-export default function PulseBoltaHai({ stockData, userName }) {
+// ✅ NUMEROLOGY CARD COMPONENT
+function NumerologyCard({ dob, userName }) {
+  const lifePathNumber = getLifePathNumber(dob);
+  if (!lifePathNumber) return null;
+  const numData = getNumerologyData(lifePathNumber);
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #0D1117 0%, #1a1400 100%)',
+      border: '1.5px solid #D8A33D',
+      borderRadius: 16, padding: 16, marginBottom: 16,
+      boxShadow: '0 4px 20px rgba(216,163,61,0.15)',
+    }}>
+      <div style={{ fontSize: 10, letterSpacing: 2, color: GOLD, fontWeight: 800, marginBottom: 12 }}>
+        🔢 PULSE NUMEROLOGY
+      </div>
+
+      {/* Life Path Number */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 14 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #D8A33D, #B8860B)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, fontWeight: 900, color: '#0D1117', flexShrink: 0,
+        }}>
+          {lifePathNumber}
+        </div>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#E8E6E0' }}>
+            {numData.trait}
+          </div>
+          <div style={{ fontSize: 11, color: '#8B92A0', marginTop: 2 }}>
+            Life Path Number {lifePathNumber}
+          </div>
+        </div>
+      </div>
+
+      {/* Description */}
+      <div style={{
+        backgroundColor: 'rgba(216,163,61,0.08)',
+        borderRadius: 10, padding: '10px 12px', marginBottom: 12,
+        fontSize: 13, color: '#C9D1D9', lineHeight: 1.6,
+        borderLeft: '3px solid #D8A33D',
+      }}>
+        {numData.desc}
+      </div>
+
+      {/* Lucky Info */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{
+          flex: 1, backgroundColor: '#161B22', borderRadius: 10,
+          padding: '10px 8px', textAlign: 'center',
+          border: '1px solid #30363D',
+        }}>
+          <div style={{ fontSize: 18 }}>🔢</div>
+          <div style={{ fontSize: 10, color: '#8B92A0', marginTop: 4, fontWeight: 600 }}>LUCKY NO.</div>
+          <div style={{ fontSize: 16, fontWeight: 800, color: GOLD, marginTop: 2 }}>{numData.luckyNumber}</div>
+        </div>
+        <div style={{
+          flex: 1, backgroundColor: '#161B22', borderRadius: 10,
+          padding: '10px 8px', textAlign: 'center',
+          border: '1px solid #30363D',
+        }}>
+          <div style={{ fontSize: 18 }}>🎨</div>
+          <div style={{ fontSize: 10, color: '#8B92A0', marginTop: 4, fontWeight: 600 }}>LUCKY COLOR</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#E8E6E0', marginTop: 2 }}>{numData.luckyColor}</div>
+        </div>
+        <div style={{
+          flex: 1, backgroundColor: '#161B22', borderRadius: 10,
+          padding: '10px 8px', textAlign: 'center',
+          border: '1px solid #30363D',
+        }}>
+          <div style={{ fontSize: 18 }}>📅</div>
+          <div style={{ fontSize: 10, color: '#8B92A0', marginTop: 4, fontWeight: 600 }}>LUCKY DAY</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#E8E6E0', marginTop: 2 }}>{numData.luckyDay.split(' ')[0]}</div>
+        </div>
+      </div>
+
+      <div style={{ fontSize: 10, color: '#6E7681', marginTop: 10, textAlign: 'center' }}>
+        🔢 Chaldean Numerology based — sirf personal insight ke liye
+      </div>
+    </div>
+  );
+}
+
+export default function PulseBoltaHai({ stockData, userName, userDob }) {
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
   const [speaking, setSpeaking] = useState(false);
@@ -73,7 +182,6 @@ export default function PulseBoltaHai({ stockData, userName }) {
     if (summary && !autoSpoken) { setAutoSpoken(true); speakText(summary); }
   }, [summary]);
 
-  // Load voices
   useEffect(() => {
     window.speechSynthesis.getVoices();
     window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
@@ -84,21 +192,16 @@ export default function PulseBoltaHai({ stockData, userName }) {
     setSpeaking(false);
   };
 
-  // ✅ IMPROVED SPEAK FUNCTION
   const speakText = (text) => {
     if (!window.speechSynthesis) { setError("Browser voice support nahi karta."); return; }
     stopSpeech();
-    
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = "hi-IN";
-    utterance.rate = 0.88;   // Thoda slow — clear samajh aaye
-    utterance.pitch = 1.1;   // Thoda high — natural lagey
+    utterance.rate = 0.88;
+    utterance.pitch = 1.1;
     utterance.volume = 1;
-
-    // Best voice select karo
     const bestVoice = getBestVoice();
     if (bestVoice) utterance.voice = bestVoice;
-
     utterance.onstart = () => setSpeaking(true);
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
@@ -106,18 +209,15 @@ export default function PulseBoltaHai({ stockData, userName }) {
     window.speechSynthesis.speak(utterance);
   };
 
-  // ✅ ASTRO VOICE — naam se greet
   const speakAstro = () => {
     const name = userName || 'Bhai';
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-    
     const text = `${greeting} ${name}! Aaj ${astro.day} hai — ${astro.planet} ka din! 
     ${astro.vibe}. 
     ${astro.caution ? 'Aaj cautious raho — risky trades se bachna.' : `${astro.sectors} sector mein opportunities dekho.`}
     ${astro.festival ? astro.festival.msg : ''}
     Har Har Mahadev! Shubh trading!`;
-    
     speakText(text);
   };
 
@@ -146,6 +246,9 @@ export default function PulseBoltaHai({ stockData, userName }) {
 
   return (
     <div>
+      {/* ✅ NUMEROLOGY CARD */}
+      <NumerologyCard dob={userDob} userName={userName} />
+
       {/* ✅ PULSE ASTRO CARD */}
       {showAstro && (
         <div style={{
@@ -161,7 +264,6 @@ export default function PulseBoltaHai({ stockData, userName }) {
             <button onClick={() => setShowAstro(false)} style={{ background: 'none', border: 'none', color: '#6E7681', cursor: 'pointer', fontSize: 14 }}>✕</button>
           </div>
 
-          {/* Festival banner */}
           {astro.festival && (
             <div style={{
               backgroundColor: astro.festival.special ? '#7C3AED22' : '#065F4622',
@@ -278,7 +380,6 @@ export default function PulseBoltaHai({ stockData, userName }) {
             <p style={{ margin: "10px 0 0", color: "#6E7681", fontSize: 11, fontStyle: "italic" }}>
               ⚠️ Sirf technical analysis hai — investment advice nahi. SEBI registered advisor se salah lein.
             </p>
-
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button onClick={handleVoiceToggle} style={{
                 flex: 1, padding: "9px", borderRadius: 8,
