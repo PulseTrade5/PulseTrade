@@ -472,7 +472,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             backgroundColor: C.surface, padding: 4,
             borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
           }}>
-            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record']].map(([key,label]) => (
+            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record'],['screener','🚀 Screener']].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
                 borderRadius: 10, border: 'none',
@@ -804,6 +804,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             </div>
           )}
 
+
+          {tab === 'screener' && (
+            <PulseScreener isDark={dark} />
+          )}
           <div style={{ textAlign: 'center', marginTop: 32, paddingTop: 16, borderTop: `1px solid ${C.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
             <a href="/terms" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
             <a href="/refund" style={{ color: C.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
