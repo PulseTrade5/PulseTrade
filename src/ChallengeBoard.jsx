@@ -30,10 +30,10 @@ function getWeekDates() {
 }
 
 const BADGES_CONFIG = [
-  { id: 'rookie', name: 'Rookie Trader', icon: '🌱', points: 100, desc: 'Pehle 100 points' },
-  { id: 'smart', name: 'Smart Trader', icon: '📊', points: 500, desc: '500 points milestone' },
-  { id: 'pro', name: 'Pro Trader', icon: '🎯', points: 1000, desc: '1000 points milestone' },
-  { id: 'elite', name: 'Elite Trader', icon: '👑', points: 2000, desc: '2000 points — Legend!' },
+  { id: 'rookie', name: 'Rookie Trader', icon: 'ðŸŒ±', points: 100, desc: 'Pehle 100 points' },
+  { id: 'smart', name: 'Smart Trader', icon: 'ðŸ“Š', points: 500, desc: '500 points milestone' },
+  { id: 'pro', name: 'Pro Trader', icon: 'ðŸŽ¯', points: 1000, desc: '1000 points milestone' },
+  { id: 'elite', name: 'Elite Trader', icon: 'ðŸ‘‘', points: 2000, desc: '2000 points â€” Legend!' },
 ];
 
 export default function ChallengeBoard({ user, onBack }) {
@@ -198,7 +198,7 @@ export default function ChallengeBoard({ user, onBack }) {
   if (loading) return (
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ textAlign: 'center', color: COLORS.muted }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>⏳</div>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>â³</div>
         <div>Load ho raha hai...</div>
       </div>
     </div>
@@ -219,19 +219,19 @@ export default function ChallengeBoard({ user, onBack }) {
               background: 'none', border: `1px solid ${COLORS.border}`,
               color: COLORS.muted, borderRadius: 8, padding: '4px 10px',
               cursor: 'pointer', fontSize: 13,
-            }}>← Back</button>
+            }}>â† Back</button>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800 }}>
                 Pulse<span style={{ color: COLORS.gold }}>Challenge</span>
               </div>
-              <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
+              <div style={{ fontSize: 10, color: COLORS.muted }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
             </div>
           </div>
           <div style={{
             backgroundColor: COLORS.goldLight, border: `1px solid ${COLORS.gold}`,
             borderRadius: 20, padding: '5px 14px', fontSize: 12, fontWeight: 700, color: COLORS.gold,
           }}>
-            ⚡ {myPoints?.total_points || 0} pts
+            âš¡ {myPoints?.total_points || 0} pts
           </div>
         </div>
 
@@ -240,7 +240,7 @@ export default function ChallengeBoard({ user, onBack }) {
           display: 'flex', gap: 4, padding: 4,
           backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.border}`,
         }}>
-          {[['challenge', '🎯 Challenge'], ['leaderboard', '🏆 Board'], ['points', '🎖️ My Points']].map(([key, label]) => (
+          {[['challenge', 'ðŸŽ¯ Challenge'], ['leaderboard', 'ðŸ† Board'], ['points', 'ðŸŽ–ï¸ My Points']].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700,
               borderRadius: 10, border: 'none',
@@ -264,13 +264,13 @@ export default function ChallengeBoard({ user, onBack }) {
                 boxShadow: `0 8px 32px ${COLORS.gold}22`,
               }}>
                 <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.gold, fontWeight: 800, marginBottom: 8 }}>
-                  🎯 WEEKLY CHALLENGE — WEEK {weekNo}
+                  ðŸŽ¯ WEEKLY CHALLENGE â€” WEEK {weekNo}
                 </div>
                 <h2 style={{ fontSize: 20, fontWeight: 900, margin: '0 0 6px', lineHeight: 1.3, color: COLORS.text }}>
                   {challenge?.question || 'Is hafte NIFTY50 kahan jayega?'}
                 </h2>
                 <p style={{ fontSize: 12, color: COLORS.muted, margin: '0 0 20px' }}>
-                  {weekDates.start} → {weekDates.end}
+                  {weekDates.start} â†’ {weekDates.end}
                 </p>
 
                 {challenge?.result !== 'pending' ? (
@@ -281,18 +281,18 @@ export default function ChallengeBoard({ user, onBack }) {
                     borderRadius: 12, padding: 16, textAlign: 'center',
                   }}>
                     <div style={{ fontSize: 32, marginBottom: 8 }}>
-                      {challenge.result === 'bullish' ? '📈' : '📉'}
+                      {challenge.result === 'bullish' ? 'ðŸ“ˆ' : 'ðŸ“‰'}
                     </div>
                     <div style={{ fontWeight: 800, fontSize: 16, color: challenge.result === 'bullish' ? COLORS.green : COLORS.red }}>
                       Result: {challenge.result === 'bullish' ? 'Bullish' : 'Bearish'} Raha!
                     </div>
                     {voted === challenge.result ? (
                       <div style={{ color: COLORS.green, fontWeight: 700, marginTop: 8 }}>
-                        🎉 Sahi prediction! +50 points mile!
+                        ðŸŽ‰ Sahi prediction! +50 points mile!
                       </div>
                     ) : (
                       <div style={{ color: COLORS.red, fontWeight: 700, marginTop: 8 }}>
-                        ❌ Is baar nahi hua — agli baar try karo!
+                        âŒ Is baar nahi hua â€” agli baar try karo!
                       </div>
                     )}
                   </div>
@@ -305,7 +305,7 @@ export default function ChallengeBoard({ user, onBack }) {
                       backgroundColor: `${COLORS.green}22`, color: COLORS.green,
                       fontSize: 15, fontWeight: 800, cursor: 'pointer',
                     }}>
-                      📈 Bullish<br />
+                      ðŸ“ˆ Bullish<br />
                       <span style={{ fontSize: 11, fontWeight: 600 }}>Upar jayega</span>
                     </button>
                     <button onClick={() => handleVote('bearish')} disabled={voteLoading} style={{
@@ -314,7 +314,7 @@ export default function ChallengeBoard({ user, onBack }) {
                       backgroundColor: `${COLORS.red}22`, color: COLORS.red,
                       fontSize: 15, fontWeight: 800, cursor: 'pointer',
                     }}>
-                      📉 Bearish<br />
+                      ðŸ“‰ Bearish<br />
                       <span style={{ fontSize: 11, fontWeight: 600 }}>Neeche jayega</span>
                     </button>
                   </div>
@@ -326,20 +326,20 @@ export default function ChallengeBoard({ user, onBack }) {
                       border: `2px solid ${voted === 'bullish' ? COLORS.green : COLORS.red}`,
                       borderRadius: 12, padding: 14, textAlign: 'center', marginBottom: 12,
                     }}>
-                      <div style={{ fontSize: 24, marginBottom: 4 }}>{voted === 'bullish' ? '📈' : '📉'}</div>
+                      <div style={{ fontSize: 24, marginBottom: 4 }}>{voted === 'bullish' ? 'ðŸ“ˆ' : 'ðŸ“‰'}</div>
                       <div style={{ fontWeight: 800, color: voted === 'bullish' ? COLORS.green : COLORS.red }}>
                         Tumne {voted === 'bullish' ? 'Bullish' : 'Bearish'} vote kiya!
                       </div>
                       <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 4 }}>
-                        Result Shukrawar ko aayega 🎯
+                        Result Shukrawar ko aayega ðŸŽ¯
                       </div>
                     </div>
 
                     {/* Vote stats */}
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: COLORS.muted, marginBottom: 6 }}>
-                        <span>📈 Bullish — {bullishPct}%</span>
-                        <span>📉 Bearish — {bearishPct}%</span>
+                        <span>ðŸ“ˆ Bullish â€” {bullishPct}%</span>
+                        <span>ðŸ“‰ Bearish â€” {bearishPct}%</span>
                       </div>
                       <div style={{ height: 8, backgroundColor: COLORS.border, borderRadius: 99, overflow: 'hidden', display: 'flex' }}>
                         <div style={{ width: `${bullishPct}%`, backgroundColor: COLORS.green, borderRadius: '99px 0 0 99px', transition: 'width 1s ease' }} />
@@ -351,7 +351,7 @@ export default function ChallengeBoard({ user, onBack }) {
                     </div>
 
                     <div style={{ backgroundColor: COLORS.goldLight, borderRadius: 10, padding: 10, textAlign: 'center', fontSize: 12, color: COLORS.gold, fontWeight: 700 }}>
-                      🎯 Sahi prediction pe +50 Pulse Points milenge!
+                      ðŸŽ¯ Sahi prediction pe +50 Pulse Points milenge!
                     </div>
                   </div>
                 )}
@@ -359,14 +359,14 @@ export default function ChallengeBoard({ user, onBack }) {
 
               {/* Points earning guide */}
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>⚡ POINTS KAISE MILENGE</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>âš¡ POINTS KAISE MILENGE</div>
                 {[
-                  ['✅ Sahi prediction', '+50 pts'],
-                  ['🗳️ Vote karo (win/loss)', '+5 pts'],
-                  ['📊 Stock check karo', '+5 pts'],
-                  ['⭐ Watchlist add karo', '+3 pts'],
-                  ['🔥 7 din streak', '+25 pts'],
-                  ['🎯 3 baar sahi prediction', '+100 pts bonus'],
+                  ['âœ… Sahi prediction', '+50 pts'],
+                  ['ðŸ—³ï¸ Vote karo (win/loss)', '+5 pts'],
+                  ['ðŸ“Š Stock check karo', '+5 pts'],
+                  ['â­ Watchlist add karo', '+3 pts'],
+                  ['ðŸ”¥ 7 din streak', '+25 pts'],
+                  ['ðŸŽ¯ 3 baar sahi prediction', '+100 pts bonus'],
                 ].map(([action, pts]) => (
                   <div key={action} style={rowStyle}>
                     <span style={{ color: COLORS.muted }}>{action}</span>
@@ -380,11 +380,11 @@ export default function ChallengeBoard({ user, onBack }) {
           {/* LEADERBOARD TAB */}
           {tab === 'leaderboard' && (
             <div style={cardStyle}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 16, fontWeight: 700 }}>🏆 TOP TRADERS</div>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 16, fontWeight: 700 }}>ðŸ† TOP TRADERS</div>
               {leaderboard.length === 0 ? (
                 <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0' }}>Abhi koi data nahi hai.</p>
               ) : leaderboard.map((u, i) => {
-                const badge = i === 0 ? '👑' : i === 1 ? '🥇' : i === 2 ? '🥈' : i === 3 ? '🥉' : '⭐';
+                const badge = i === 0 ? 'ðŸ‘‘' : i === 1 ? 'ðŸ¥‡' : i === 2 ? 'ðŸ¥ˆ' : i === 3 ? 'ðŸ¥‰' : 'â­';
                 return (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 12,
@@ -395,9 +395,9 @@ export default function ChallengeBoard({ user, onBack }) {
                     <div style={{ fontSize: 20, width: 28, textAlign: 'center' }}>{badge}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, color: u.isMe ? COLORS.gold : COLORS.text }}>
-                        {u.name} {u.isMe ? '👈 You' : ''}
+                        {u.name} {u.isMe ? 'ðŸ‘ˆ You' : ''}
                       </div>
-                      <div style={{ fontSize: 11, color: COLORS.muted }}>🔥 {u.streak_days} din streak</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>ðŸ”¥ {u.streak_days} din streak</div>
                     </div>
                     <div style={{ fontWeight: 800, color: COLORS.gold, fontSize: 16 }}>
                       {u.total_points.toLocaleString()}
@@ -424,7 +424,7 @@ export default function ChallengeBoard({ user, onBack }) {
                 <div style={{ fontSize: 14, color: COLORS.muted, marginBottom: 16 }}>Pulse Points</div>
                 <div style={{ display: 'flex', justifyContent: 'center', gap: 24 }}>
                   {[
-                    ['🔥', myPoints?.streak_days || 0, 'Din Streak'],
+                    ['ðŸ”¥', myPoints?.streak_days || 0, 'Din Streak'],
                   ].map(([icon, val, label]) => (
                     <div key={label} style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: 20 }}>{icon}</div>
@@ -437,7 +437,7 @@ export default function ChallengeBoard({ user, onBack }) {
 
               {/* Badges */}
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>🎖️ BADGES</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, marginBottom: 12, fontWeight: 700 }}>ðŸŽ–ï¸ BADGES</div>
                 {BADGES_CONFIG.map(badge => {
                   const unlocked = (myPoints?.total_points || 0) >= badge.points;
                   return (
@@ -451,7 +451,4 @@ export default function ChallengeBoard({ user, onBack }) {
                       <div style={{ fontSize: 28 }}>{badge.icon}</div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 700, color: unlocked ? COLORS.gold : COLORS.muted }}>{badge.name}</div>
-                        <div style={{ fontSize: 11, color: COLORS.muted }}>{badge.desc}</div>
-                      </div>
-                      {unlocked ? (
-          
+                        <div style={{ fontSize:
