@@ -300,15 +300,9 @@ function ReferralCard({ user, C }) {
   );
 }
 
-export default function StockDashboard({ user, onChallenge }) {
-  const [dark, setDark] = useState(() => localStorage.getItem('pt_dark') === 'true');
+export default function StockDashboard({ user, isDark, onTabChange, defaultTab }) {
+  const dark = isDark ?? false;
   const C = dark ? DARK : LIGHT;
-
-  const toggleDark = () => {
-    const next = !dark;
-    setDark(next);
-    localStorage.setItem('pt_dark', next);
-  };
 
   const [symbolInput, setSymbolInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -316,7 +310,7 @@ export default function StockDashboard({ user, onChallenge }) {
   const [result, setResult] = useState(null);
   const [stockInfo, setStockInfo] = useState(null);
   const [stockName, setStockName] = useState('');
-  const [tab, setTab] = useState('check');
+  const [tab, setTab] = useState(defaultTab || 'check');
   const [watchlist, setWatchlist] = useState([]);
   const [history, setHistory] = useState([]);
   const [sizingMode, setSizingMode] = useState('risk');
@@ -328,8 +322,6 @@ export default function StockDashboard({ user, onChallenge }) {
   const [alertSent, setAlertSent] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
-
-  const handleLogout = async () => { await supabase.auth.signOut(); };
 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
@@ -434,41 +426,13 @@ export default function StockDashboard({ user, onChallenge }) {
             <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <button onClick={toggleDark} style={{
-              width: 52, height: 26, borderRadius: 99,
-              backgroundColor: dark ? C.gold : '#CBD5E1',
-              border: 'none', cursor: 'pointer',
-              position: 'relative', transition: 'background 0.3s ease',
-              display: 'flex', alignItems: 'center', padding: '0 3px', flexShrink: 0,
-            }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: '50%', backgroundColor: '#FFF',
-                transform: dark ? 'translateX(26px)' : 'translateX(0px)',
-                transition: 'transform 0.3s ease',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-              }}>
-                {dark ? '🌙' : '☀️'}
-              </div>
-            </button>
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
                 fontSize: 11, padding: '5px 10px', borderRadius: 20,
                 border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
                 color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
-              }}>⚙️</a>
+              }}>⚙️ Admin</a>
             )}
-            <button onClick={() => onChallenge && onChallenge()} style={{
-              fontSize: 11, padding: '5px 10px', borderRadius: 20,
-              border: `1.5px solid ${C.gold}`,
-              backgroundColor: C.goldLight,
-              color: C.goldDim, cursor: 'pointer', fontWeight: 700,
-            }}>🎯</button>
-            <button onClick={handleLogout} style={{
-              fontSize: 12, padding: '6px 14px', borderRadius: 20,
-              border: `1.5px solid ${C.surfaceBorder}`,
-              backgroundColor: 'transparent', color: C.muted, cursor: 'pointer', fontWeight: 600,
-            }}>🚪 Logout</button>
           </div>
         </div>
 
@@ -513,7 +477,6 @@ export default function StockDashboard({ user, onChallenge }) {
 
           {tab === 'check' && (
             <>
-              {/* SEARCH CARD */}
               <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
                 <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={inputStyle} />
@@ -743,8 +706,6 @@ export default function StockDashboard({ user, onChallenge }) {
                       ))}
                     </div>
                   </div>
-
-
                 </>
               )}
             </>
