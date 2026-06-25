@@ -8,6 +8,7 @@ import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
 import WelcomeScreen from './WelcomeScreen';
 import PulseScreener from './PulseScreener.jsx';
+import Academy from './Academy';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -419,6 +420,8 @@ function App() {
             </div>
           </div>
         );
+      case 'academy':
+        return <Academy isDark={isDark} />;
       case 'profile':
         return <ProfileTab profile={profile} session={session} isDark={isDark} />;
       case 'screener':
