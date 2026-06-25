@@ -151,6 +151,8 @@ export default function Academy({ isDark }) {
           amount: course.price,
           userEmail: user.email,
           userId: user.id,
+          orderId: orderId,
+          returnUrl: `${window.location.origin}/?academy_order=${orderId}&course=${course.id}`,
         }),
       });
 
@@ -455,4 +457,4 @@ export default function Academy({ isDark }) {
       </div>
     </div>
   );
-}
+                                       }
