@@ -392,6 +392,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           transition: 'all 0.3s ease',
         }}>
           <div>
+            <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
             <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: C.gold }}>Trade</span>
             </h1>
