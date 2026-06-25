@@ -197,36 +197,24 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
       </div>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1 }}>
-            ⚡ PULSE SCORE
-          </span>
-          <span style={{ fontSize: 16, fontWeight: 900, color: accentColor }}>
-            {score}/100
-          </span>
+          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1 }}>⚡ PULSE SCORE</span>
+          <span style={{ fontSize: 16, fontWeight: 900, color: accentColor }}>{score}/100</span>
         </div>
         <div style={{ height: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 99, overflow: 'hidden' }}>
           <div style={{
             height: '100%', width: `${score}%`,
-            background: isBullish
-              ? 'linear-gradient(90deg, #059669, #34D399)'
-              : 'linear-gradient(90deg, #DC2626, #FCA5A5)',
+            background: isBullish ? 'linear-gradient(90deg, #059669, #34D399)' : 'linear-gradient(90deg, #DC2626, #FCA5A5)',
             borderRadius: 99, transition: 'width 1.2s ease',
           }} />
         </div>
       </div>
       <div style={{
-        fontSize: 13, fontWeight: 700,
-        color: 'rgba(255,255,255,0.75)',
-        textAlign: 'center', marginTop: 16,
-        padding: '8px 12px',
-        backgroundColor: 'rgba(255,255,255,0.07)',
-        borderRadius: 10,
+        fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)',
+        textAlign: 'center', marginTop: 16, padding: '8px 12px',
+        backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10,
       }}>
-        {isBullish
-          ? score >= 70 ? '🔥 Strong Bullish — Momentum bahut strong hai!'
-          : '⚡ Moderate Bullish — Cautiously optimistic raho'
-          : score >= 70 ? '❄️ Strong Bearish — Selling pressure strong hai!'
-          : '⚡ Moderate Bearish — Dhyan se dekho'}
+        {isBullish ? score >= 70 ? '🔥 Strong Bullish — Momentum bahut strong hai!' : '⚡ Moderate Bullish — Cautiously optimistic raho'
+          : score >= 70 ? '❄️ Strong Bearish — Selling pressure strong hai!' : '⚡ Moderate Bearish — Dhyan se dekho'}
       </div>
     </div>
   );
@@ -241,15 +229,11 @@ function ReferralCard({ user, C }) {
     if (!user?.id) return;
     supabase.from('profiles').select('referral_code, referral_count').eq('id', user.id).single()
       .then(({ data }) => {
-        if (data?.referral_code) {
-          setRefCode(data.referral_code);
-          setRefCount(data.referral_count || 0);
-        }
+        if (data?.referral_code) { setRefCode(data.referral_code); setRefCount(data.referral_count || 0); }
       });
   }, [user?.id]);
 
   const refLink = refCode ? `pulsetrade.in?ref=${refCode}` : null;
-
   const handleCopy = () => {
     if (!refLink) return;
     navigator.clipboard.writeText(`https://${refLink}`);
@@ -258,33 +242,15 @@ function ReferralCard({ user, C }) {
   };
 
   return (
-    <div style={{
-      backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
-      borderRadius: 16, padding: 18, marginBottom: 16,
-      boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
-    }}>
-      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>
-        🔗 MERA REFERRAL LINK
-      </div>
+    <div style={{ backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
+      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>🔗 MERA REFERRAL LINK</div>
       <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, lineHeight: 1.6 }}>
         Dost ko invite karo → <span style={{ color: C.gold, fontWeight: 700 }}>tujhe +100 pts</span>, unhe <span style={{ color: C.green, fontWeight: 700 }}>+50 pts</span>! 🎁
       </div>
       {refLink ? (
         <>
-          <div style={{
-            backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-            borderRadius: 10, padding: '10px 14px', marginBottom: 10,
-            fontSize: 13, fontWeight: 700, color: C.text,
-            fontFamily: 'monospace', wordBreak: 'break-all',
-          }}>
-            {refLink}
-          </div>
-          <button onClick={handleCopy} style={{
-            width: '100%', padding: '11px', borderRadius: 10, border: 'none',
-            backgroundColor: copied ? C.green : C.gold,
-            color: '#FFF', fontWeight: 700, fontSize: 13, cursor: 'pointer',
-            transition: 'background 0.3s',
-          }}>
+          <div style={{ backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`, borderRadius: 10, padding: '10px 14px', marginBottom: 10, fontSize: 13, fontWeight: 700, color: C.text, fontFamily: 'monospace', wordBreak: 'break-all' }}>{refLink}</div>
+          <button onClick={handleCopy} style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', backgroundColor: copied ? C.green : C.gold, color: '#FFF', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'background 0.3s' }}>
             {copied ? '✅ Link Copy Ho Gaya!' : '📋 Link Copy Karo'}
           </button>
           <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginTop: 10 }}>
@@ -292,9 +258,7 @@ function ReferralCard({ user, C }) {
           </div>
         </>
       ) : (
-        <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, padding: '10px 0' }}>
-          ⏳ Referral code load ho raha hai...
-        </div>
+        <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, padding: '10px 0' }}>⏳ Referral code load ho raha hai...</div>
       )}
     </div>
   );
@@ -322,6 +286,13 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const [alertSent, setAlertSent] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
   const [pulseData, setPulseData] = useState(null);
+  const [userDob, setUserDob] = useState(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    supabase.from('profiles').select('dob').eq('id', user.id).single()
+      .then(({ data }) => { if (data?.dob) setUserDob(data.dob); });
+  }, [user?.id]);
 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
@@ -583,7 +554,11 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                     <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={C.red} C={C} />
                   </div>
 
-                  {pulseData && <PulseBoltaHai stockData={pulseData} userName={user?.email?.split('@')[0]?.split('.')[0]?.replace(/[0-9]/g, '')?.replace(/^./, c => c.toUpperCase())} />}
+                  {pulseData && <PulseBoltaHai
+                    stockData={pulseData}
+                    userName={user?.email?.split('@')[0]?.split('.')[0]?.replace(/[0-9]/g, '')?.replace(/^./, c => c.toUpperCase())}
+                    userDob={userDob}
+                  />}
 
                   <div style={cardStyle}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.surfaceBorder}` }}>
