@@ -7,6 +7,7 @@ import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
 import WelcomeScreen from './WelcomeScreen';
+import PulseScreener from './PulseScreener';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -400,6 +401,8 @@ function App() {
         return <ChallengeBoard user={session.user} onBack={() => setActiveTab('check')} />;
       case 'watchlist':
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
+      case 'screener':
+        return <PulseScreener isDark={isDark} />;
       case 'settings':
         return (
           <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
