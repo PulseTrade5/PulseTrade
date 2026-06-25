@@ -7,6 +7,7 @@ import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
 import WelcomeScreen from './WelcomeScreen';
+import PulseScreener from './PulseScreener';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
