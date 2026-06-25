@@ -27,6 +27,7 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
     { id: 'watchlist', icon: '⭐', label: 'Watchlist' },
     { id: 'screener', icon: '🚀', label: 'Screener' },
     { id: 'challenge', icon: '🎯', label: 'Challenge' },
+    { id: 'academy', icon: '🎓', label: 'Academy' },
     { id: 'settings', icon: '⚙️', label: 'Settings' },
     { id: 'profile', icon: '👤', label: 'Profile' },
   ];
@@ -98,4 +99,3 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
     </div>
   );
 }
-
