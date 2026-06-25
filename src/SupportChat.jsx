@@ -26,7 +26,6 @@ export default function SupportChat({ user, isDark, onClose }) {
 
   useEffect(() => {
     loadMessages();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   useEffect(() => {
@@ -54,18 +53,27 @@ export default function SupportChat({ user, isDark, onClose }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000,
+      position: 'fixed', inset: 0,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      display: 'flex', alignItems: 'flex-end',
+      justifyContent: 'center', zIndex: 9999,
     }}>
       <div style={{
-        backgroundColor: C.surface, width: '100%', maxWidth: 480,
-        height: '80vh', maxHeight: '640px', borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        backgroundColor: C.surface,
+        width: '100%', maxWidth: 480,
+        height: '90vh',
+        borderRadius: '20px 20px 0 0',
+        display: 'flex', flexDirection: 'column',
+        overflow: 'hidden',
         boxShadow: '0 -4px 30px rgba(0,0,0,0.2)',
       }}>
+
         {/* HEADER */}
         <div style={{
-          padding: '18px 20px', borderBottom: `1px solid ${C.border}`,
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '16px 20px',
+          borderBottom: `1px solid ${C.border}`,
+          display: 'flex', justifyContent: 'space-between',
+          alignItems: 'center', flexShrink: 0,
         }}>
           <div>
             <div style={{ fontSize: 17, fontWeight: 800, color: C.text }}>🛟 Support Center</div>
@@ -75,12 +83,17 @@ export default function SupportChat({ user, isDark, onClose }) {
             </div>
           </div>
           <button onClick={onClose} style={{
-            fontSize: 20, background: 'none', border: 'none', color: C.muted, cursor: 'pointer', padding: 4,
+            fontSize: 20, background: 'none', border: 'none',
+            color: C.muted, cursor: 'pointer', padding: 4,
           }}>✕</button>
         </div>
 
         {/* MESSAGES */}
-        <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div ref={scrollRef} style={{
+          flex: 1, overflowY: 'auto',
+          padding: '16px 20px',
+          display: 'flex', flexDirection: 'column', gap: 10,
+        }}>
           {loading ? (
             <div style={{ textAlign: 'center', color: C.muted, fontSize: 13, padding: '20px 0' }}>⏳ Load ho raha hai...</div>
           ) : messages.length === 0 ? (
@@ -94,7 +107,8 @@ export default function SupportChat({ user, isDark, onClose }) {
           ) : (
             messages.map((m) => (
               <div key={m.id} style={{
-                display: 'flex', justifyContent: m.sender === 'user' ? 'flex-end' : 'flex-start',
+                display: 'flex',
+                justifyContent: m.sender === 'user' ? 'flex-end' : 'flex-start',
               }}>
                 <div style={{
                   maxWidth: '78%', padding: '10px 14px', borderRadius: 16,
@@ -115,7 +129,13 @@ export default function SupportChat({ user, isDark, onClose }) {
         </div>
 
         {/* INPUT */}
-        <div style={{ padding: '14px 16px', borderTop: `1px solid ${C.border}`, display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div style={{
+          padding: '12px 16px',
+          borderTop: `1px solid ${C.border}`,
+          display: 'flex', gap: 8,
+          flexShrink: 0,
+          backgroundColor: C.surface,
+        }}>
           <input
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}
@@ -123,7 +143,8 @@ export default function SupportChat({ user, isDark, onClose }) {
             placeholder="Apni problem yahan likho..."
             style={{
               flex: 1, padding: '11px 14px', fontSize: 14, borderRadius: 24,
-              border: `1.5px solid ${C.border}`, backgroundColor: C.bg, color: C.text,
+              border: `1.5px solid ${C.border}`,
+              backgroundColor: C.bg, color: C.text,
               outline: 'none', fontFamily: 'Inter, sans-serif',
             }}
           />
@@ -134,7 +155,8 @@ export default function SupportChat({ user, isDark, onClose }) {
               width: 44, height: 44, borderRadius: '50%', border: 'none',
               backgroundColor: sending || !newMessage.trim() ? C.border : C.gold,
               color: '#FFF', fontSize: 18, cursor: sending ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0,
             }}
           >
             {sending ? '⏳' : '➤'}
