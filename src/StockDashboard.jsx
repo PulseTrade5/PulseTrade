@@ -401,6 +401,11 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button onClick={() => setShowSupport(true)} style={{
+              fontSize: 11, padding: '5px 10px', borderRadius: 20,
+              border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent',
+              color: C.muted, cursor: 'pointer', fontWeight: 700,
+            }}>💬 Hum Se Baat Karo</button>
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
                 fontSize: 11, padding: '5px 10px', borderRadius: 20,
@@ -771,21 +776,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           </div>
         </div>
       </div>
-
-      {/* FLOATING SUPPORT BUTTON */}
-      <button
-        onClick={() => setShowSupport(true)}
-        style={{
-          position: 'fixed', bottom: 90, right: 20, width: 56, height: 56,
-          borderRadius: '50%', border: 'none', backgroundColor: C.gold,
-          color: '#FFF', fontSize: 24, cursor: 'pointer', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 4px 16px rgba(200,146,10,0.45)',
-        }}
-        aria-label="Support Center"
-      >
-        🛟
-      </button>
 
       {showSupport && (
         <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
