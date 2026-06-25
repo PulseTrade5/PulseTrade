@@ -246,6 +246,26 @@ function AITradeCoach({ stockData, C, isDark }) {
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
   const [showCoach, setShowCoach] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
+
+  const speakAnswer = (text) => {
+    if (!text) return;
+    window.speechSynthesis.cancel();
+    const clean = text.replace(/\*\*/g, '').replace(/\*/g, '');
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.lang = 'hi-IN';
+    utterance.rate = 0.9;
+    utterance.pitch = 1;
+    setSpeaking(true);
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setSpeaking(false);
+  };
 
   const askCoach = async () => {
     if (!question.trim()) return;
@@ -330,7 +350,17 @@ function AITradeCoach({ stockData, C, isDark }) {
           border: `1px solid ${C.gold}44`,
           fontSize: 13, color: C.text, lineHeight: 1.7,
         }}>
-          <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach: </span>{answer}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach:</span>
+            <button onClick={() => speaking ? stopSpeaking() : speakAnswer(answer)} style={{
+              padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+              backgroundColor: speaking ? '#DC2626' : C.gold,
+              color: '#FFF', fontSize: 11, fontWeight: 700,
+            }}>
+              {speaking ? '⏹️ Roko' : '🔊 Suno'}
+            </button>
+          </div>
+          <div>{answer.replace(/\*\*/g, '').replace(/\*/g, '')}</div>
         </div>
       )}
 
