@@ -9,18 +9,18 @@ const COLORS = {
 };
 
 const FEATURES = [
-  { icon: 'ðŸŽ¯', title: 'Trend Analysis', desc: 'Bullish ya Bearish â€” ek nazar mein pata chale.' },
-  { icon: 'ðŸ“Š', title: 'RSI â€¢ MACD â€¢ ADX', desc: 'Top indicators ek jagah, Hinglish explanation ke saath.' },
-  { icon: 'ðŸ”Š', title: 'Pulse Bolta Hai', desc: 'AI summary sunao â€” padhne ki zarurat nahi!' },
-  { icon: 'â­', title: 'Watchlist', desc: 'Apne favorite stocks save karo, nazar rakho.' },
-  { icon: 'ðŸ“§', title: 'Email Alerts', desc: 'Important signals seedha inbox mein.' },
-  { icon: 'ðŸ¤–', title: 'AI Hinglish Summary', desc: 'Complex analysis simple bhasha mein.' },
+  { icon: '🎯', title: 'Trend Analysis', desc: 'Bullish ya Bearish — ek nazar mein pata chale.' },
+  { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish explanation ke saath.' },
+  { icon: '🔊', title: 'Pulse Bolta Hai', desc: 'AI summary sunao — padhne ki zarurat nahi!' },
+  { icon: '⭐', title: 'Watchlist', desc: 'Apne favorite stocks save karo, nazar rakho.' },
+  { icon: '📧', title: 'Email Alerts', desc: 'Important signals seedha inbox mein.' },
+  { icon: '🤖', title: 'AI Hinglish Summary', desc: 'Complex analysis simple bhasha mein.' },
 ];
 
 const PLANS = [
-  { label: '1 Month', price: 'â‚¹599', per: 'â‚¹599/mo', popular: false, tag: null },
-  { label: '2 Months', price: 'â‚¹1,049', per: 'â‚¹525/mo', popular: true, tag: 'ðŸ”¥ Most Popular' },
-  { label: '3 Months', price: 'â‚¹1,499', per: 'â‚¹500/mo', popular: false, tag: 'ðŸ’° Best Value' },
+  { label: '1 Month', price: '₹599', per: '₹599/mo', popular: false, tag: null },
+  { label: '2 Months', price: '₹1,049', per: '₹525/mo', popular: true, tag: '🔥 Most Popular' },
+  { label: '3 Months', price: '₹1,499', per: '₹500/mo', popular: false, tag: '💰 Best Value' },
 ];
 
 export default function LandingPage({ onLogin }) {
@@ -50,33 +50,33 @@ export default function LandingPage({ onLogin }) {
             <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: COLORS.gold }}>Trade</span>
             </div>
-            <div style={{ fontSize: 10, color: COLORS.muted }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
+            <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <button onClick={onLogin} style={{
             padding: '8px 20px', fontSize: 13, fontWeight: 700,
             borderRadius: 20, border: `1.5px solid ${COLORS.gold}`,
             backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer',
           }}>
-            Login â†’
+            Login →
           </button>
         </div>
 
-        {/* âœ… FOUNDING MEMBER BANNER */}
+        {/* ✅ FOUNDING MEMBER BANNER */}
         <div style={{
           background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
           padding: '12px 20px',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
         }}>
-          <span style={{ fontSize: 18 }}>ðŸ…</span>
+          <span style={{ fontSize: 18 }}>🏅</span>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: 12, fontWeight: 800, color: '#FFF' }}>
-              Founding Member Deal â€” Sirf 87 spots baaki!
+              Founding Member Deal — Sirf 87 spots baaki!
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>
-              â‚¹599 mein 2 Months + OG Trader Badge ðŸŽ
+              ₹599 mein 2 Months + OG Trader Badge 🎁
             </div>
           </div>
-          <span style={{ fontSize: 18 }}>ðŸ…</span>
+          <span style={{ fontSize: 18 }}>🏅</span>
         </div>
 
         {/* HERO */}
@@ -92,14 +92,14 @@ export default function LandingPage({ onLogin }) {
             padding: '5px 14px', borderRadius: 20,
             border: '1px solid #bbf7d0', marginBottom: 20,
           }}>
-            âœ… NSE â€¢ BSE Live Data
+            ✅ NSE • BSE Live Data
           </div>
           <h1 style={{ fontSize: 32, fontWeight: 900, lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-1px' }}>
             Bazaar ka pulse dekho,<br />
             <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
           </h1>
           <p style={{ fontSize: 15, color: COLORS.muted, lineHeight: 1.7, margin: '0 0 28px' }}>
-            NSE/BSE stocks ka AI-powered<br />technical analysis â€” Hinglish mein. ðŸ‡®ðŸ‡³
+            NSE/BSE stocks ka AI-powered<br />technical analysis — Hinglish mein. 🇮🇳
           </p>
           <button onClick={onLogin} style={{
             display: 'block', width: '100%',
@@ -110,19 +110,19 @@ export default function LandingPage({ onLogin }) {
             boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
             marginBottom: 12,
           }}>
-            ðŸš€ 5-Din FREE Trial Shuru Karo
+            🚀 5-Din FREE Trial Shuru Karo
           </button>
           <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>
-            No credit card â€¢ Instant access â€¢ Cancel anytime
+            No credit card • Instant access • Cancel anytime
           </p>
         </div>
 
         {/* FEATURES */}
         <div style={{ padding: '32px 20px 0' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>âœ¨ FEATURES</div>
+            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>✨ FEATURES</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Sab kuch ek jagah</h2>
-            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>Jo cheezein traders ko chahiye â€” sab yahan hai</p>
+            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>Jo cheezein traders ko chahiye — sab yahan hai</p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {FEATURES.map((f) => (
@@ -152,9 +152,9 @@ export default function LandingPage({ onLogin }) {
         {/* PRICING SECTION */}
         <div style={{ padding: '32px 20px 0' }}>
           <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>ðŸ’° PRICING</div>
+            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>💰 PRICING</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Simple Plans</h2>
-            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>5-din free trial ke baad â€” apna plan chuno</p>
+            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>5-din free trial ke baad — apna plan chuno</p>
           </div>
 
           {/* Free Trial Banner */}
@@ -164,9 +164,9 @@ export default function LandingPage({ onLogin }) {
             borderRadius: 14, padding: '16px 20px',
             textAlign: 'center', marginBottom: 16,
           }}>
-            <div style={{ fontSize: 24, marginBottom: 6 }}>ðŸŽ‰</div>
+            <div style={{ fontSize: 24, marginBottom: 6 }}>🎉</div>
             <div style={{ fontWeight: 800, fontSize: 16, color: COLORS.green, marginBottom: 4 }}>5-Din FREE Trial</div>
-            <div style={{ fontSize: 12, color: COLORS.muted }}>No credit card required â€” seedha signup karo!</div>
+            <div style={{ fontSize: 12, color: COLORS.muted }}>No credit card required — seedha signup karo!</div>
           </div>
 
           {/* Plan Cards */}
@@ -207,7 +207,7 @@ export default function LandingPage({ onLogin }) {
             cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
           }}>
-            ðŸš€ Free Trial Se Shuru Karo
+            🚀 Free Trial Se Shuru Karo
           </button>
         </div>
 
@@ -219,12 +219,12 @@ export default function LandingPage({ onLogin }) {
             <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
           </div>
           <div style={{ fontSize: 11, color: COLORS.mutedLight }}>
-            ðŸ›¡ï¸ SEBI Disclaimer: Yeh sirf technical analysis hai â€” investment advice nahi.
+            🛡️ SEBI Disclaimer: Yeh sirf technical analysis hai — investment advice nahi.
           </div>
-          <p style={{ fontSize: 12, color: COLORS.mutedLight, marginTop: 12 }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</p>
+          <p style={{ fontSize: 12, color: COLORS.mutedLight, marginTop: 12 }}>🔱 हर हर महादेव 🔱</p>
         </div>
 
       </div>
     </div>
   );
-      }
+}
