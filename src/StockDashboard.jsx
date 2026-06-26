@@ -8,6 +8,7 @@ import SupportChat from './SupportChat';
 import GlobalMarkets from './GlobalMarkets';
 import FearGreedMeter from './FearGreedMeter';
 import PulseScreener from './PulseScreener.jsx';
+import NumerologyPanel from './NumerologyPanel';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -49,7 +50,6 @@ function fmtVol(n) {
   return n.toLocaleString('en-IN');
 }
 
-// ✅ WAVE COMPONENT
 function WaveBar({ dark }) {
   const goldColor = dark ? '#D8A33D' : '#C8920A';
   const greenColor = dark ? '#3FAE7C' : '#059669';
@@ -65,7 +65,6 @@ function WaveBar({ dark }) {
   );
 }
 
-// ✅ LIVE DOT
 function LiveDot({ C }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -242,7 +241,6 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   );
 }
 
-
 function AITradeCoach({ stockData, C, isDark }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
@@ -345,7 +343,6 @@ function AITradeCoach({ stockData, C, isDark }) {
         <button onClick={() => setShowCoach(false)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>✕</button>
       </div>
 
-      {/* MODE SWITCHER */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         {[['text', '💬 Sawaal Pucho'], ['chart', '📸 Chart Analyze']].map(([m, l]) => (
           <button key={m} onClick={() => setChartMode(m)} style={{
@@ -406,61 +403,60 @@ function AITradeCoach({ stockData, C, isDark }) {
 
       {chartMode === 'text' && (
         <div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-        {['Aaj entry loon?', 'Stop loss kahan?', 'Risk kitna?', 'Trend kitna strong?'].map(q => (
-          <button key={q} onClick={() => setQuestion(q)} style={{
-            fontSize: 11, padding: '5px 12px', borderRadius: 20,
-            border: `1px solid ${C.surfaceBorder}`,
-            backgroundColor: question === q ? C.goldLight : 'transparent',
-            color: question === q ? C.goldDim : C.muted,
-            cursor: 'pointer', fontWeight: 600,
-          }}>{q}</button>
-        ))}
-      </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+            {['Aaj entry loon?', 'Stop loss kahan?', 'Risk kitna?', 'Trend kitna strong?'].map(q => (
+              <button key={q} onClick={() => setQuestion(q)} style={{
+                fontSize: 11, padding: '5px 12px', borderRadius: 20,
+                border: `1px solid ${C.surfaceBorder}`,
+                backgroundColor: question === q ? C.goldLight : 'transparent',
+                color: question === q ? C.goldDim : C.muted,
+                cursor: 'pointer', fontWeight: 600,
+              }}>{q}</button>
+            ))}
+          </div>
 
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input
-          value={question}
-          onChange={e => setQuestion(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && askCoach()}
-          placeholder="Kuch bhi pucho — Hinglish mein!"
-          style={{
-            flex: 1, padding: '10px 14px', fontSize: 13,
-            backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-            borderRadius: 10, color: C.text, outline: 'none',
-          }}
-        />
-        <button onClick={askCoach} disabled={loading} style={{
-          padding: '10px 16px', borderRadius: 10, border: 'none',
-          backgroundColor: C.gold, color: '#FFF',
-          fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          opacity: loading ? 0.7 : 1,
-        }}>
-          {loading ? '⏳' : '➤'}
-        </button>
-      </div>
-
-      {answer && (
-        <div style={{
-          padding: '12px 14px', borderRadius: 12,
-          backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
-          border: `1px solid ${C.gold}44`,
-          fontSize: 13, color: C.text, lineHeight: 1.7,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach:</span>
-            <button onClick={() => speaking ? stopSpeaking() : speakAnswer(answer)} style={{
-              padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
-              backgroundColor: speaking ? '#DC2626' : C.gold,
-              color: '#FFF', fontSize: 11, fontWeight: 700,
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <input
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && askCoach()}
+              placeholder="Kuch bhi pucho — Hinglish mein!"
+              style={{
+                flex: 1, padding: '10px 14px', fontSize: 13,
+                backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
+                borderRadius: 10, color: C.text, outline: 'none',
+              }}
+            />
+            <button onClick={askCoach} disabled={loading} style={{
+              padding: '10px 16px', borderRadius: 10, border: 'none',
+              backgroundColor: C.gold, color: '#FFF',
+              fontWeight: 700, fontSize: 13, cursor: 'pointer',
+              opacity: loading ? 0.7 : 1,
             }}>
-              {speaking ? '⏹️ Roko' : '🔊 Suno'}
+              {loading ? '⏳' : '➤'}
             </button>
           </div>
-          <div>{answer.replace(/\*\*/g, '').replace(/\*/g, '')}</div>
-        </div>
-      )}
 
+          {answer && (
+            <div style={{
+              padding: '12px 14px', borderRadius: 12,
+              backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
+              border: `1px solid ${C.gold}44`,
+              fontSize: 13, color: C.text, lineHeight: 1.7,
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach:</span>
+                <button onClick={() => speaking ? stopSpeaking() : speakAnswer(answer)} style={{
+                  padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
+                  backgroundColor: speaking ? '#DC2626' : C.gold,
+                  color: '#FFF', fontSize: 11, fontWeight: 700,
+                }}>
+                  {speaking ? '⏹️ Roko' : '🔊 Suno'}
+                </button>
+              </div>
+              <div>{answer.replace(/\*\*/g, '').replace(/\*/g, '')}</div>
+            </div>
+          )}
         </div>
       )}
 
@@ -470,7 +466,6 @@ function AITradeCoach({ stockData, C, isDark }) {
     </div>
   );
 }
-
 
 function PulseOracle({ userDob, isDark, C }) {
   const [oracle, setOracle] = useState(null);
@@ -487,7 +482,7 @@ function PulseOracle({ userDob, isDark, C }) {
       const digits = userDob.replace(/-/g, '').split('').map(Number);
       let lp = digits.reduce((a,b) => a+b, 0);
       while (lp > 9 && lp !== 11 && lp !== 22) lp = String(lp).split('').map(Number).reduce((a,b)=>a+b,0);
-      
+
       const response = await fetch('/api/ai-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -807,10 +802,8 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           </div>
         </div>
 
-        {/* WAVE */}
         <WaveBar dark={dark} />
 
-        {/* TOP GRADIENT LINE */}
         <style>{`@keyframes shimmer-line { 0%{background-position:-200% center} 100%{background-position:200% center} }`}</style>
         <div style={{
           height: 3,
@@ -818,8 +811,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           backgroundSize: '200% auto',
           animation: 'shimmer-line 3s linear infinite',
         }} />
-
-
 
         <div style={{ padding: '20px 20px 0' }}>
           <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
@@ -829,11 +820,18 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             display: 'flex', gap: 4, marginBottom: 20,
             backgroundColor: C.surface, padding: 4,
             borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
+            overflowX: 'auto',
           }}>
-            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record'],['screener','🚀 Screener']].map(([key,label]) => (
+            {[
+              ['check','🔍 Check'],
+              ['watchlist','⭐ Watch'],
+              ['track','📋 Record'],
+              ['screener','🚀 Screener'],
+              ['numerology','🔢 Numero'],
+            ].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
-                flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
-                borderRadius: 10, border: 'none',
+                flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700,
+                borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
                 backgroundColor: tab===key ? (dark ? C.gold : '#1E3A5F') : 'transparent',
                 color: tab===key ? '#FFF' : C.muted,
                 cursor: 'pointer', transition: 'background 0.2s',
@@ -848,7 +846,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
 
           {tab === 'check' && (
             <>
-              {/* GLOBAL MARKETS */}
               <GlobalMarkets isDark={dark} />
               <FearGreedMeter isDark={dark} />
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
@@ -856,17 +853,17 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <div style={cardStyle}>
                 <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
                 <div style={{ position: 'relative', display: 'flex', gap: 8 }}>
-                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={{...inputStyle, flex: 1}} />
-                <button onClick={startVoiceSearch} style={{
-                  padding: '11px 14px', borderRadius: 10, border: 'none', flexShrink: 0,
-                  backgroundColor: isListening ? '#DC2626' : C.gold,
-                  color: '#FFF', cursor: 'pointer', fontSize: 18,
-                  boxShadow: isListening ? '0 0 12px rgba(220,38,38,0.5)' : 'none',
-                  transition: 'all 0.3s',
-                }}>
-                  {isListening ? '🔴' : '🎙️'}
-                </button>
-              </div>
+                  <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={{...inputStyle, flex: 1}} />
+                  <button onClick={startVoiceSearch} style={{
+                    padding: '11px 14px', borderRadius: 10, border: 'none', flexShrink: 0,
+                    backgroundColor: isListening ? '#DC2626' : C.gold,
+                    color: '#FFF', cursor: 'pointer', fontSize: 18,
+                    boxShadow: isListening ? '0 0 12px rgba(220,38,38,0.5)' : 'none',
+                    transition: 'all 0.3s',
+                  }}>
+                    {isListening ? '🔴' : '🎙️'}
+                  </button>
+                </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
                   {POPULAR.map(s => (
                     <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
@@ -1015,23 +1012,11 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                       const score = result.trend === 'Bullish' ? result.longScore : result.shortScore;
                       const price = stockInfo?.regularMarketPrice || result.lastClose;
                       const change = stockInfo?.regularMarketChangePercent ? `${stockInfo.regularMarketChangePercent >= 0 ? '▲' : '▼'} ${Math.abs(stockInfo.regularMarketChangePercent).toFixed(2)}%` : '';
-                      const msg = `🔱 *PulseTrade Analysis*
-
-📊 *${stockName}* — ${result.trend === 'Bullish' ? '🟢 BULLISH' : '🔴 BEARISH'}
-💰 Price: ₹${Number(price).toLocaleString('en-IN', {maximumFractionDigits: 2})} ${change}
-⚡ Pulse Score: ${score}/100
-📈 RSI: ${result.rsi} | ADX: ${result.adx}
-🎯 Trend: ${result.trendStrength}
-
-${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠️ Bearish Trend — Cautious raho!'}
-
-🔍 Khud check karo: pulsetrade.in
-🔱 हर हर महादेव 🔱`;
+                      const msg = `🔱 *PulseTrade Analysis*\n\n📊 *${stockName}* — ${result.trend === 'Bullish' ? '🟢 BULLISH' : '🔴 BEARISH'}\n💰 Price: ₹${Number(price).toLocaleString('en-IN', {maximumFractionDigits: 2})} ${change}\n⚡ Pulse Score: ${score}/100\n📈 RSI: ${result.rsi} | ADX: ${result.adx}\n🎯 Trend: ${result.trendStrength}\n\n${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠️ Bearish Trend — Cautious raho!'}\n\n🔍 Khud check karo: pulsetrade.in\n🔱 हर हर महादेव 🔱`;
                       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
                     }} style={{
                       width: '100%', marginTop: 8, padding: '9px',
-                      fontSize: 13, fontWeight: 700, borderRadius: 10,
-                      border: 'none',
+                      fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
                       background: 'linear-gradient(135deg, #25D366, #128C7E)',
                       color: '#FFF', cursor: 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -1205,6 +1190,14 @@ ${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠�
 
           {tab === 'screener' && (
             <PulseScreener
+              isDark={dark}
+              userDob={userDob}
+              userName={user?.email?.split('@')[0]}
+            />
+          )}
+
+          {tab === 'numerology' && (
+            <NumerologyPanel
               isDark={dark}
               userDob={userDob}
               userName={user?.email?.split('@')[0]}
