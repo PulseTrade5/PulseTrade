@@ -6,15 +6,16 @@ const COLORS = {
   green: "#059669", greenLight: "#ECFDF5",
   red: "#DC2626",
   text: "#0F172A", muted: "#64748B", mutedLight: "#94A3B8",
+  navy: "#1E3A5F", navyLight: "#EFF6FF",
 };
 
 const FEATURES = [
-  { icon: '🎯', title: 'Trend Analysis', desc: 'Bullish ya Bearish — ek nazar mein pata chale.' },
-  { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish explanation ke saath.' },
+  { icon: '📈', title: 'Swing Trade Signals', desc: '10 din se 2 mahine — sahi entry, sahi exit.' },
+  { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish mein.' },
   { icon: '🔊', title: 'Pulse Bolta Hai', desc: 'AI summary sunao — padhne ki zarurat nahi!' },
   { icon: '⭐', title: 'Watchlist', desc: 'Apne favorite stocks save karo, nazar rakho.' },
   { icon: '📧', title: 'Email Alerts', desc: 'Important signals seedha inbox mein.' },
-  { icon: '🤖', title: 'AI Hinglish Summary', desc: 'Complex analysis simple bhasha mein.' },
+  { icon: '🎓', title: 'Trading Academy', desc: 'Hindi PDF courses — Candlestick se RSI tak.' },
 ];
 
 const PLANS = [
@@ -42,15 +43,14 @@ export default function LandingPage({ onLogin }) {
           backgroundColor: scrolled ? COLORS.surface : 'transparent',
           borderBottom: scrolled ? `1px solid ${COLORS.surfaceBorder}` : 'none',
           boxShadow: scrolled ? '0 1px 8px rgba(0,0,0,0.06)' : 'none',
-          padding: '16px 20px',
+          padding: '14px 20px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           transition: 'all 0.3s ease',
         }}>
-          <div>
-            <div style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.5px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: COLORS.gold }}>Trade</span>
             </div>
-            <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <button onClick={onLogin} style={{
             padding: '8px 20px', fontSize: 13, fontWeight: 700,
@@ -61,7 +61,7 @@ export default function LandingPage({ onLogin }) {
           </button>
         </div>
 
-        {/* ✅ FOUNDING MEMBER BANNER */}
+        {/* FOUNDING MEMBER BANNER */}
         <div style={{
           background: 'linear-gradient(135deg, #7C3AED, #4F46E5)',
           padding: '12px 20px',
@@ -81,147 +81,187 @@ export default function LandingPage({ onLogin }) {
 
         {/* HERO */}
         <div style={{
-          padding: '48px 24px 40px',
-          background: `linear-gradient(160deg, #ffffff 0%, ${COLORS.goldLight} 100%)`,
+          padding: '40px 24px 36px',
+          background: 'linear-gradient(160deg, #0d1b3e 0%, #1E3A5F 100%)',
           textAlign: 'center',
-          borderBottom: `1px solid #f0c040`,
         }}>
+          {/* Logo */}
+          <div style={{ marginBottom: 20 }}>
+            <img
+              src="/logo.png"
+              alt="PulseTrade Logo"
+              style={{ width: 110, height: 110, borderRadius: '50%', objectFit: 'cover' }}
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
           <div style={{
             display: 'inline-block', fontSize: 11, fontWeight: 800,
-            color: COLORS.green, backgroundColor: COLORS.greenLight,
+            color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)',
             padding: '5px 14px', borderRadius: 20,
-            border: '1px solid #bbf7d0', marginBottom: 20,
+            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 16,
           }}>
             ✅ NSE • BSE Live Data
           </div>
-          <h1 style={{ fontSize: 32, fontWeight: 900, lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-1px' }}>
-            Bazaar ka pulse dekho,<br />
-            <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
+
+          <h1 style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.25, margin: '0 0 10px', letterSpacing: '-0.5px', color: '#FFFFFF' }}>
+            India's #1 NSE/BSE<br />
+            <span style={{ color: COLORS.gold }}>Swing Trading Analysis Tool</span>
           </h1>
-          <p style={{ fontSize: 15, color: COLORS.muted, lineHeight: 1.7, margin: '0 0 28px' }}>
-            NSE/BSE stocks ka AI-powered<br />technical analysis — Hinglish mein. 🇮🇳
+
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 8px', fontWeight: 600 }}>
+            10 Din se 2 Mahine —
           </p>
+          <p style={{ fontSize: 14, color: COLORS.gold, lineHeight: 1.6, margin: '0 0 28px', fontWeight: 700 }}>
+            Sahi Trend, Sahi Time, Faisla Khud Karo! 🎯
+          </p>
+
           <button onClick={onLogin} style={{
             display: 'block', width: '100%',
             padding: '16px', fontSize: 17, fontWeight: 800,
             borderRadius: 14, border: 'none',
-            backgroundColor: COLORS.gold, color: '#FFF',
-            cursor: 'pointer',
+            background: 'linear-gradient(135deg, #C8920A, #D97706)',
+            color: '#FFF', cursor: 'pointer',
             boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
             marginBottom: 12,
           }}>
-            🚀 5-Din FREE Trial Shuru Karo
+            🚀 5 Din FREE Trial Shuru Karo
           </button>
-          <p style={{ fontSize: 12, color: COLORS.muted, margin: 0 }}>
-            No credit card • Instant access • Cancel anytime
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
+            No credit card • Cancel anytime
           </p>
         </div>
 
-        {/* FEATURES */}
-        <div style={{ padding: '32px 20px 0' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>✨ FEATURES</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Sab kuch ek jagah</h2>
-            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>Jo cheezein traders ko chahiye — sab yahan hai</p>
+        {/* SWING TRADING BADGE */}
+        <div style={{
+          background: 'linear-gradient(135deg, #FFFBEB, #FEF3C7)',
+          border: `1.5px solid ${COLORS.gold}`,
+          margin: '16px',
+          borderRadius: 16,
+          padding: '16px 20px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.navy, marginBottom: 6 }}>
+            📈 Swing Traders ke liye Banaya Gaya
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.6 }}>
+            Entry • Stop Loss • Target — sab ek jagah<br />
+            <span style={{ color: COLORS.gold, fontWeight: 700 }}>Holding: 10 Din se 2 Mahine</span>
+          </div>
+        </div>
+
+        {/* FEATURES */}
+        <div style={{ padding: '8px 16px 16px' }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14, textAlign: 'center' }}>
+            🛠️ FEATURES
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {FEATURES.map((f) => (
               <div key={f.title} style={{
                 backgroundColor: COLORS.surface,
                 border: `1px solid ${COLORS.surfaceBorder}`,
-                borderRadius: 14, padding: '16px 18px',
-                display: 'flex', alignItems: 'center', gap: 16,
+                borderRadius: 14, padding: '14px 12px',
                 boxShadow: '0 1px 4px rgba(0,0,0,0.04)',
               }}>
-                <div style={{
-                  fontSize: 28, width: 52, height: 52, flexShrink: 0,
-                  backgroundColor: COLORS.goldLight, borderRadius: 14,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  {f.icon}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 15, marginBottom: 3 }}>{f.title}</div>
-                  <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.5 }}>{f.desc}</div>
-                </div>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>{f.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>{f.title}</div>
+                <div style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.5 }}>{f.desc}</div>
               </div>
             ))}
           </div>
         </div>
 
-        {/* PRICING SECTION */}
-        <div style={{ padding: '32px 20px 0' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 11, letterSpacing: 2, fontWeight: 800, color: COLORS.muted, marginBottom: 8 }}>💰 PRICING</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, margin: 0 }}>Simple Plans</h2>
-            <p style={{ fontSize: 13, color: COLORS.muted, marginTop: 8 }}>5-din free trial ke baad — apna plan chuno</p>
+        {/* SOCIAL PROOF */}
+        <div style={{
+          margin: '0 16px 16px',
+          backgroundColor: COLORS.surface,
+          border: `1px solid ${COLORS.surfaceBorder}`,
+          borderRadius: 16, padding: '20px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 16 }}>
+            📊 STATS
           </div>
-
-          {/* Free Trial Banner */}
-          <div style={{
-            backgroundColor: COLORS.greenLight,
-            border: `2px solid ${COLORS.green}`,
-            borderRadius: 14, padding: '16px 20px',
-            textAlign: 'center', marginBottom: 16,
-          }}>
-            <div style={{ fontSize: 24, marginBottom: 6 }}>🎉</div>
-            <div style={{ fontWeight: 800, fontSize: 16, color: COLORS.green, marginBottom: 4 }}>5-Din FREE Trial</div>
-            <div style={{ fontSize: 12, color: COLORS.muted }}>No credit card required — seedha signup karo!</div>
-          </div>
-
-          {/* Plan Cards */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 20 }}>
-            {PLANS.map((plan) => (
-              <div key={plan.label} style={{
-                backgroundColor: plan.popular ? COLORS.text : COLORS.surface,
-                border: `2px solid ${plan.popular ? COLORS.gold : COLORS.surfaceBorder}`,
-                borderRadius: 16, padding: '18px 20px',
-                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                boxShadow: plan.popular ? '0 4px 20px rgba(200,146,10,0.2)' : '0 1px 4px rgba(0,0,0,0.04)',
-                position: 'relative',
-              }}>
-                {plan.tag && (
-                  <div style={{
-                    position: 'absolute', top: -10, left: 16,
-                    fontSize: 10, fontWeight: 800,
-                    backgroundColor: COLORS.gold, color: '#FFF',
-                    padding: '3px 10px', borderRadius: 20,
-                  }}>
-                    {plan.tag}
-                  </div>
-                )}
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: 16, color: plan.popular ? '#FFF' : COLORS.text }}>{plan.label}</div>
-                  <div style={{ fontSize: 12, color: plan.popular ? '#CBD5E1' : COLORS.muted, marginTop: 2 }}>{plan.per}</div>
-                </div>
-                <div style={{ fontSize: 24, fontWeight: 900, color: COLORS.gold }}>{plan.price}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
+            {[
+              { num: '500+', label: 'Active Traders' },
+              { num: '50+', label: 'Stocks Daily' },
+              { num: '5★', label: 'Rating' },
+            ].map((s) => (
+              <div key={s.label}>
+                <div style={{ fontSize: 22, fontWeight: 900, color: COLORS.gold }}>{s.num}</div>
+                <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{s.label}</div>
               </div>
             ))}
           </div>
+        </div>
 
+        {/* PLANS */}
+        <div style={{ padding: '0 16px 16px' }} id="subscribe">
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14, textAlign: 'center' }}>
+            💰 PLANS
+          </div>
+          {PLANS.map((plan) => (
+            <div key={plan.label} style={{
+              backgroundColor: plan.popular ? COLORS.goldLight : COLORS.surface,
+              border: `1.5px solid ${plan.popular ? COLORS.gold : COLORS.surfaceBorder}`,
+              borderRadius: 14, padding: '16px',
+              marginBottom: 10,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              boxShadow: plan.popular ? '0 4px 16px rgba(200,146,10,0.15)' : 'none',
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: COLORS.text }}>{plan.label}</div>
+                {plan.tag && <div style={{ fontSize: 11, color: COLORS.goldDim, fontWeight: 700, marginTop: 2 }}>{plan.tag}</div>}
+                <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{plan.per}</div>
+              </div>
+              <div style={{ fontSize: 22, fontWeight: 900, color: COLORS.gold }}>{plan.price}</div>
+            </div>
+          ))}
           <button onClick={onLogin} style={{
-            display: 'block', width: '100%',
-            padding: '16px', fontSize: 16, fontWeight: 800,
+            display: 'block', width: '100%', marginTop: 8,
+            padding: '15px', fontSize: 16, fontWeight: 800,
             borderRadius: 14, border: 'none',
-            backgroundColor: COLORS.gold, color: '#FFF',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px rgba(200,146,10,0.4)',
+            background: 'linear-gradient(135deg, #1E3A5F, #2D5A8E)',
+            color: '#FFF', cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(30,58,95,0.3)',
           }}>
-            🚀 Free Trial Se Shuru Karo
+            🎯 Abhi Subscribe Karo
           </button>
         </div>
 
+        {/* DISCLAIMER */}
+        <div style={{
+          margin: '0 16px 16px',
+          background: COLORS.navyLight,
+          border: `1px solid #BFDBFE`,
+          borderRadius: 12, padding: '12px 16px',
+          display: 'flex', gap: 8, alignItems: 'flex-start',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>🛡️</span>
+          <p style={{ fontSize: 11, color: COLORS.navy, margin: 0, lineHeight: 1.6 }}>
+            <strong>PulseTrade</strong> provides technical market analysis and educational tools only. This is not investment advice. Consult a SEBI registered advisor before investing.
+          </p>
+        </div>
+
         {/* FOOTER */}
-        <div style={{ padding: '32px 20px 48px', textAlign: 'center', borderTop: `1px solid ${COLORS.surfaceBorder}`, marginTop: 32 }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12, marginBottom: 16 }}>
-            <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
-            <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
-            <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
+        <div style={{
+          padding: '16px 20px 32px', textAlign: 'center',
+          borderTop: `1px solid ${COLORS.surfaceBorder}`,
+        }}>
+          <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>
+            Pulse<span style={{ color: COLORS.gold }}>Trade</span>
           </div>
-          <div style={{ fontSize: 11, color: COLORS.mutedLight }}>
-            🛡️ SEBI Disclaimer: Yeh sirf technical analysis hai — investment advice nahi.
+          <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 12 }}>🔱 हर हर महादेव 🔱</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+            {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Refund', '/refund'], ['Contact', '/contact']].map(([l, h]) => (
+              <span key={l} style={{ display: 'flex', alignItems: 'center' }}>
+                <a href={h} style={{ fontSize: 12, color: COLORS.muted, textDecoration: 'none', padding: '0 8px' }}>{l}</a>
+                <span style={{ color: COLORS.surfaceBorder }}>•</span>
+              </span>
+            ))}
           </div>
-          <p style={{ fontSize: 12, color: COLORS.mutedLight, marginTop: 12 }}>🔱 हर हर महादेव 🔱</p>
+          <div style={{ fontSize: 11, color: COLORS.mutedLight }}>© 2026 PulseTrade</div>
         </div>
 
       </div>
