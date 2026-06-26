@@ -775,8 +775,8 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
         {/* HEADER */}
         <div style={{
           background: dark
-            dark ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
-            : 'linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%)',
+            ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
+            : 'linear-gradient(135deg, #1E3A5F 0%, #2D5A8E 100%)',
           borderBottom: `1px solid ${C.surfaceBorder}`,
           padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
