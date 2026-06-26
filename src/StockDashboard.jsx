@@ -1,1242 +1,492 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import { analyzeStock } from './technicalAnalysis';
-import SubscribeButton from './SubscribeButton';
-import PulseBoltaHai from '../PulseBoltaHai';
-import MoodTracker from './MoodTracker';
-import SupportChat from './SupportChat';
-import GlobalMarkets from './GlobalMarkets';
-import FearGreedMeter from './FearGreedMeter';
+import StockDashboard from './StockDashboard';
+import LoginPage from './LoginPage';
+import LandingPage from './LandingPage';
+import AdminPanel from './AdminPanel';
+import ChallengeBoard from './ChallengeBoard';
+import BottomNav from './BottomNav';
+import WelcomeScreen from './WelcomeScreen';
 import PulseScreener from './PulseScreener.jsx';
 
+function GreetingToast({ name, show }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
+  if (!show || !name) return null;
+  return (
+    <div style={{
+      position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
+      backgroundColor: '#0F172A', color: '#FFF',
+      padding: '14px 24px', borderRadius: 16, zIndex: 9999,
+      fontSize: 15, fontWeight: 700, textAlign: 'center',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
+      border: '1.5px solid #C8920A',
+      animation: 'toastIn 0.4s ease',
+      whiteSpace: 'nowrap',
+    }}>
+      <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
+      {greeting}, <span style={{ color: '#C8920A' }}>{name}</span>! 🔱
+    </div>
+  );
+}
+
+function SplashScreen() {
+  const [dot, setDot] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(160deg, #0a1628 0%, #0d2b4e 50%, #0a1628 100%)',
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: 'Inter, system-ui, sans-serif',
+      gap: 20, position: 'relative', overflow: 'hidden',
+    }}>
+      <style>{`
+        @keyframes pulse-glow-blue {
+          0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 40px rgba(45,90,142,0.4); }
+          50% { box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px rgba(45,90,142,0.9); }
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes float-3d {
+          0%, 100% { transform: translateY(0px) rotateY(0deg); }
+          25% { transform: translateY(-10px) rotateY(8deg); }
+          50% { transform: translateY(-6px) rotateY(0deg); }
+          75% { transform: translateY(-10px) rotateY(-8deg); }
+        }
+        @keyframes ring-expand {
+          0% { opacity: 0.4; transform: scale(0.8); }
+          100% { opacity: 0; transform: scale(1.4); }
+        }
+        @keyframes loading-bar {
+          0% { width: 0%; }
+          100% { width: 100%; }
+        }
+        @keyframes shadow-pulse-anim {
+          0%, 100% { transform: scaleX(1); opacity: 0.3; }
+          50% { transform: scaleX(0.7); opacity: 0.15; }
+        }
+      `}</style>
+
+      {[200, 320, 450].map((size, i) => (
+        <div key={i} style={{
+          position: 'absolute', width: size, height: size, borderRadius: '50%',
+          border: '1px solid rgba(45,90,142,0.2)',
+          animation: `ring-expand 4s ease-out ${i}s infinite`,
+        }} />
+      ))}
+
+      <div style={{ animation: 'float-3d 3s ease-in-out infinite', position: 'relative', zIndex: 10 }}>
+        <div style={{
+          width: 130, height: 130, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0d2b4e 0%, #1E3A5F 50%, #2D5A8E 100%)',
+          border: '3px solid #2D5A8E',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 68,
+          animation: 'pulse-glow-blue 2s ease-in-out infinite',
+        }}>🐼</div>
+      </div>
+
+      <div style={{
+        width: 90, height: 16, marginTop: -14,
+        background: 'radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%)',
+        borderRadius: '50%', zIndex: 9,
+        animation: 'shadow-pulse-anim 3s ease-in-out infinite',
+      }} />
+
+      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease', zIndex: 10 }}>
+        <div style={{ fontSize: 36, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
+          Pulse<span style={{ color: '#F59E0B' }}>Trade</span>
+        </div>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
+          Bazaar ka pulse dekho, faisla khud karo
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 8, zIndex: 10 }}>
+        {[0, 1, 2].map(i => (
+          <div key={i} style={{
+            width: 8, height: 8, borderRadius: '50%',
+            backgroundColor: dot === i ? '#F59E0B' : 'rgba(255,255,255,0.2)',
+            boxShadow: dot === i ? '0 0 8px #F59E0B' : 'none',
+            transition: 'background 0.3s ease',
+          }} />
+        ))}
+      </div>
+
+      <div style={{ width: 120, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden', zIndex: 10 }}>
+        <div style={{
+          height: '100%',
+          background: 'linear-gradient(90deg, #1E3A5F, #2D5A8E, #F59E0B)',
+          borderRadius: 99,
+          animation: 'loading-bar 2.5s ease-in-out forwards',
+        }} />
+      </div>
+    </div>
+  );
+}
+
 const LIGHT = {
-  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
-  gold: "#F59E0B", goldLight: "#FFFBEB", goldDim: "#D97706",
-  blue: "#1E3A5F", blueLight: "#EFF6FF",
-  green: "#059669", greenLight: "#ECFDF5",
-  red: "#DC2626", redLight: "#FEF2F2",
-  text: "#0F172A", textSecondary: "#334155", muted: "#64748B", mutedLight: "#94A3B8",
-  headerBg: "#1E3A5F", sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+  bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
+  goldLight: '#FEF3C7', goldDim: '#D97706',
+  text: '#0F172A', muted: '#64748B', green: '#059669',
+  greenLight: '#ECFDF5', red: '#DC2626', border: '#E2E8F0',
 };
 
 const DARK = {
-  bg: "#0D1117", surface: "#161B22", surfaceBorder: "#30363D", surfaceHover: "#1C2128",
-  gold: "#D8A33D", goldLight: "#2D2008", goldDim: "#F0B429",
-  green: "#3FAE7C", greenLight: "#0D2B1F",
-  red: "#F87171", redLight: "#2D1515",
-  text: "#E8E6E0", textSecondary: "#C9D1D9", muted: "#8B92A0", mutedLight: "#6E7681",
-  headerBg: "#161B22", sebi: "#93C5FD", sebiBg: "#0D1F3C", sebiBorder: "#1D4ED8",
+  bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
+  text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
+  red: '#D1453B', border: '#30363D',
 };
 
-const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "ICICIBANK", "ITC"];
-const TIERS = [3, 6, 10];
-
-function fmtINR(n) {
-  if (n === null || n === undefined || isNaN(n)) return "—";
-  return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-}
-function fmtCr(n) {
-  if (!n) return "—";
-  const cr = n / 1e7;
-  if (cr >= 1e5) return `₹${(cr/1e5).toFixed(2)} L Cr`;
-  if (cr >= 1e3) return `₹${(cr/1e3).toFixed(2)}K Cr`;
-  return `₹${cr.toFixed(0)} Cr`;
-}
-function fmtVol(n) {
-  if (!n) return "—";
-  if (n >= 1e7) return `${(n/1e7).toFixed(2)} Cr`;
-  if (n >= 1e5) return `${(n/1e5).toFixed(2)} L`;
-  return n.toLocaleString('en-IN');
-}
-
-// ✅ WAVE COMPONENT
-function WaveBar({ dark }) {
-  const goldColor = dark ? '#D8A33D' : '#C8920A';
-  const greenColor = dark ? '#3FAE7C' : '#059669';
-  const bgColor = dark ? '#161B22' : '#FFFFFF';
+function TermsPage() {
   return (
-    <div style={{ backgroundColor: bgColor, overflow: 'hidden', height: 32, lineHeight: 0 }}>
-      <style>{`@keyframes wave-move { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }`}</style>
-      <svg viewBox="0 0 2880 32" preserveAspectRatio="none" style={{ display: 'block', width: '200%', height: 32, animation: 'wave-move 4s linear infinite' }}>
-        <path d="M0,16 C180,32 360,0 540,16 C720,32 900,0 1080,16 C1260,32 1440,0 1440,16 C1620,32 1800,0 1980,16 C2160,32 2340,0 2520,16 C2700,32 2880,0 2880,16 L2880,32 L0,32 Z" fill={goldColor} opacity="0.15"/>
-        <path d="M0,20 C180,4 360,28 540,20 C720,4 900,28 1080,20 C1260,4 1440,28 1440,20 C1620,4 1800,28 1980,20 C2160,4 2340,28 2520,20 C2700,4 2880,28 2880,20 L2880,32 L0,32 Z" fill={greenColor} opacity="0.1"/>
-      </svg>
+    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
+      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Terms & Conditions</h1>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>1. Acceptance</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>By using PulseTrade (pulsetrade.in), you agree to these terms.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>2. Service Description</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade provides technical analysis tools for NSE/BSE listed securities. All information is for educational purposes only.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>3. Disclaimer</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is NOT a SEBI registered investment advisor. Users must consult a SEBI registered advisor before making any investment decisions.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>4. Subscription</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months via Cashfree Payments.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>5. Limitation of Liability</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade shall not be liable for any financial losses. Trading involves substantial risk of loss.</p>
+      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
     </div>
   );
 }
 
-// ✅ LIVE DOT
-function LiveDot({ C }) {
+function RefundPage() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-      <style>{`@keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }`}</style>
-      <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#059669', animation: 'live-pulse 1.5s ease-in-out infinite', boxShadow: '0 0 6px #059669' }} />
-      <span style={{ fontSize: 10, fontWeight: 700, color: '#059669' }}>Live</span>
+    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
+      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Refunds & Cancellations</h1>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>General Policy</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription is activated.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception — Technical Failure</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but subscription not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>How to Contact</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Email: <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Cancellations</h2>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscription remains active till end of paid period. No partial refunds.</p>
+      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
     </div>
   );
 }
 
-function Week52Bar({ current, low, high, C }) {
-  const pct = Math.min(100, Math.max(0, ((current - low) / (high - low)) * 100));
+function ContactPage() {
   return (
-    <div style={{ marginTop: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.muted, marginBottom: 4, fontWeight: 600 }}>
-        <span>52W Low {fmtINR(low)}</span>
-        <span>52W High {fmtINR(high)}</span>
+    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
+      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Contact Us</h1>
+      <div style={{ backgroundColor: DARK.surface, borderRadius: 12, padding: 24, marginBottom: 24 }}>
+        <p style={{ marginBottom: 12 }}>📧 <strong>Email:</strong> <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
+        <p style={{ marginBottom: 12 }}>🌐 <strong>Website:</strong> <span style={{ color: DARK.gold }}>pulsetrade.in</span></p>
+        <p style={{ marginBottom: 12 }}>📍 <strong>Location:</strong> India</p>
+        <p style={{ marginBottom: 0 }}>⏰ <strong>Support Hours:</strong> Mon–Sat, 10 AM – 6 PM IST</p>
       </div>
-      <div style={{ position: 'relative', height: 8, backgroundColor: C.surfaceBorder, borderRadius: 99 }}>
-        <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${C.red}, ${C.gold}, ${C.green})`, borderRadius: 99 }} />
-        <div style={{ position: 'absolute', top: -3, left: `${pct}%`, transform: 'translateX(-50%)', width: 14, height: 14, backgroundColor: C.gold, border: '2.5px solid white', borderRadius: '50%', boxShadow: '0 1px 4px rgba(0,0,0,0.18)' }} />
-      </div>
-      <div style={{ textAlign: 'center', fontSize: 11, color: C.goldDim, fontWeight: 700, marginTop: 5 }}>{pct.toFixed(0)}% of 52W range</div>
+      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
     </div>
   );
 }
 
-function IndicatorBar({ label, value, max, color, C }) {
-  const pct = Math.min(100, (value / max) * 100);
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: C.muted, marginBottom: 4, fontWeight: 600 }}>
-        <span>{label}</span><span style={{ color, fontWeight: 700 }}>{value}</span>
-      </div>
-      <div style={{ height: 6, backgroundColor: C.surfaceBorder, borderRadius: 99, overflow: 'hidden' }}>
-        <div style={{ height: '100%', width: `${pct}%`, backgroundColor: color, borderRadius: 99, transition: 'width 1s ease' }} />
-      </div>
-    </div>
-  );
-}
-
-function TrendMeter({ longScore, shortScore, trend, C }) {
-  const score = trend === 'Bullish' ? longScore : shortScore;
-  const color = trend === 'Bullish' ? C.green : C.red;
-  const colorLight = trend === 'Bullish' ? C.greenLight : C.redLight;
-  const [animScore, setAnimScore] = useState(0);
-  const [animPct, setAnimPct] = useState(0);
-  const [showGlow, setShowGlow] = useState(false);
-  const animRef = useRef(null);
-
+function PaymentStatusPage() {
+  const [status, setStatus] = useState('loading');
+  const [data, setData] = useState(null);
   useEffect(() => {
-    setAnimScore(0); setAnimPct(0); setShowGlow(false);
-    let start = null;
-    const target = Math.min(100, Math.max(0, score));
-    const animate = (ts) => {
-      if (!start) start = ts;
-      const p = Math.min((ts - start) / 1500, 1);
-      const e = 1 - Math.pow(1 - p, 3);
-      setAnimScore(Math.round(e * target));
-      setAnimPct(e * target);
-      if (p < 1) animRef.current = requestAnimationFrame(animate);
-      else setShowGlow(true);
-    };
-    animRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animRef.current);
-  }, [score, trend]);
-
-  const radius = 70, cx = 100, cy = 90;
-  const toRad = d => (d * Math.PI) / 180;
-  const ax = a => cx + radius * Math.cos(toRad(a));
-  const ay = a => cy + radius * Math.sin(toRad(a));
-  const fillArc = (animPct / 100) * 180;
-  const fillAngle = 180 - fillArc;
-  const nx = cx + (radius - 12) * Math.cos(toRad(fillAngle));
-  const ny = cy + (radius - 12) * Math.sin(toRad(fillAngle));
-  const bgPath = `M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 0 1 ${ax(0)} ${ay(0)}`;
-  const fillPath = animPct > 0
-    ? `M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 ${fillArc > 90 ? 1 : 0} 1 ${ax(fillAngle)} ${ay(fillAngle)}`
-    : null;
-
+    const params = new URLSearchParams(window.location.search);
+    const order_id = params.get('order_id');
+    if (!order_id) { setStatus('error'); return; }
+    fetch(`/api/verify-payment?order_id=${order_id}`)
+      .then(r => r.json())
+      .then(d => { setData(d); setStatus(d.status === 'PAID' ? 'success' : 'failed'); })
+      .catch(() => setStatus('error'));
+  }, []);
   return (
-    <div style={{
-      backgroundColor: C.surface, border: `1.5px solid ${showGlow ? color : C.surfaceBorder}`,
-      borderRadius: 16, padding: 20, marginBottom: 16, textAlign: 'center',
-      boxShadow: showGlow ? `0 4px 24px ${color}22` : '0 1px 4px rgba(0,0,0,0.06)',
-      transition: 'box-shadow 0.5s, border-color 0.5s',
-    }}>
-      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 8, fontWeight: 700 }}>🎯 TREND METER</div>
-      <svg width="200" height="110" viewBox="0 0 200 110" style={{ overflow: 'visible' }}>
-        <defs>
-          <filter id="glow"><feGaussianBlur stdDeviation="3" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-        </defs>
-        <path d={bgPath} fill="none" stroke={C.surfaceBorder} strokeWidth="14" strokeLinecap="round"/>
-        <path d={`M ${ax(180)} ${ay(180)} A ${radius} ${radius} 0 0 1 ${ax(120)} ${ay(120)}`} fill="none" stroke="#DC2626" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
-        <path d={`M ${ax(120)} ${ay(120)} A ${radius} ${radius} 0 0 1 ${ax(60)} ${ay(60)}`} fill="none" stroke="#C8920A" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
-        <path d={`M ${ax(60)} ${ay(60)} A ${radius} ${radius} 0 0 1 ${ax(0)} ${ay(0)}`} fill="none" stroke="#059669" strokeWidth="14" strokeLinecap="round" opacity="0.18"/>
-        {fillPath && <path d={fillPath} fill="none" stroke={color} strokeWidth="14" strokeLinecap="round" filter={showGlow ? "url(#glow)" : "none"}/>}
-        <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={C.textSecondary} strokeWidth="2.5" strokeLinecap="round"/>
-        <circle cx={cx} cy={cy} r="6" fill={color} filter={showGlow ? "url(#glow)" : "none"}/>
-        <text x="18" y="108" fill="#DC2626" fontSize="9" fontWeight="700">BEARISH</text>
-        <text x="152" y="108" fill="#059669" fontSize="9" fontWeight="700">BULLISH</text>
-        <text x="82" y="18" fill="#C8920A" fontSize="9" fontWeight="700">NEUTRAL</text>
-      </svg>
-      <div style={{ fontSize: 32, fontWeight: 800, color, marginTop: -6 }}>
-        {animScore}<span style={{ fontSize: 14, color: C.muted }}>/100</span>
-      </div>
-      <div style={{
-        display: 'inline-block', fontSize: 13, fontWeight: 700, color,
-        backgroundColor: colorLight, padding: '4px 14px', borderRadius: 20, marginTop: 6,
-        opacity: showGlow ? 1 : 0, transition: 'opacity 0.5s',
-      }}>
-        {score >= 70 ? '🔥 Strong ' : score >= 40 ? '⚡ Moderate ' : '❄️ Weak '}{trend}
-      </div>
-    </div>
-  );
-}
-
-function PulseHeroBanner({ result, stockName, stockInfo, C }) {
-  const isBullish = result.trend === 'Bullish';
-  const score = isBullish ? result.longScore : result.shortScore;
-  const gradientBg = isBullish
-    ? 'linear-gradient(135deg, #064E3B 0%, #065F46 50%, #0D2B1F 100%)'
-    : 'linear-gradient(135deg, #7F1D1D 0%, #991B1B 50%, #2D1515 100%)';
-  const accentColor = isBullish ? '#3FAE7C' : '#F87171';
-  const borderColor = isBullish ? '#3FAE7C' : '#F87171';
-
-  return (
-    <div style={{
-      background: gradientBg, borderRadius: 20, padding: '24px 20px', marginBottom: 16,
-      border: `1.5px solid ${borderColor}`, boxShadow: `0 8px 32px ${accentColor}33`,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
-        <div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{stockName}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{stockInfo?.longName || stockName}</div>
-        </div>
-        <div style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20, backgroundColor: accentColor, color: '#FFF' }}>
-          {isBullish ? '🟢 BULLISH' : '🔴 BEARISH'}
-        </div>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
-          {fmtINR(stockInfo?.regularMarketPrice || result.lastClose)}
-        </span>
-        {stockInfo?.regularMarketChange !== undefined && (
-          <span style={{
-            fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-            backgroundColor: stockInfo.regularMarketChange >= 0 ? 'rgba(63,174,124,0.25)' : 'rgba(248,113,113,0.25)',
-            color: stockInfo.regularMarketChange >= 0 ? '#3FAE7C' : '#F87171',
-            border: `1px solid ${stockInfo.regularMarketChange >= 0 ? '#3FAE7C' : '#F87171'}`,
-          }}>
-            {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'} {Math.abs(stockInfo.regularMarketChangePercent || 0).toFixed(2)}%
-          </span>
-        )}
-      </div>
-      <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1 }}>⚡ PULSE SCORE</span>
-          <span style={{ fontSize: 16, fontWeight: 900, color: accentColor }}>{score}/100</span>
-        </div>
-        <div style={{ height: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 99, overflow: 'hidden' }}>
-          <div style={{
-            height: '100%', width: `${score}%`,
-            background: isBullish ? 'linear-gradient(90deg, #059669, #34D399)' : 'linear-gradient(90deg, #DC2626, #FCA5A5)',
-            borderRadius: 99, transition: 'width 1.2s ease',
-          }} />
-        </div>
-      </div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)', textAlign: 'center', marginTop: 16, padding: '8px 12px', backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 10 }}>
-        {isBullish ? score >= 70 ? '🔥 Strong Bullish — Momentum bahut strong hai!' : '⚡ Moderate Bullish — Cautiously optimistic raho'
-          : score >= 70 ? '❄️ Strong Bearish — Selling pressure strong hai!' : '⚡ Moderate Bearish — Dhyan se dekho'}
-      </div>
-    </div>
-  );
-}
-
-
-function AITradeCoach({ stockData, C, isDark }) {
-  const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showCoach, setShowCoach] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [chartMode, setChartMode] = useState('text');
-  const [chartImage, setChartImage] = useState(null);
-  const [chartAnalysis, setChartAnalysis] = useState('');
-  const [chartLoading, setChartLoading] = useState(false);
-
-  const handleChartUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target.result.split(',')[1];
-      setChartImage(base64);
-      setChartAnalysis('');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const analyzeChart = async () => {
-    if (!chartImage) return;
-    setChartLoading(true);
-    setChartAnalysis('');
-    try {
-      const response = await fetch('/api/ai-vision', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageData: chartImage })
-      });
-      const data = await response.json();
-      setChartAnalysis(data.analysis || 'Analysis nahi ho saki');
-    } catch {
-      setChartAnalysis('Network error — dobara try karo!');
-    }
-    setChartLoading(false);
-  };
-
-  const speakAnswer = (text) => {
-    if (!text) return;
-    window.speechSynthesis.cancel();
-    const clean = text.replace(/\*\*/g, '').replace(/\*/g, '');
-    const utterance = new SpeechSynthesisUtterance(clean);
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-    setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const stopSpeaking = () => {
-    window.speechSynthesis.cancel();
-    setSpeaking(false);
-  };
-
-  const askCoach = async () => {
-    if (!question.trim()) return;
-    setLoading(true);
-    setAnswer('');
-    try {
-      const context = stockData ? `Stock: ${stockData.symbol}, Trend: ${stockData.trend}, RSI: ${stockData.rsi}, ADX: ${stockData.adx}, Pulse Score: ${stockData.trend === 'Bullish' ? stockData.longScore : stockData.shortScore}/100, Price: ₹${stockData.currentPrice}` : '';
-      const response = await fetch('/api/ai-coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question, context })
-      });
-      const data = await response.json();
-      setAnswer(data.answer || 'Kuch gadbad ho gayi — dobara try karo!');
-    } catch {
-      setAnswer('Network error — dobara try karo!');
-    }
-    setLoading(false);
-  };
-
-  if (!showCoach) return (
-    <button onClick={() => setShowCoach(true)} style={{
-      width: '100%', padding: '12px', marginBottom: 16,
-      background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)',
-      border: `1.5px solid ${C.gold}`, borderRadius: 14,
-      fontSize: 14, fontWeight: 700, color: C.gold,
-      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    }}>
-      🤖 AI Trade Coach Se Pucho
-    </button>
-  );
-
-  return (
-    <div style={{
-      backgroundColor: C.surface, border: `1.5px solid ${C.gold}`,
-      borderRadius: 16, padding: 18, marginBottom: 16,
-      boxShadow: `0 4px 20px ${C.gold}22`,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800 }}>🤖 AI TRADE COACH</div>
-        <button onClick={() => setShowCoach(false)} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', fontSize: 16 }}>✕</button>
-      </div>
-
-      {/* MODE SWITCHER */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-        {[['text', '💬 Sawaal Pucho'], ['chart', '📸 Chart Analyze']].map(([m, l]) => (
-          <button key={m} onClick={() => setChartMode(m)} style={{
-            flex: 1, padding: '8px', borderRadius: 10, border: 'none',
-            backgroundColor: chartMode === m ? C.gold : C.bg,
-            color: chartMode === m ? '#FFF' : C.muted,
-            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-            border: `1.5px solid ${chartMode === m ? C.gold : C.surfaceBorder}`,
-          }}>{l}</button>
-        ))}
-      </div>
-
-      {chartMode === 'chart' && (
-        <div>
-          <label style={{
-            display: 'block', width: '100%', padding: '20px',
-            border: `2px dashed ${C.gold}`, borderRadius: 12,
-            textAlign: 'center', cursor: 'pointer', marginBottom: 12,
-            backgroundColor: C.bg,
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>📸</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>Chart Screenshot Upload Karo</div>
-            <div style={{ fontSize: 11, color: C.muted, marginTop: 4 }}>TradingView ya koi bhi chart</div>
-            <input type="file" accept="image/*" onChange={handleChartUpload} style={{ display: 'none' }} />
-          </label>
-          {chartImage && (
-            <>
-              <img src={`data:image/jpeg;base64,${chartImage}`} style={{ width: '100%', borderRadius: 10, marginBottom: 10 }} alt="chart" />
-              <button onClick={analyzeChart} disabled={chartLoading} style={{
-                width: '100%', padding: '12px', borderRadius: 10, border: 'none',
-                backgroundColor: chartLoading ? C.surfaceBorder : C.gold,
-                color: chartLoading ? C.muted : '#FFF',
-                fontWeight: 700, fontSize: 14, cursor: chartLoading ? 'not-allowed' : 'pointer',
-              }}>
-                {chartLoading ? '⏳ AI Analyze kar raha hai...' : '🔍 Chart Analyze Karo'}
-              </button>
-            </>
-          )}
-          {chartAnalysis && (
-            <div style={{
-              marginTop: 12, padding: '12px 14px', borderRadius: 12,
-              backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
-              border: `1px solid ${C.gold}44`,
-              fontSize: 13, color: C.text, lineHeight: 1.7,
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                <span style={{ color: C.gold, fontWeight: 700 }}>🤖 AI Analysis:</span>
-                <button onClick={() => speakAnswer(chartAnalysis)} style={{
-                  padding: '4px 10px', borderRadius: 20, border: 'none',
-                  backgroundColor: C.gold, color: '#FFF', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-                }}>🔊 Suno</button>
+    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+      <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
+        <div style={{ color: DARK.gold, fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
+        {status === 'loading' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div><p style={{ color: DARK.muted }}>Payment verify ho raha hai...</p></div>}
+        {status === 'success' && (
+          <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.green}`, borderRadius: 16, padding: 32 }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <h2 style={{ color: DARK.green, marginBottom: 8 }}>Payment Successful!</h2>
+            <p style={{ color: DARK.muted, marginBottom: 16 }}>Tumhari subscription activate ho gayi hai.</p>
+            {data && (
+              <div style={{ backgroundColor: DARK.bg, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Order ID</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Amount</span><span style={{ fontWeight: 600, color: DARK.gold }}>₹{data.amount}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Email</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span></div>
               </div>
-              <div>{chartAnalysis.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '').replace(/^\s+/gm, '')}</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {chartMode === 'text' && (
-        <div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
-        {['Aaj entry loon?', 'Stop loss kahan?', 'Risk kitna?', 'Trend kitna strong?'].map(q => (
-          <button key={q} onClick={() => setQuestion(q)} style={{
-            fontSize: 11, padding: '5px 12px', borderRadius: 20,
-            border: `1px solid ${C.surfaceBorder}`,
-            backgroundColor: question === q ? C.goldLight : 'transparent',
-            color: question === q ? C.goldDim : C.muted,
-            cursor: 'pointer', fontWeight: 600,
-          }}>{q}</button>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input
-          value={question}
-          onChange={e => setQuestion(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && askCoach()}
-          placeholder="Kuch bhi pucho — Hinglish mein!"
-          style={{
-            flex: 1, padding: '10px 14px', fontSize: 13,
-            backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-            borderRadius: 10, color: C.text, outline: 'none',
-          }}
-        />
-        <button onClick={askCoach} disabled={loading} style={{
-          padding: '10px 16px', borderRadius: 10, border: 'none',
-          backgroundColor: C.gold, color: '#FFF',
-          fontWeight: 700, fontSize: 13, cursor: 'pointer',
-          opacity: loading ? 0.7 : 1,
-        }}>
-          {loading ? '⏳' : '➤'}
-        </button>
-      </div>
-
-      {answer && (
-        <div style={{
-          padding: '12px 14px', borderRadius: 12,
-          backgroundColor: isDark ? 'rgba(216,163,61,0.08)' : '#FFFBEB',
-          border: `1px solid ${C.gold}44`,
-          fontSize: 13, color: C.text, lineHeight: 1.7,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <span style={{ color: C.gold, fontWeight: 700 }}>🤖 Coach:</span>
-            <button onClick={() => speaking ? stopSpeaking() : speakAnswer(answer)} style={{
-              padding: '5px 12px', borderRadius: 20, border: 'none', cursor: 'pointer',
-              backgroundColor: speaking ? '#DC2626' : C.gold,
-              color: '#FFF', fontSize: 11, fontWeight: 700,
-            }}>
-              {speaking ? '⏹️ Roko' : '🔊 Suno'}
-            </button>
-          </div>
-          <div>{answer.replace(/\*\*/g, '').replace(/\*/g, '')}</div>
-        </div>
-      )}
-
-        </div>
-      )}
-
-      <div style={{ fontSize: 10, color: C.muted, marginTop: 10, textAlign: 'center' }}>
-        ⚠️ Sirf educational — investment advice nahi
-      </div>
-    </div>
-  );
-}
-
-
-function PulseOracle({ userDob, isDark, C }) {
-  const [oracle, setOracle] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [shown, setShown] = useState(false);
-
-  const getOracle = async () => {
-    if (!userDob) { alert('Pehle profile mein DOB add karo!'); return; }
-    setLoading(true);
-    try {
-      const today = new Date();
-      const dayName = ['Raviwar','Somwar','Mangalwar','Budhwar','Guruwar','Shukrawar','Shaniwar'][today.getDay()];
-      const digits = userDob.replace(/-/g, '').split('').map(Number);
-      let lp = digits.reduce((a,b) => a+b, 0);
-      while (lp > 9 && lp !== 11 && lp !== 22) lp = String(lp).split('').map(Number).reduce((a,b)=>a+b,0);
-      
-      const response = await fetch('/api/ai-coach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question: `Aaj ${dayName} hai. Mera Life Path Number ${lp} hai. Aaj ${today.toLocaleDateString('en-IN')} ko mera trading din kaisa rahega? 3-4 lines mein Hinglish mein bata: 1) Din kaisa hai (Excellent/Good/Average/Avoid) 2) Best trading time 3) Lucky sector 4) Ek warning. Fun aur motivating rakho!`,
-          context: `Life Path: ${lp}, Day: ${dayName}, Date: ${today.toLocaleDateString('en-IN')}`
-        })
-      });
-      const data = await response.json();
-      setOracle(data.answer || 'Oracle ne jawab nahi diya!');
-      setShown(true);
-    } catch {
-      setOracle('Network error — dobara try karo!');
-    }
-    setLoading(false);
-  };
-
-  const speakOracle = () => {
-    if (!oracle) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(oracle.replace(/\*\*/g, '').replace(/\*/g, ''));
-    utterance.lang = 'hi-IN';
-    utterance.rate = 0.9;
-    setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-  };
-
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  return (
-    <div style={{
-      background: isDark
-        ? 'linear-gradient(135deg, #0D0A1A, #1A0D2E)'
-        : 'linear-gradient(135deg, #F5F0FF, #FFFFFF)',
-      border: '1.5px solid #7C3AED',
-      borderRadius: 16, padding: 18, marginBottom: 16,
-      boxShadow: '0 4px 20px rgba(124,58,237,0.15)',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-        <div>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: '#7C3AED', fontWeight: 800 }}>🔮 PULSE ORACLE</div>
-          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{dateStr}</div>
-        </div>
-        {oracle && (
-          <button onClick={speakOracle} style={{
-            padding: '5px 12px', borderRadius: 20, border: 'none',
-            backgroundColor: speaking ? '#DC2626' : '#7C3AED',
-            color: '#FFF', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-          }}>
-            {speaking ? '⏹️ Roko' : '🔊 Suno'}
-          </button>
-        )}
-      </div>
-
-      {!shown ? (
-        <button onClick={getOracle} disabled={loading} style={{
-          width: '100%', padding: '14px', borderRadius: 12, border: 'none',
-          background: loading ? C.surfaceBorder : 'linear-gradient(135deg, #7C3AED, #A78BFA)',
-          color: loading ? C.muted : '#FFF',
-          fontSize: 14, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer',
-          boxShadow: loading ? 'none' : '0 4px 20px rgba(124,58,237,0.3)',
-        }}>
-          {loading ? '🔮 Oracle dekh raha hai...' : '🔮 Aaj Ka Prediction Dekho'}
-        </button>
-      ) : (
-        <div>
-          <div style={{
-            padding: '14px', borderRadius: 12,
-            backgroundColor: isDark ? 'rgba(124,58,237,0.1)' : 'rgba(124,58,237,0.06)',
-            border: '1px solid rgba(124,58,237,0.2)',
-            fontSize: 13, color: C.text, lineHeight: 1.8,
-          }}>
-            {oracle.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '')}
-          </div>
-          <button onClick={() => { setShown(false); setOracle(null); }} style={{
-            width: '100%', marginTop: 10, padding: '8px',
-            backgroundColor: 'transparent', border: `1px solid rgba(124,58,237,0.3)`,
-            borderRadius: 8, color: '#7C3AED', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-          }}>🔄 Dobara Dekho</button>
-        </div>
-      )}
-
-      <div style={{ fontSize: 10, color: C.muted, marginTop: 10, textAlign: 'center' }}>
-        ✨ Sirf entertainment — investment advice nahi
-      </div>
-    </div>
-  );
-}
-
-function ReferralCard({ user, C }) {
-  const [refCode, setRefCode] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const [refCount, setRefCount] = useState(0);
-
-  useEffect(() => {
-    if (!user?.id) return;
-    supabase.from('profiles').select('referral_code, referral_count').eq('id', user.id).single()
-      .then(({ data }) => {
-        if (data?.referral_code) { setRefCode(data.referral_code); setRefCount(data.referral_count || 0); }
-      });
-  }, [user?.id]);
-
-  const refLink = refCode ? `pulsetrade.in?ref=${refCode}` : null;
-  const handleCopy = () => {
-    if (!refLink) return;
-    navigator.clipboard.writeText(`https://${refLink}`);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div style={{ backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' }}>
-      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>🔗 MERA REFERRAL LINK</div>
-      <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, lineHeight: 1.6 }}>
-        Dost ko invite karo → <span style={{ color: C.gold, fontWeight: 700 }}>tujhe +100 pts</span>, unhe <span style={{ color: C.green, fontWeight: 700 }}>+50 pts</span>! 🎁
-      </div>
-      {refLink ? (
-        <>
-          <div style={{ backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`, borderRadius: 10, padding: '10px 14px', marginBottom: 10, fontSize: 13, fontWeight: 700, color: C.text, fontFamily: 'monospace', wordBreak: 'break-all' }}>{refLink}</div>
-          <button onClick={handleCopy} style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', backgroundColor: copied ? C.green : C.gold, color: '#FFF', fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'background 0.3s' }}>
-            {copied ? '✅ Link Copy Ho Gaya!' : '📋 Link Copy Karo'}
-          </button>
-          <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, marginTop: 10 }}>
-            🎯 <span style={{ color: C.gold, fontWeight: 700 }}>{refCount}</span> dost join kiya abhi tak!
-          </div>
-        </>
-      ) : (
-        <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, padding: '10px 0' }}>⏳ Referral code load ho raha hai...</div>
-      )}
-    </div>
-  );
-}
-
-export default function StockDashboard({ user, isDark, onTabChange, defaultTab }) {
-  const dark = isDark ?? false;
-  const C = dark ? DARK : LIGHT;
-
-  const [symbolInput, setSymbolInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [result, setResult] = useState(null);
-  const [stockInfo, setStockInfo] = useState(null);
-  const [stockName, setStockName] = useState('');
-  const [tab, setTab] = useState(defaultTab || 'check');
-  const [watchlist, setWatchlist] = useState([]);
-  const [history, setHistory] = useState([]);
-  const [sizingMode, setSizingMode] = useState('risk');
-  const [quantity, setQuantity] = useState(10);
-  const [riskAmount, setRiskAmount] = useState(1000);
-  const [slPercent, setSlPercent] = useState(3);
-  const [entryPrice, setEntryPrice] = useState(0);
-  const [direction, setDirection] = useState('BUY');
-  const [alertSent, setAlertSent] = useState(false);
-  const [alertSending, setAlertSending] = useState(false);
-  const [pulseData, setPulseData] = useState(null);
-  const [userDob, setUserDob] = useState(null);
-  const [showSupport, setShowSupport] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-
-  const startVoiceSearch = () => {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert('Tera browser voice search support nahi karta — Chrome use karo!');
-      return;
-    }
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'hi-IN';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 3;
-    setIsListening(true);
-    recognition.start();
-    recognition.onresult = (event) => {
-      const results = event.results[0];
-      let transcript = '';
-      for (let i = 0; i < results.length; i++) {
-        transcript = results[i].transcript.toUpperCase();
-        const stockMatch = transcript.match(/\b(RELIANCE|TCS|INFY|HDFCBANK|SBIN|TATAMOTORS|ICICIBANK|ITC|WIPRO|AXISBANK|KOTAKBANK|LT|SUNPHARMA|BAJFINANCE|MARUTI|ULTRACEMCO|TITAN|NESTLEIND|POWERGRID|ONGC|[A-Z]{2,10})\b/);
-        if (stockMatch) { transcript = stockMatch[1]; break; }
-      }
-      setSymbolInput(transcript.trim());
-      handleSearch(transcript.trim());
-      setIsListening(false);
-    };
-    recognition.onerror = () => setIsListening(false);
-    recognition.onend = () => setIsListening(false);
-  };
-
-  useEffect(() => {
-    if (!user?.id) return;
-    supabase.from('profiles').select('dob').eq('id', user.id).single()
-      .then(({ data }) => { if (data?.dob) setUserDob(data.dob); });
-  }, [user?.id]);
-
-  const handleSearch = async (symOverride) => {
-    const sym = (symOverride || symbolInput).trim().toUpperCase();
-    if (!sym) return;
-    setLoading(true); setError(''); setResult(null); setStockInfo(null);
-    setPulseData(null); setSymbolInput(sym); setAlertSent(false);
-    let symbol = sym;
-    if (!symbol.includes('.')) symbol = symbol + '.NS';
-    try {
-      const res = await fetch(`/api/get-stock-data?symbol=${encodeURIComponent(symbol)}&range=1y`);
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Data fetch failed.'); setLoading(false); return; }
-      if (!data.candles || data.candles.length < 50) { setError('Itna data nahi mila.'); setLoading(false); return; }
-      const analysis = analyzeStock(data.candles);
-      if (analysis.error) { setError(analysis.error); setLoading(false); return; }
-      setResult(analysis);
-      setStockInfo(data.stockInfo || null);
-      setStockName(sym);
-      setEntryPrice(analysis.lastClose);
-      setDirection(analysis.trend === 'Bullish' ? 'BUY' : 'SELL');
-      if (analysis.atr) setSlPercent(Math.min(6, Math.max(1.5, (analysis.atr / analysis.lastClose * 100).toFixed(1))));
-      setHistory(prev => [{ id: Date.now(), symbol: sym, trend: analysis.trend, price: analysis.lastClose, date: new Date().toISOString(), outcome: 'pending' }, ...prev].slice(0, 100));
-      setPulseData({
-        symbol: sym, companyName: data.stockInfo?.longName || sym,
-        currentPrice: data.stockInfo?.regularMarketPrice || analysis.lastClose,
-        change: data.stockInfo?.regularMarketChange,
-        changePercent: data.stockInfo?.regularMarketChangePercent?.toFixed(2),
-        rsi: analysis.rsi, macd: analysis.macd, macdSignal: analysis.macdSignal,
-        ema20: analysis.ema20, ema50: analysis.ema50, adx: analysis.adx,
-        supertrend: analysis.supertrend, trend: analysis.trend,
-        volume: data.stockInfo?.regularMarketVolume,
-        avgVolume: data.stockInfo?.averageDailyVolume10Day,
-      });
-    } catch (err) {
-      setError('Kuch gadbad ho gayi, dobara try karo.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSendAlert = async () => {
-    if (!user?.email || !result?.signal) return;
-    setAlertSending(true);
-    try {
-      await fetch('/api/send-alert', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: user.email, symbol: stockName, trend: result.trend,
-          entry: result.entry?.toFixed(2), stopLoss: result.stopLoss?.toFixed(2),
-          target1: result.targets?.[0]?.toFixed(2), target2: result.targets?.[1]?.toFixed(2), target3: result.targets?.[2]?.toFixed(2),
-        }),
-      });
-      setAlertSent(true);
-    } catch (err) { console.error(err); }
-    finally { setAlertSending(false); }
-  };
-
-  const ep = Number(entryPrice) || 0;
-  const sl = Math.max(0, Number(slPercent) || 0);
-  const stopLossPrice = direction === 'BUY' ? ep * (1 - sl/100) : ep * (1 + sl/100);
-  const riskPerShare = Math.abs(ep - stopLossPrice);
-  const calculatedQty = riskPerShare > 0 ? Math.floor(Math.max(0, Number(riskAmount)||0) / riskPerShare) : 0;
-  const qty = sizingMode === 'risk' ? calculatedQty : Math.max(0, Number(quantity)||0);
-  const lossAmount = Math.abs(ep - stopLossPrice) * qty;
-  const tierResults = TIERS.map(t => { const price = direction === 'BUY' ? ep*(1+t/100) : ep*(1-t/100); return { percent: t, price, profit: Math.abs(price-ep)*qty }; });
-  const riskReward = lossAmount > 0 ? (tierResults[2].profit / lossAmount).toFixed(1) : 0;
-  const trendColor = result?.trend === 'Bullish' ? C.green : result?.trend === 'Bearish' ? C.red : C.gold;
-
-  const inputStyle = {
-    width: '100%', padding: '11px 14px', fontSize: 14,
-    backgroundColor: C.bg, border: `1.5px solid ${C.surfaceBorder}`,
-    borderRadius: 10, color: C.text, outline: 'none',
-    boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
-  };
-  const rowStyle = {
-    display: 'flex', justifyContent: 'space-between',
-    fontSize: 13, padding: '7px 0', borderBottom: `1px solid ${C.surfaceBorder}`,
-  };
-  const cardStyle = {
-    backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
-    borderRadius: 16, padding: 18, marginBottom: 16,
-    boxShadow: dark ? '0 2px 16px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)',
-    transition: 'all 0.3s ease',
-  };
-
-  return (
-    <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', transition: 'all 0.3s ease' }}>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
-
-        {/* HEADER */}
-        <div style={{
-          background: dark
-            ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
-            : 'linear-gradient(135deg, #1E3A5F 0%, #2D5A8E 100%)',
-          borderBottom: `1px solid ${C.surfaceBorder}`,
-          padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-          transition: 'all 0.3s ease',
-        }}>
-          <div>
-            <div style={{ fontSize: 11, color: dark ? C.gold : '#F59E0B', fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: dark ? C.text : '#fff' }}>
-              Pulse<span style={{ color: C.gold }}>Trade</span>
-            </h1>
-            <div style={{ fontSize: 10, color: dark ? C.muted : 'rgba(255,255,255,0.6)', marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <LiveDot C={C} />
-            <button onClick={() => setShowSupport(true)} style={{
-              fontSize: 11, padding: '5px 10px', borderRadius: 20,
-              border: `1.5px solid ${dark ? C.surfaceBorder : 'rgba(255,255,255,0.3)'}`,
-              backgroundColor: dark ? 'transparent' : 'rgba(255,255,255,0.1)',
-              color: dark ? C.muted : '#fff', cursor: 'pointer', fontWeight: 700,
-            }}>💬 Hum Se Baat Karo</button>
-            {user?.email === 'prabhat3300@gmail.com' && (
-              <a href="/admin" style={{
-                fontSize: 11, padding: '5px 10px', borderRadius: 20,
-                border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
-                color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
-              }}>⚙️ Admin</a>
             )}
+            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
           </div>
-        </div>
-
-        {/* WAVE */}
-        <WaveBar dark={dark} />
-
-        {/* TOP GRADIENT LINE */}
-        <style>{`@keyframes shimmer-line { 0%{background-position:-200% center} 100%{background-position:200% center} }`}</style>
-        <div style={{
-          height: 3,
-          background: 'linear-gradient(90deg, #C8920A, #3FAE7C, #C8920A)',
-          backgroundSize: '200% auto',
-          animation: 'shimmer-line 3s linear infinite',
-        }} />
-
-
-
-        <div style={{ padding: '20px 20px 0' }}>
-          <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
-
-          {/* TABS */}
-          <div style={{
-            display: 'flex', gap: 4, marginBottom: 20,
-            backgroundColor: C.surface, padding: 4,
-            borderRadius: 14, border: `1px solid ${C.surfaceBorder}`,
-          }}>
-            {[['check','🔍 Check'],['watchlist','⭐ Watchlist'],['track','📋 Record'],['screener','🚀 Screener']].map(([key,label]) => (
-              <button key={key} onClick={() => setTab(key)} style={{
-                flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
-                borderRadius: 10, border: 'none',
-                backgroundColor: tab===key ? (dark ? C.gold : '#1E3A5F') : 'transparent',
-                color: tab===key ? '#FFF' : C.muted,
-                cursor: 'pointer', transition: 'background 0.2s',
-              }}>{label}</button>
-            ))}
-          </div>
-
-          {/* SUBSCRIBE */}
-          <div style={{ textAlign: 'center', marginBottom: 20 }}>
-            <SubscribeButton userEmail={user?.email} userId={user?.id} />
-          </div>
-
-          {tab === 'check' && (
-            <>
-              {/* GLOBAL MARKETS */}
-              <GlobalMarkets isDark={dark} />
-              <FearGreedMeter isDark={dark} />
-              <PulseOracle userDob={userDob} isDark={dark} C={C} />
-
-              <div style={cardStyle}>
-                <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, display: 'block', marginBottom: 8, fontWeight: 700 }}>STOCK SYMBOL YA NAAM</label>
-                <div style={{ position: 'relative', display: 'flex', gap: 8 }}>
-                <input value={symbolInput} onChange={e => setSymbolInput(e.target.value)} onKeyDown={e => e.key==='Enter' && handleSearch()} placeholder="e.g. RELIANCE, TCS" style={{...inputStyle, flex: 1}} />
-                <button onClick={startVoiceSearch} style={{
-                  padding: '11px 14px', borderRadius: 10, border: 'none', flexShrink: 0,
-                  backgroundColor: isListening ? '#DC2626' : C.gold,
-                  color: '#FFF', cursor: 'pointer', fontSize: 18,
-                  boxShadow: isListening ? '0 0 12px rgba(220,38,38,0.5)' : 'none',
-                  transition: 'all 0.3s',
-                }}>
-                  {isListening ? '🔴' : '🎙️'}
-                </button>
-              </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
-                  {POPULAR.map(s => (
-                    <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
-                      fontSize: 11, padding: '5px 12px', borderRadius: 20,
-                      border: `1.5px solid ${symbolInput===s ? (dark ? C.gold : '#1E3A5F') : C.surfaceBorder}`,
-                      backgroundColor: symbolInput===s ? (dark ? C.goldLight : '#EFF6FF') : 'transparent',
-                      color: symbolInput===s ? (dark ? C.goldDim : '#1E3A5F') : C.muted,
-                      cursor: 'pointer', fontWeight: 600,
-                    }}>{s}</button>
-                  ))}
-                </div>
-                <div style={{ marginTop: 16 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <label style={{ fontSize: 10, letterSpacing: 2, color: C.muted, fontWeight: 700 }}>POSITION SIZING</label>
-                    <div style={{ display: 'flex', gap: 6 }}>
-                      {[['risk','Risk ₹'],['manual','Qty']].map(([m,l]) => (
-                        <button key={m} onClick={() => setSizingMode(m)} style={{
-                          fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-                          border: `1.5px solid ${sizingMode===m ? (dark ? C.gold : '#1E3A5F') : C.surfaceBorder}`,
-                          backgroundColor: sizingMode===m ? (dark ? C.goldLight : '#EFF6FF') : 'transparent',
-                          color: sizingMode===m ? (dark ? C.goldDim : '#1E3A5F') : C.muted, cursor: 'pointer',
-                        }}>{l}</button>
-                      ))}
-                    </div>
-                  </div>
-                  {sizingMode === 'risk' ? (
-                    <>
-                      <input type="number" value={riskAmount} onChange={e => setRiskAmount(e.target.value)} placeholder="Risk amount e.g. 1000" style={inputStyle} />
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-                        <span style={{ fontSize: 12, color: C.muted }}>Calculated Qty</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.gold }}>{qty} shares</span>
-                      </div>
-                    </>
-                  ) : (
-                    <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} placeholder="Qty e.g. 10" style={inputStyle} />
-                  )}
-                </div>
-                <button onClick={() => handleSearch()} disabled={loading} style={{
-                  width: '100%', marginTop: 14, padding: '12px',
-                  fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
-                  backgroundColor: loading ? C.surfaceBorder : (dark ? C.gold : '#1E3A5F'),
-                  color: loading ? C.muted : '#FFF',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: loading ? 'none' : (dark ? '0 2px 12px rgba(200,146,10,0.3)' : '0 2px 12px rgba(30,58,95,0.3)'),
-                }}>
-                  {loading ? '⏳ Check ho raha hai...' : '🔍 Trend Nikalo'}
-                </button>
-                {error && <p style={{ fontSize: 12, color: C.red, marginTop: 8, fontWeight: 600 }}>{error}</p>}
-              </div>
-
-              {result && (
-                <>
-                  <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
-                  <MoodTracker isDark={dark} />
-                  <AITradeCoach stockData={pulseData} C={C} isDark={dark} />
-
-                  {stockInfo && (
-                    <div style={cardStyle}>
-                      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 10, fontWeight: 700 }}>📊 STOCK INFO</div>
-                      {stockInfo.longName && (
-                        <div style={{ marginBottom: 12 }}>
-                          <div style={{ fontSize: 14, fontWeight: 800, color: C.text, marginBottom: 6 }}>{stockInfo.longName}</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: 26, fontWeight: 800, color: C.text }}>{fmtINR(stockInfo.regularMarketPrice || result.lastClose)}</span>
-                            {stockInfo.regularMarketChange !== undefined && (
-                              <span style={{
-                                fontSize: 12, fontWeight: 700,
-                                color: stockInfo.regularMarketChange >= 0 ? C.green : C.red,
-                                backgroundColor: stockInfo.regularMarketChange >= 0 ? C.greenLight : C.redLight,
-                                padding: '3px 10px', borderRadius: 20,
-                              }}>
-                                {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'} {fmtINR(Math.abs(stockInfo.regularMarketChange))} ({Math.abs(stockInfo.regularMarketChangePercent || 0).toFixed(2)}%)
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                      {[
-                        ['Market Cap', fmtCr(stockInfo.marketCap)],
-                        ['P/E Ratio', stockInfo.trailingPE ? stockInfo.trailingPE.toFixed(2) : '—'],
-                        ['Aaj ka Volume', fmtVol(stockInfo.regularMarketVolume)],
-                        ['Avg Volume (3M)', fmtVol(stockInfo.averageDailyVolume3Month)],
-                        ['Exchange', stockInfo.exchangeName || '—'],
-                      ].map(([label, value]) => (
-                        <div key={label} style={rowStyle}>
-                          <span style={{ color: C.muted }}>{label}</span>
-                          <span style={{ fontWeight: 600, color: C.text }}>{value}</span>
-                        </div>
-                      ))}
-                      {result.week52High && result.week52Low && (
-                        <Week52Bar current={result.lastClose} low={result.week52Low} high={result.week52High} C={C} />
-                      )}
-                    </div>
-                  )}
-
-                  <TrendMeter longScore={result.longScore} shortScore={result.shortScore} trend={result.trend} C={C} />
-
-                  <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>📈 INDICATOR STRENGTH</div>
-                    <IndicatorBar label={`RSI — ${result.rsi > 70 ? 'Overbought' : result.rsi < 30 ? 'Oversold' : 'Neutral zone'}`} value={result.rsi} max={100} color={result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : C.gold} C={C} />
-                    <IndicatorBar label={`ADX — ${result.trendStrength}`} value={result.adx} max={60} color={result.adx >= 25 ? C.green : C.muted} C={C} />
-                    <IndicatorBar label="Long Score" value={result.longScore} max={100} color={C.green} C={C} />
-                    <IndicatorBar label="Short Score" value={result.shortScore} max={100} color={C.red} C={C} />
-                  </div>
-
-                  {pulseData && <PulseBoltaHai
-                    stockData={pulseData}
-                    userName={user?.email?.split('@')[0]?.split('.')[0]?.replace(/[0-9]/g, '')?.replace(/^./, c => c.toUpperCase())}
-                    userDob={userDob}
-                  />}
-
-                  <div style={cardStyle}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottom: `1px solid ${C.surfaceBorder}` }}>
-                      <span style={{ fontSize: 20, fontWeight: 800, color: C.text }}>{stockName}</span>
-                      <span style={{
-                        fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-                        backgroundColor: trendColor === C.green ? C.greenLight : trendColor === C.red ? C.redLight : C.goldLight,
-                        color: trendColor,
-                      }}>{result.trend}</span>
-                    </div>
-                    {[
-                      ['Momentum (MACD)', result.momentum, result.momentum==='Bullish' ? C.green : C.red],
-                      ['RSI', result.rsi, result.rsi > 70 ? C.red : result.rsi < 30 ? C.green : null],
-                      ['ADX (Strength)', `${result.adx} (${result.trendStrength})`, null],
-                      ['Supertrend', result.supertrend, result.supertrend==='Bullish' ? C.green : C.red],
-                      ['Long Score', `${result.longScore} / 100`, C.green],
-                      ['Short Score', `${result.shortScore} / 100`, C.red],
-                    ].map(([label, value, color]) => (
-                      <div key={label} style={rowStyle}>
-                        <span style={{ color: C.muted }}>{label}</span>
-                        <span style={{ fontWeight: 700, color: color || C.textSecondary }}>{value}</span>
-                      </div>
-                    ))}
-                    <button onClick={() => {
-                      const exists = watchlist.some(w => w.symbol === stockName);
-                      setWatchlist(prev => exists ? prev.filter(w => w.symbol !== stockName) : [{ symbol: stockName, lastTrend: result.trend, lastPrice: result.lastClose, lastChecked: new Date().toISOString() }, ...prev].slice(0, 30));
-                    }} style={{
-                      width: '100%', marginTop: 14, padding: '9px',
-                      fontSize: 13, fontWeight: 700, borderRadius: 10,
-                      border: `1.5px solid ${C.gold}`,
-                      backgroundColor: 'transparent', color: C.gold, cursor: 'pointer',
-                    }}>
-                      {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
-                    </button>
-                    <button onClick={() => {
-                      const score = result.trend === 'Bullish' ? result.longScore : result.shortScore;
-                      const price = stockInfo?.regularMarketPrice || result.lastClose;
-                      const change = stockInfo?.regularMarketChangePercent ? `${stockInfo.regularMarketChangePercent >= 0 ? '▲' : '▼'} ${Math.abs(stockInfo.regularMarketChangePercent).toFixed(2)}%` : '';
-                      const msg = `🔱 *PulseTrade Analysis*
-
-📊 *${stockName}* — ${result.trend === 'Bullish' ? '🟢 BULLISH' : '🔴 BEARISH'}
-💰 Price: ₹${Number(price).toLocaleString('en-IN', {maximumFractionDigits: 2})} ${change}
-⚡ Pulse Score: ${score}/100
-📈 RSI: ${result.rsi} | ADX: ${result.adx}
-🎯 Trend: ${result.trendStrength}
-
-${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠️ Bearish Trend — Cautious raho!'}
-
-🔍 Khud check karo: pulsetrade.in
-🔱 हर हर महादेव 🔱`;
-                      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
-                    }} style={{
-                      width: '100%', marginTop: 8, padding: '9px',
-                      fontSize: 13, fontWeight: 700, borderRadius: 10,
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #25D366, #128C7E)',
-                      color: '#FFF', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                    }}>
-                      <span style={{fontSize: 16}}>📱</span> WhatsApp Pe Share Karo
-                    </button>
-                  </div>
-
-                  {result.signal ? (
-                    <div style={{
-                      backgroundColor: C.surface,
-                      border: `2px solid ${result.signal==='LONG' ? C.green : C.red}`,
-                      borderRadius: 16, padding: 18, marginBottom: 16,
-                      boxShadow: `0 4px 20px ${result.signal==='LONG' ? C.green : C.red}18`,
-                    }}>
-                      <div style={{
-                        fontSize: 15, fontWeight: 800,
-                        color: result.signal==='LONG' ? C.green : C.red,
-                        backgroundColor: result.signal==='LONG' ? C.greenLight : C.redLight,
-                        padding: '8px 14px', borderRadius: 10, marginBottom: 14,
-                      }}>
-                        {result.signal==='LONG' ? '📈 Bullish Setup' : '📉 Bearish Setup'}
-                      </div>
-                      {[
-                        ['Entry', fmtINR(result.entry)],
-                        ['Stop Loss', fmtINR(result.stopLoss)],
-                        ['Safe Exit 🟢 (3%)', fmtINR(result.targets?.[0])],
-                        ['Sweet Spot 🎯 (6%)', fmtINR(result.targets?.[1])],
-                        ['Full Target 🚀 (10%)', fmtINR(result.targets?.[2])],
-                        ['Suggested Hold', result.suggestedHold],
-                      ].map(([label, value]) => (
-                        <div key={label} style={rowStyle}>
-                          <span style={{ color: C.muted }}>{label}</span>
-                          <span style={{ fontWeight: 700, color: C.text }}>{value}</span>
-                        </div>
-                      ))}
-                      <button onClick={handleSendAlert} disabled={alertSending || alertSent} style={{
-                        width: '100%', marginTop: 14, padding: '12px',
-                        fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
-                        backgroundColor: alertSent ? C.green : C.gold,
-                        color: '#FFF', cursor: alertSent ? 'default' : 'pointer',
-                      }}>
-                        {alertSent ? '✅ Alert Bhej Diya!' : alertSending ? '📨 Bhej rahe hain...' : '📧 Email Alert Bhejo'}
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{
-                      backgroundColor: C.surface, border: `1px dashed ${C.surfaceBorder}`,
-                      borderRadius: 16, padding: 18, marginBottom: 16,
-                      fontSize: 13, color: C.muted, textAlign: 'center',
-                    }}>
-                      ⏳ Abhi koi clear confluence signal nahi hai. Wait karo.
-                    </div>
-                  )}
-
-                  <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 14, fontWeight: 700 }}>POSITION SIZING CALCULATOR</div>
-                    <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
-                      {[['BUY','📈 Bullish Scenario'],['SELL','📉 Bearish Scenario']].map(([d, label]) => (
-                        <button key={d} onClick={() => setDirection(d)} style={{
-                          flex: 1, padding: '9px', fontSize: 12, fontWeight: 700, borderRadius: 10, border: 'none',
-                          backgroundColor: direction===d ? (d==='BUY' ? C.green : C.red) : C.bg,
-                          color: direction===d ? '#FFF' : C.muted, cursor: 'pointer',
-                        }}>{label}</button>
-                      ))}
-                    </div>
-                    {[
-                      ['Entry Price', fmtINR(ep)],
-                      ['Stop Loss Price', fmtINR(stopLossPrice)],
-                      ['Quantity', `${qty} shares`],
-                      ['Max Loss', fmtINR(lossAmount)],
-                      ['Risk:Reward (10%)', `1 : ${riskReward}`],
-                    ].map(([label, value]) => (
-                      <div key={label} style={rowStyle}>
-                        <span style={{ color: C.muted }}>{label}</span>
-                        <span style={{ fontWeight: 700, color: C.textSecondary }}>{value}</span>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: 14, display: 'flex', gap: 8 }}>
-                      {tierResults.map((t, i) => (
-                        <div key={t.percent} style={{
-                          flex: 1, backgroundColor: C.goldLight, borderRadius: 12,
-                          padding: '12px 8px', textAlign: 'center',
-                          border: `1px solid ${C.surfaceBorder}`,
-                        }}>
-                          <div style={{ fontSize: 10, color: C.goldDim, fontWeight: 700 }}>
-                            {i === 0 ? 'Safe Exit 🟢' : i === 1 ? 'Sweet Spot 🎯' : 'Full Target 🚀'}
-                          </div>
-                          <div style={{ fontSize: 13, fontWeight: 800, color: C.gold, marginTop: 2 }}>{fmtINR(t.price)}</div>
-                          <div style={{ fontSize: 11, color: C.green, fontWeight: 600 }}>+{fmtINR(t.profit)}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
-            </>
-          )}
-
-          {tab === 'watchlist' && (
-            <>
-              <ReferralCard user={user} C={C} />
-              <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 16, fontWeight: 700 }}>WATCHLIST</div>
-                {watchlist.length === 0 ? (
-                  <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi khaali hai. Check tab se add karo.</p>
-                ) : watchlist.map(w => (
-                  <div key={w.symbol} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
-                    <div>
-                      <div style={{ fontWeight: 700, color: C.text }}>{w.symbol}</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                        <span style={{ fontSize: 12, color: C.muted }}>{fmtINR(w.lastPrice)}</span>
-                        <span style={{
-                          fontSize: 11, fontWeight: 700, padding: '1px 8px', borderRadius: 12,
-                          color: w.lastTrend === 'Bullish' ? C.green : C.red,
-                          backgroundColor: w.lastTrend === 'Bullish' ? C.greenLight : C.redLight,
-                        }}>{w.lastTrend}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => { setTab('check'); handleSearch(w.symbol); }} style={{ fontSize: 12, padding: '7px 14px', borderRadius: 8, border: 'none', backgroundColor: C.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>Check</button>
-                      <button onClick={() => setWatchlist(prev => prev.filter(x => x.symbol !== w.symbol))} style={{ fontSize: 12, padding: '7px 12px', borderRadius: 8, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.red, cursor: 'pointer', fontWeight: 700 }}>✕</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-
-          {tab === 'track' && (
-            <div style={cardStyle}>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
-              {history.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                  {[
-                    ['Wins', history.filter(h=>h.outcome==='win').length, C.green, C.greenLight],
-                    ['Losses', history.filter(h=>h.outcome==='loss').length, C.red, C.redLight],
-                    ['Pending', history.filter(h=>h.outcome==='pending').length, C.gold, C.goldLight],
-                  ].map(([l, v, c, bg]) => (
-                    <div key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: 12, padding: '12px 8px', textAlign: 'center' }}>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: c }}>{v}</div>
-                      <div style={{ fontSize: 11, color: c, fontWeight: 700 }}>{l}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {history.length === 0 ? (
-                <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', padding: '16px 0' }}>Abhi koi history nahi hai.</p>
-              ) : history.map(h => (
-                <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `1px solid ${C.surfaceBorder}` }}>
-                  <div>
-                    <div style={{ fontWeight: 700, color: C.text }}>{h.symbol}</div>
-                    <div style={{ fontSize: 12, color: C.muted, marginTop: 2 }}>{fmtINR(h.price)} • {h.trend}</div>
-                  </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
-                    {['win','loss','pending'].map(o => (
-                      <button key={o} onClick={() => setHistory(prev => prev.map(x => x.id===h.id ? {...x, outcome: o} : x))} style={{
-                        fontSize: 11, padding: '5px 10px', borderRadius: 8, border: 'none',
-                        backgroundColor: h.outcome===o ? (o==='win' ? C.green : o==='loss' ? C.red : C.gold) : C.bg,
-                        color: h.outcome===o ? '#FFF' : C.muted,
-                        cursor: 'pointer', fontWeight: 700,
-                      }}>
-                        {o==='win' ? '✓' : o==='loss' ? '✗' : '⏳'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {tab === 'screener' && (
-            <PulseScreener
-              isDark={dark}
-              userDob={userDob}
-              userName={user?.email?.split('@')[0]}
-            />
-          )}
-
-          {/* FOOTER */}
-          <div style={{ marginTop: 32, borderRadius: 16, overflow: 'hidden', border: `1px solid ${C.surfaceBorder}` }}>
-            <div style={{ background: dark ? 'rgba(200,146,10,0.06)' : '#EFF6FF', borderBottom: `1px solid ${dark ? 'rgba(200,146,10,0.15)' : '#BFDBFE'}`, padding: '14px 18px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>📊</span>
-              <div style={{ fontSize: 11.5, color: dark ? 'rgba(255,255,255,0.5)' : '#1E3A5F', lineHeight: 1.7 }}>
-                <strong style={{ color: dark ? C.gold : '#1E3A5F' }}>PulseTrade</strong> provides technical market analysis and educational tools only. This is not investment advice. Consult a SEBI registered advisor before investing.
-              </div>
-            </div>
-            <div style={{ background: C.surface, padding: '12px 18px', display: 'flex', justifyContent: 'center', flexWrap: 'wrap' }}>
-              {[['Terms & Conditions','/terms'],['Privacy Policy','/privacy'],['Refund Policy','/refund'],['Contact Us','/contact']].map(([label, href], i, arr) => (
-                <span key={label} style={{ display: 'flex', alignItems: 'center' }}>
-                  <a href={href} style={{ fontSize: 12, color: C.muted, textDecoration: 'none', fontWeight: 600, padding: '2px 10px' }}>{label}</a>
-                  {i < arr.length - 1 && <span style={{ color: C.surfaceBorder }}>•</span>}
-                </span>
-              ))}
-            </div>
-            <div style={{ background: C.surface, borderTop: `1px solid ${C.surfaceBorder}`, padding: '10px 18px', textAlign: 'center', fontSize: 11, color: C.muted }}>
-              © 2026 <span style={{ color: C.gold, fontWeight: 700 }}>PulseTrade</span> &nbsp;•&nbsp; 🔱 हर हर महादेव 🔱
-            </div>
-          </div>
-        </div>
+        )}
+        {status === 'failed' && <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.red}`, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>❌</div><h2 style={{ color: DARK.red, marginBottom: 8 }}>Payment Failed</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
+        {status === 'error' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
       </div>
-
-      {showSupport && (
-        <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
-      )}
     </div>
   );
 }
+
+function TrialExpiredPage({ user, onLogout }) {
+  return (
+    <div style={{ backgroundColor: LIGHT.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: LIGHT.text }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
+        <div style={{ backgroundColor: LIGHT.surface, borderBottom: `1px solid ${LIGHT.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <div>
+            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: LIGHT.gold }}>Trade</span></div>
+            <div style={{ fontSize: 10, color: LIGHT.muted }}>🔱 हर हर महादेव 🔱</div>
+          </div>
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+        </div>
+        <div style={{ padding: '32px 20px' }}>
+          <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
+            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>Tera 5-din free trial khatam ho gaya.<br />Dashboard access ke liye subscribe karo.</p>
+            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
+          </div>
+          <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 PLANS CHOOSE KARO</div>
+            {[
+              { label: '1 Month', price: '₹599', popular: false },
+              { label: '2 Months', price: '₹1,049', tag: '🔥 Popular', popular: true },
+              { label: '3 Months', price: '₹1,499', tag: '💰 Best Value', popular: false },
+            ].map((plan) => (
+              <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? LIGHT.gold : LIGHT.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? LIGHT.goldLight : LIGHT.bg }}>
+                <div>
+                  <span style={{ fontWeight: 700, color: LIGHT.text, fontSize: 14 }}>{plan.label}</span>
+                  {plan.tag && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: LIGHT.goldDim }}>{plan.tag}</span>}
+                </div>
+                <span style={{ color: LIGHT.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
+              </div>
+            ))}
+            <a href="/#subscribe" style={{ display: 'block', width: '100%', marginTop: 16, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: LIGHT.gold, color: '#FFF', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', boxShadow: '0 2px 14px rgba(200,146,10,0.35)' }}>
+              🚀 Abhi Subscribe Karo
+            </a>
+          </div>
+          <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>Support: support@pulsetrade.in</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileTab({ profile, session, isDark }) {
+  const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : null;
+  const trialEnd = trialStart ? new Date(trialStart.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
+  const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, padding: '24px 20px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
+      <div style={{ maxWidth: 420, margin: '0 auto' }}>
+        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ fontSize: 64, marginBottom: 8 }}>👤</div>
+          <div style={{ fontSize: 22, fontWeight: 800, color: isDark ? DARK.text : LIGHT.text }}>{profile?.name || 'Trader'}</div>
+          <div style={{ fontSize: 13, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 4 }}>{session.user.email}</div>
+          <div style={{ fontSize: 11, color: '#C8920A', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
+        </div>
+        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>📋 ACCOUNT STATUS</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+            <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}</span>
+          </div>
+          {!profile?.is_subscribed && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Trial Bacha</span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: daysLeft <= 1 ? '#DC2626' : '#C8920A' }}>{daysLeft} din</span>
+            </div>
+          )}
+          {profile?.is_subscribed && profile?.subscription_end_date && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Subscription End</span>
+              <span style={{ fontWeight: 700, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{new Date(profile.subscription_end_date).toLocaleDateString('en-IN')}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
+            <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Member Since</span>
+            <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{trialStart ? trialStart.toLocaleDateString('en-IN') : '-'}</span>
+          </div>
+        </div>
+        <div style={{ borderRadius: 16, padding: 20, marginBottom: 16, border: '1.5px solid #C8920A', background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 6 }}>⚡ PULSE POINTS</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#C8920A' }}>{profile?.pulse_points || 0}</div>
+            </div>
+            <div style={{ fontSize: 44 }}>🏆</div>
+          </div>
+        </div>
+        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>🔗 REFERRAL CODE</div>
+          <div style={{ backgroundColor: isDark ? DARK.bg : LIGHT.bg, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#C8920A' }}>{profile?.referral_code || '------'}</span>
+            <button onClick={() => { if (profile?.referral_code) { navigator.clipboard.writeText(profile.referral_code); alert('Referral code copied! 🎉'); } }} style={{ padding: '6px 14px', borderRadius: 8, backgroundColor: '#C8920A', color: '#FFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Copy</button>
+          </div>
+          <div style={{ fontSize: 11, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 8 }}>Friend ko refer karo → +50 Pulse Points milenge!</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [profile, setProfile] = useState(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [showGreeting, setShowGreeting] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
+  const [activeTab, setActiveTab] = useState('check');
+  const [isDark, setIsDark] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setSession(session?.user ? session : null);
+      setLoadingSession(false);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session?.user ? session : null);
+      setLoadingSession(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user) { setProfile(null); return; }
+    setLoadingProfile(true);
+    supabase.from('profiles').select('*').eq('id', session.user.id).single()
+      .then(({ data, error }) => {
+        if (error || !data) {
+          supabase.from('profiles').insert({
+            id: session.user.id,
+            email: session.user.email,
+            trial_start_date: new Date().toISOString(),
+          }).then(() => {
+            setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
+            setShowWelcome(true);
+          });
+        } else {
+          setProfile(data);
+          setShowLogin(false);
+          setShowGreeting(true);
+          setTimeout(() => setShowGreeting(false), 4000);
+          if (!data.onboarding_done) setShowWelcome(true);
+        }
+        setLoadingProfile(false);
+      });
+  }, [session]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowLogin(false);
+    setActiveTab('check');
+  };
+
+  const handleWelcomeDone = async () => {
+    setShowWelcome(false);
+    if (session?.user?.id) {
+      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
+    }
+  };
+
+  const checkAccess = () => {
+    if (!profile) return 'loading';
+    if (profile.is_subscribed) {
+      if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
+      return 'active';
+    }
+    const trialStart = new Date(profile.trial_start_date);
+    const diffDays = (new Date() - trialStart) / (1000 * 60 * 60 * 24);
+    if (diffDays <= 5) return 'trial';
+    return 'expired';
+  };
+
+  const path = window.location.pathname;
+  if (path === '/terms') return <TermsPage />;
+  if (path === '/refund') return <RefundPage />;
+  if (path === '/contact') return <ContactPage />;
+  if (path === '/payment-status') return <PaymentStatusPage />;
+
+  if (showSplash) return <SplashScreen />;
+  if (loadingSession || loadingProfile) return <SplashScreen />;
+
+  if (!session) {
+    if (showLogin) return <LoginPage />;
+    return <LandingPage onLogin={() => setShowLogin(true)} />;
+  }
+
+  if (path === '/admin') return <AdminPanel user={session.user} onLogout={handleLogout} />;
+
+  const access = checkAccess();
+  if (access === 'loading') return <SplashScreen />;
+  if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'check':
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+      case 'challenge':
+        return <ChallengeBoard user={session.user} onBack={() => setActiveTab('check')} />;
+      case 'watchlist':
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
+      case 'settings':
+        return (
+          <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
+            <div style={{ fontSize: 48 }}>⚙️</div>
+            <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>Settings</div>
+            <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>🌙 Dark Mode</span>
+                <button onClick={() => setIsDark(d => !d)} style={{ width: 52, height: 28, borderRadius: 14, backgroundColor: isDark ? '#C8920A' : '#E2E8F0', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.3s' }}>
+                  <div style={{ position: 'absolute', top: 3, left: isDark ? 26 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#FFF', transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
+                </button>
+              </div>
+              <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
+                <button onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: 12, backgroundColor: '#DC2626', color: '#FFF', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>🚪 Logout</button>
+              </div>
+            </div>
+          </div>
+        );
+      case 'profile':
+        return <ProfileTab profile={profile} session={session} isDark={isDark} />;
+      case 'screener':
+        return <PulseScreener isDark={isDark} />;
+      default:
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+    }
+  };
+
+  return (
+    <>
+      {showWelcome && <WelcomeScreen onDone={handleWelcomeDone} />}
+      <GreetingToast name={profile?.name} show={showGreeting} />
+      <div style={{ paddingBottom: 70 }}>
+        {renderTab()}
+      </div>
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isDark={isDark}
+      />
+    </>
+  );
+}
+
+export default App;
