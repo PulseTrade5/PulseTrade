@@ -6,7 +6,6 @@ import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
-import WelcomeScreen from './WelcomeScreen';
 import PulseScreener from './PulseScreener.jsx';
 import Academy from './Academy';
 
@@ -37,6 +36,9 @@ function SplashScreen() {
     const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
     return () => clearInterval(t);
   }, []);
+
+  const LOGO_URL = "/file_00000000b7687208b27c366287ff7e00.png";
+
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
@@ -47,9 +49,9 @@ function SplashScreen() {
       gap: 20, overflow: 'hidden',
     }}>
       <style>{`
-        @keyframes pulse-glow-blue {
-          0%, 100% { box-shadow: 0 0 40px rgba(45,90,142,0.4); }
-          50% { box-shadow: 0 0 80px rgba(45,90,142,0.9); }
+        @keyframes pulse-glow-gold {
+          0%, 100% { box-shadow: 0 0 40px rgba(200,146,10,0.3); }
+          50% { box-shadow: 0 0 80px rgba(200,146,10,0.7); }
         }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -70,18 +72,20 @@ function SplashScreen() {
       {[200, 320, 450].map((size, i) => (
         <div key={i} style={{
           position: 'absolute', width: size, height: size, borderRadius: '50%',
-          border: '1px solid rgba(45,90,142,0.2)',
+          border: '1px solid rgba(200,146,10,0.15)',
           animation: 'ring-expand 4s ease-out ' + i + 's infinite',
         }} />
       ))}
       <div style={{ animation: 'float-3d 3s ease-in-out infinite', position: 'relative', zIndex: 10 }}>
-        <div style={{
-          width: 130, height: 130, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #0d2b4e 0%, #1E3A5F 50%, #2D5A8E 100%)',
-          border: '3px solid #2D5A8E',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 68, animation: 'pulse-glow-blue 2s ease-in-out infinite',
-        }}>🐼</div>
+        <img
+          src={LOGO_URL}
+          alt="PulseTrade"
+          style={{
+            width: 130, height: 130, borderRadius: '50%', objectFit: 'cover',
+            border: '3px solid rgba(200,146,10,0.5)',
+            animation: 'pulse-glow-gold 2s ease-in-out infinite',
+          }}
+        />
       </div>
       <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease', zIndex: 10 }}>
         <div style={{ fontSize: 36, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
@@ -323,13 +327,11 @@ function App() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [splashDone, setSplashDone] = useState(false);
   const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => { setShowSplash(false); setSplashDone(true); }, 2500);
+    const t = setTimeout(() => { setShowSplash(false); }, 2500);
     return () => clearTimeout(t);
   }, []);
 
@@ -357,14 +359,12 @@ function App() {
             trial_start_date: new Date().toISOString(),
           }).then(() => {
             setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
-            setShowWelcome(true);
           });
         } else {
           setProfile(data);
           setShowLogin(false);
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
-          if (!data.onboarding_done) setShowWelcome(true);
         }
         setLoadingProfile(false);
       });
@@ -374,13 +374,6 @@ function App() {
     await supabase.auth.signOut();
     setShowLogin(false);
     setActiveTab('check');
-  };
-
-  const handleWelcomeDone = async () => {
-    setShowWelcome(false);
-    if (session?.user?.id) {
-      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
-    }
   };
 
   const checkAccess = () => {
@@ -454,7 +447,6 @@ function App() {
 
   return (
     <>
-      {showWelcome && <WelcomeScreen onDone={handleWelcomeDone} />}
       <GreetingToast name={profile?.name} show={showGreeting} />
       <div style={{ paddingBottom: 70 }}>
         {renderTab()}
