@@ -86,13 +86,8 @@ export default function LandingPage({ onLogin }) {
           textAlign: 'center',
         }}>
           {/* Logo */}
-          <div style={{ marginBottom: 20 }}>
-            <img
-              src="/logo.png"
-              alt="PulseTrade Logo"
-              style={{ width: 110, height: 110, borderRadius: '50%', objectFit: 'cover' }}
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
+          <div style={{ marginBottom: 20, width: 110, height: 110, borderRadius: '50%', background: 'linear-gradient(135deg, #0d2b4e, #1E3A5F)', border: '3px solid #2D5A8E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60, margin: '0 auto 20px' }}>
+            🐼
           </div>
 
           <div style={{
