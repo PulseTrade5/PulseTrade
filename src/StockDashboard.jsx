@@ -11,11 +11,13 @@ import PulseScreener from './PulseScreener.jsx';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
-  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
+  gold: "#F59E0B", goldLight: "#FFFBEB", goldDim: "#D97706",
+  blue: "#1E3A5F", blueLight: "#EFF6FF", blueMid: "#2D5A8E",
   green: "#059669", greenLight: "#ECFDF5",
   red: "#DC2626", redLight: "#FEF2F2",
   text: "#0F172A", textSecondary: "#334155", muted: "#64748B", mutedLight: "#94A3B8",
-  headerBg: "#FFFFFF", sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+  headerBg: "#1E3A5F", sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+  primary: "#1E3A5F", primaryLight: "#EFF6FF",
 };
 
 const DARK = {
@@ -324,9 +326,9 @@ function AITradeCoach({ stockData, C, isDark }) {
   if (!showCoach) return (
     <button onClick={() => setShowCoach(true)} style={{
       width: '100%', padding: '12px', marginBottom: 16,
-      background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)',
-      border: `1.5px solid ${C.gold}`, borderRadius: 14,
-      fontSize: 14, fontWeight: 700, color: C.gold,
+      background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #EFF6FF, #FFFFFF)',
+      border: `1.5px solid ${isDark ? C.gold : '#1E3A5F'}`, borderRadius: 14,
+      fontSize: 14, fontWeight: 700, color: isDark ? C.gold : '#1E3A5F',
       cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
     }}>
       🤖 AI Trade Coach Se Pucho
@@ -410,8 +412,8 @@ function AITradeCoach({ stockData, C, isDark }) {
           <button key={q} onClick={() => setQuestion(q)} style={{
             fontSize: 11, padding: '5px 12px', borderRadius: 20,
             border: `1px solid ${C.surfaceBorder}`,
-            backgroundColor: question === q ? C.goldLight : 'transparent',
-            color: question === q ? C.goldDim : C.muted,
+            backgroundColor: question === q ? (isDark ? C.goldLight : '#EFF6FF') : 'transparent',
+            color: question === q ? (isDark ? C.goldDim : '#1E3A5F') : C.muted,
             cursor: 'pointer', fontWeight: 600,
           }}>{q}</button>
         ))}
@@ -775,31 +777,33 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
         <div style={{
           background: dark
             ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
-            : 'linear-gradient(135deg, #FFFFFF 0%, #FFFBEB 100%)',
+            : 'linear-gradient(135deg, #1E3A5F 0%, #2D5A8E 100%)',
           borderBottom: `1px solid ${C.surfaceBorder}`,
           padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
           transition: 'all 0.3s ease',
         }}>
           <div>
-            <div style={{ fontSize: 11, color: C.gold, fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
+            <div style={{ fontSize: 11, color: dark ? C.gold : '#F59E0B', fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: dark ? C.text : '#FFFFFF' }}>
               Pulse<span style={{ color: C.gold }}>Trade</span>
             </h1>
-            <div style={{ fontSize: 10, color: C.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
+            <div style={{ fontSize: 10, color: dark ? C.muted : 'rgba(255,255,255,0.6)', marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <LiveDot C={C} />
             <button onClick={() => setShowSupport(true)} style={{
               fontSize: 11, padding: '5px 10px', borderRadius: 20,
-              border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent',
-              color: C.muted, cursor: 'pointer', fontWeight: 700,
+              border: `1.5px solid ${dark ? C.surfaceBorder : 'rgba(255,255,255,0.3)'}`,
+              backgroundColor: dark ? 'transparent' : 'rgba(255,255,255,0.1)',
+              color: dark ? C.muted : '#fff', cursor: 'pointer', fontWeight: 700,
             }}>💬 Hum Se Baat Karo</button>
             {user?.email === 'prabhat3300@gmail.com' && (
               <a href="/admin" style={{
                 fontSize: 11, padding: '5px 10px', borderRadius: 20,
-                border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
-                color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
+                border: `1.5px solid ${dark ? C.gold : '#F59E0B'}`,
+                backgroundColor: dark ? C.goldLight : 'rgba(245,158,11,0.2)',
+                color: dark ? C.goldDim : '#F59E0B', cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
               }}>⚙️ Admin</a>
             )}
           </div>
@@ -844,7 +848,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
                 borderRadius: 10, border: 'none',
-                backgroundColor: tab===key ? C.gold : 'transparent',
+                backgroundColor: tab===key ? (dark ? C.gold : '#1E3A5F') : 'transparent',
                 color: tab===key ? '#FFF' : C.muted,
                 cursor: 'pointer', transition: 'background 0.2s',
               }}>{label}</button>
@@ -881,9 +885,9 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                   {POPULAR.map(s => (
                     <button key={s} disabled={loading} onClick={() => handleSearch(s)} style={{
                       fontSize: 11, padding: '5px 12px', borderRadius: 20,
-                      border: `1.5px solid ${symbolInput===s ? C.gold : C.surfaceBorder}`,
-                      backgroundColor: symbolInput===s ? C.goldLight : 'transparent',
-                      color: symbolInput===s ? C.goldDim : C.muted,
+                      border: `1.5px solid ${symbolInput===s ? (dark ? C.gold : '#1E3A5F') : C.surfaceBorder}`,
+                      backgroundColor: symbolInput===s ? (dark ? C.goldLight : '#EFF6FF') : 'transparent',
+                      color: symbolInput===s ? (dark ? C.goldDim : '#1E3A5F') : C.muted,
                       cursor: 'pointer', fontWeight: 600,
                     }}>{s}</button>
                   ))}
@@ -895,9 +899,9 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                       {[['risk','Risk ₹'],['manual','Qty']].map(([m,l]) => (
                         <button key={m} onClick={() => setSizingMode(m)} style={{
                           fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-                          border: `1.5px solid ${sizingMode===m ? C.gold : C.surfaceBorder}`,
-                          backgroundColor: sizingMode===m ? C.goldLight : 'transparent',
-                          color: sizingMode===m ? C.goldDim : C.muted, cursor: 'pointer',
+                          border: `1.5px solid ${sizingMode===m ? (dark ? C.gold : '#1E3A5F') : C.surfaceBorder}`,
+                          backgroundColor: sizingMode===m ? (dark ? C.goldLight : '#EFF6FF') : 'transparent',
+                          color: sizingMode===m ? (dark ? C.goldDim : '#1E3A5F') : C.muted, cursor: 'pointer',
                         }}>{l}</button>
                       ))}
                     </div>
@@ -917,10 +921,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                 <button onClick={() => handleSearch()} disabled={loading} style={{
                   width: '100%', marginTop: 14, padding: '12px',
                   fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
-                  backgroundColor: loading ? C.surfaceBorder : C.gold,
+                  backgroundColor: loading ? C.surfaceBorder : (dark ? C.gold : '#1E3A5F'),
                   color: loading ? C.muted : '#FFF',
                   cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: loading ? 'none' : '0 2px 12px rgba(200,146,10,0.3)',
+                  boxShadow: loading ? 'none' : (dark ? '0 2px 12px rgba(200,146,10,0.3)' : '0 2px 12px rgba(30,58,95,0.3)'),
                 }}>
                   {loading ? '⏳ Check ho raha hai...' : '🔍 Trend Nikalo'}
                 </button>
@@ -1016,8 +1020,8 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
                     }} style={{
                       width: '100%', marginTop: 14, padding: '9px',
                       fontSize: 13, fontWeight: 700, borderRadius: 10,
-                      border: `1.5px solid ${C.gold}`,
-                      backgroundColor: 'transparent', color: C.gold, cursor: 'pointer',
+                      border: `1.5px solid ${dark ? C.gold : '#1E3A5F'}`,
+                      backgroundColor: 'transparent', color: dark ? C.gold : '#1E3A5F', cursor: 'pointer',
                     }}>
                       {watchlist.some(w => w.symbol === stockName) ? '⭐ Watchlist se hatao' : '☆ Watchlist mein add karo'}
                     </button>
@@ -1081,7 +1085,7 @@ ${result.trend === 'Bullish' ? '✅ Strong Bullish Trend dikh raha hai!' : '⚠�
                       <button onClick={handleSendAlert} disabled={alertSending || alertSent} style={{
                         width: '100%', marginTop: 14, padding: '12px',
                         fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
-                        backgroundColor: alertSent ? C.green : C.gold,
+                        backgroundColor: alertSent ? C.green : (dark ? C.gold : '#1E3A5F'),
                         color: '#FFF', cursor: alertSent ? 'default' : 'pointer',
                       }}>
                         {alertSent ? '✅ Alert Bhej Diya!' : alertSending ? '📨 Bhej rahe hain...' : '📧 Email Alert Bhejo'}
