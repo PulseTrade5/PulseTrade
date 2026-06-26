@@ -21,7 +21,7 @@ const COURSES = [
     price: 299,
     pages: "25+ pages",
     level: "Intermediate",
-    available: false,
+    available: true,
     pdfKey: "rsi_mastery.pdf",
   },
   {
@@ -128,7 +128,6 @@ export default function Academy({ isDark }) {
 
     setLoadingPayment(course.id);
     try {
-      // Create order in Supabase
       const orderId = `ACADEMY_${course.id}_${user.id}_${Date.now()}`;
 
       const { error: insertError } = await supabase.from("course_purchases").insert({
@@ -140,8 +139,6 @@ export default function Academy({ isDark }) {
       });
 
       if (insertError) throw insertError;
-
-      // Cashfree payment — via backend API (same as subscription)
 
       const orderRes = await fetch("/api/cashfree-order", {
         method: "POST",
@@ -159,7 +156,6 @@ export default function Academy({ isDark }) {
       const orderData = await orderRes.json();
       if (!orderData.payment_session_id) throw new Error("Payment session failed");
 
-      // Load Cashfree SDK
       if (!window.Cashfree) {
         await new Promise((resolve, reject) => {
           const script = document.createElement("script");
@@ -196,41 +192,25 @@ export default function Academy({ isDark }) {
     }
   };
 
-  // Check payment return
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const orderId = params.get("order_id");
+    const orderId = params.get("academy_order");
     const courseId = params.get("course");
     if (orderId && courseId) {
       verifyPayment(orderId, courseId);
-      window.history.replaceState({}, "", "/academy");
+      window.history.replaceState({}, "", "/");
     }
   }, []);
 
   const verifyPayment = async (orderId, courseId) => {
     try {
-      const cashfreeEnv = import.meta.env.VITE_CASHFREE_ENV || "production";
-      const appId = import.meta.env.VITE_CASHFREE_APP_ID;
-      const secretKey = import.meta.env.VITE_CASHFREE_SECRET_KEY;
-
-      const res = await fetch(
-        `${cashfreeEnv === "sandbox" ? "https://sandbox.cashfree.com" : "https://api.cashfree.com"}/pg/orders/${orderId}`,
-        {
-          headers: {
-            "x-api-version": "2023-08-01",
-            "x-client-id": appId,
-            "x-client-secret": secretKey,
-          },
-        }
-      );
+      const res = await fetch(`/api/verify-payment?order_id=${orderId}`);
       const data = await res.json();
-
-      if (data.order_status === "PAID") {
+      if (data.status === "PAID") {
         await supabase
           .from("course_purchases")
           .update({ status: "paid" })
           .eq("order_id", orderId);
-
         setPurchasedCourses((prev) => [...prev, courseId]);
         showToast("Payment successful! PDF download karo 🎉", "success");
       } else {
@@ -245,7 +225,6 @@ export default function Academy({ isDark }) {
 
   return (
     <div style={{ background: bg, minHeight: "100vh", paddingBottom: "90px" }}>
-      {/* Toast */}
       {toast && (
         <div style={{
           position: "fixed", top: "16px", left: "50%", transform: "translateX(-50%)",
@@ -258,7 +237,6 @@ export default function Academy({ isDark }) {
         </div>
       )}
 
-      {/* Header */}
       <div style={{
         background: isDark
           ? "linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)"
@@ -275,18 +253,11 @@ export default function Academy({ isDark }) {
         <p style={{ color: "#94a3b8", fontSize: "13px", margin: 0 }}>
           Trading seekho — apni bhasha mein, apni pace mein 🚀
         </p>
-        <div style={{
-          marginTop: "14px", display: "flex", gap: "8px", flexWrap: "wrap"
-        }}>
-          {[
-            { label: "6 Courses", icon: "📚" },
-            { label: "Hindi PDFs", icon: "📄" },
-            { label: "NSE/BSE Focus", icon: "📈" },
-          ].map((tag) => (
+        <div style={{ marginTop: "14px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          {[{ label: "6 Courses", icon: "📚" }, { label: "Hindi PDFs", icon: "📄" }, { label: "NSE/BSE Focus", icon: "📈" }].map((tag) => (
             <span key={tag.label} style={{
               background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)",
-              color: gold, fontSize: "11px", fontWeight: "600",
-              padding: "4px 10px", borderRadius: "20px"
+              color: gold, fontSize: "11px", fontWeight: "600", padding: "4px 10px", borderRadius: "20px"
             }}>
               {tag.icon} {tag.label}
             </span>
@@ -294,7 +265,6 @@ export default function Academy({ isDark }) {
         </div>
       </div>
 
-      {/* Course Grid */}
       <div style={{ padding: "16px" }}>
         <p style={{ color: subtext, fontSize: "12px", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.8px", fontWeight: "600" }}>
           All Courses
@@ -306,44 +276,32 @@ export default function Academy({ isDark }) {
             const isLoading = loadingPayment === course.id;
 
             return (
-              <div
-                key={course.id}
-                style={{
-                  background: card,
-                  border: `1px solid ${bought ? "rgba(34,197,94,0.4)" : border}`,
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  boxShadow: isDark ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.06)",
-                  position: "relative",
-                  opacity: !course.available && !bought ? 0.85 : 1,
-                }}
-              >
-                {/* Coming Soon badge */}
+              <div key={course.id} style={{
+                background: card,
+                border: `1px solid ${bought ? "rgba(34,197,94,0.4)" : border}`,
+                borderRadius: "16px", overflow: "hidden",
+                boxShadow: isDark ? "0 2px 12px rgba(0,0,0,0.3)" : "0 2px 12px rgba(0,0,0,0.06)",
+                position: "relative",
+                opacity: !course.available && !bought ? 0.85 : 1,
+              }}>
                 {!course.available && !bought && (
                   <div style={{
                     position: "absolute", top: "12px", right: "12px",
                     background: "rgba(100,116,139,0.2)", border: "1px solid rgba(100,116,139,0.3)",
                     color: subtext, fontSize: "10px", fontWeight: "700",
                     padding: "3px 8px", borderRadius: "8px", letterSpacing: "0.5px"
-                  }}>
-                    COMING SOON
-                  </div>
+                  }}>COMING SOON</div>
                 )}
-
-                {/* Purchased badge */}
                 {bought && (
                   <div style={{
                     position: "absolute", top: "12px", right: "12px",
                     background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.4)",
                     color: "#22c55e", fontSize: "10px", fontWeight: "700",
                     padding: "3px 8px", borderRadius: "8px"
-                  }}>
-                    ✅ PURCHASED
-                  </div>
+                  }}>✅ PURCHASED</div>
                 )}
 
                 <div style={{ padding: "16px" }}>
-                  {/* Course top */}
                   <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "10px" }}>
                     <div style={{
                       width: "48px", height: "48px", borderRadius: "12px",
@@ -351,18 +309,13 @@ export default function Academy({ isDark }) {
                       border: "1px solid rgba(245,158,11,0.2)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       fontSize: "22px", flexShrink: 0
-                    }}>
-                      {course.emoji}
-                    </div>
+                    }}>{course.emoji}</div>
                     <div style={{ flex: 1, paddingRight: bought || !course.available ? "80px" : "0" }}>
                       <h3 style={{ color: text, fontSize: "15px", fontWeight: "700", margin: "0 0 4px" }}>
                         {course.title}
                       </h3>
                       <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                        <span style={{
-                          color: LEVEL_COLOR[course.level], fontSize: "10px",
-                          fontWeight: "700", letterSpacing: "0.5px"
-                        }}>
+                        <span style={{ color: LEVEL_COLOR[course.level], fontSize: "10px", fontWeight: "700", letterSpacing: "0.5px" }}>
                           ● {course.level.toUpperCase()}
                         </span>
                         <span style={{ color: subtext, fontSize: "10px" }}>•</span>
@@ -371,72 +324,46 @@ export default function Academy({ isDark }) {
                     </div>
                   </div>
 
-                  {/* Description */}
                   <p style={{ color: subtext, fontSize: "13px", lineHeight: "1.5", margin: "0 0 14px" }}>
                     {course.description}
                   </p>
 
-                  {/* Price + Button */}
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div>
                       {bought ? (
-                        <span style={{ color: "#22c55e", fontSize: "13px", fontWeight: "600" }}>
-                          Unlocked 🔓
-                        </span>
+                        <span style={{ color: "#22c55e", fontSize: "13px", fontWeight: "600" }}>Unlocked 🔓</span>
                       ) : (
                         <div>
-                          <span style={{ color: gold, fontSize: "20px", fontWeight: "800" }}>
-                            ₹{course.price}
-                          </span>
-                          <span style={{ color: subtext, fontSize: "12px", marginLeft: "4px" }}>
-                            one-time
-                          </span>
+                          <span style={{ color: gold, fontSize: "20px", fontWeight: "800" }}>₹{course.price}</span>
+                          <span style={{ color: subtext, fontSize: "12px", marginLeft: "4px" }}>one-time</span>
                         </div>
                       )}
                     </div>
 
                     {bought ? (
-                      <button
-                        onClick={() => handleDownload(course)}
-                        style={{
-                          background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                          color: "#fff", border: "none", borderRadius: "10px",
-                          padding: "10px 18px", fontSize: "13px", fontWeight: "700",
-                          cursor: "pointer", display: "flex", alignItems: "center", gap: "6px"
-                        }}
-                      >
-                        📥 Download PDF
-                      </button>
+                      <button onClick={() => handleDownload(course)} style={{
+                        background: "linear-gradient(135deg, #22c55e, #16a34a)",
+                        color: "#fff", border: "none", borderRadius: "10px",
+                        padding: "10px 18px", fontSize: "13px", fontWeight: "700",
+                        cursor: "pointer", display: "flex", alignItems: "center", gap: "6px"
+                      }}>📥 Download PDF</button>
                     ) : course.available ? (
-                      <button
-                        onClick={() => handleBuy(course)}
-                        disabled={isLoading}
-                        style={{
-                          background: isLoading
-                            ? "rgba(245,158,11,0.4)"
-                            : "linear-gradient(135deg, #f59e0b, #d97706)",
-                          color: isLoading ? "#94a3b8" : "#fff",
-                          border: "none", borderRadius: "10px",
-                          padding: "10px 18px", fontSize: "13px", fontWeight: "700",
-                          cursor: isLoading ? "not-allowed" : "pointer",
-                          display: "flex", alignItems: "center", gap: "6px",
-                          minWidth: "110px", justifyContent: "center"
-                        }}
-                      >
-                        {isLoading ? "Loading..." : `🛒 Buy ₹${course.price}`}
-                      </button>
+                      <button onClick={() => handleBuy(course)} disabled={isLoading} style={{
+                        background: isLoading ? "rgba(245,158,11,0.4)" : "linear-gradient(135deg, #f59e0b, #d97706)",
+                        color: isLoading ? "#94a3b8" : "#fff",
+                        border: "none", borderRadius: "10px",
+                        padding: "10px 18px", fontSize: "13px", fontWeight: "700",
+                        cursor: isLoading ? "not-allowed" : "pointer",
+                        display: "flex", alignItems: "center", gap: "6px",
+                        minWidth: "110px", justifyContent: "center"
+                      }}>{isLoading ? "Loading..." : `🛒 Buy ₹${course.price}`}</button>
                     ) : (
-                      <button
-                        onClick={() => showToast("Jald aa raha hai! Notify karenge 🔔", "info")}
-                        style={{
-                          background: "rgba(100,116,139,0.15)",
-                          color: subtext, border: `1px solid ${border}`,
-                          borderRadius: "10px", padding: "10px 18px",
-                          fontSize: "13px", fontWeight: "600", cursor: "pointer"
-                        }}
-                      >
-                        🔔 Notify Me
-                      </button>
+                      <button onClick={() => showToast("Jald aa raha hai! Notify karenge 🔔", "info")} style={{
+                        background: "rgba(100,116,139,0.15)",
+                        color: subtext, border: `1px solid ${border}`,
+                        borderRadius: "10px", padding: "10px 18px",
+                        fontSize: "13px", fontWeight: "600", cursor: "pointer"
+                      }}>🔔 Notify Me</button>
                     )}
                   </div>
                 </div>
@@ -445,9 +372,9 @@ export default function Academy({ isDark }) {
           })}
         </div>
 
-        {/* Footer note */}
         <div style={{
-          marginTop: "20px", padding: "14px", background: isDark ? "rgba(245,158,11,0.05)" : "rgba(245,158,11,0.04)",
+          marginTop: "20px", padding: "14px",
+          background: isDark ? "rgba(245,158,11,0.05)" : "rgba(245,158,11,0.04)",
           border: `1px solid rgba(245,158,11,0.15)`, borderRadius: "12px", textAlign: "center"
         }}>
           <p style={{ color: subtext, fontSize: "12px", margin: 0, lineHeight: "1.6" }}>
@@ -457,4 +384,4 @@ export default function Academy({ isDark }) {
       </div>
     </div>
   );
-                                       }
+}
