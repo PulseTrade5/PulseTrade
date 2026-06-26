@@ -618,6 +618,150 @@ function ReferralCard({ user, C }) {
   );
 }
 
+// ✅ NUMEROLOGY HELPERS
+const CHALDEAN_MAP = {
+  A:1,I:1,J:1,Q:1,Y:1, B:2,K:2,R:2, C:3,G:3,L:3,S:3,
+  D:4,M:4,T:4, E:5,H:5,N:5,X:5, U:6,V:6,W:6, O:7,Z:7, F:8,P:8,
+};
+function getChaldeanNum(name) {
+  if (!name) return null;
+  let sum = name.toUpperCase().replace(/[^A-Z]/g, '').split('').reduce((a, c) => a + (CHALDEAN_MAP[c] || 0), 0);
+  while (sum > 9 && sum !== 11 && sum !== 22) sum = String(sum).split('').map(Number).reduce((a,b)=>a+b,0);
+  return sum;
+}
+function getLifePathNum(dob) {
+  if (!dob) return null;
+  let sum = dob.replace(/-/g,'').split('').map(Number).reduce((a,b)=>a+b,0);
+  while (sum > 9 && sum !== 11 && sum !== 22) sum = String(sum).split('').map(Number).reduce((a,b)=>a+b,0);
+  return sum;
+}
+const NUM_COMPATIBLE = {
+  1:[1,3,5,9], 2:[2,4,6,8], 3:[1,3,6,9], 4:[2,4,8],
+  5:[1,5,6,9], 6:[3,5,6,9], 7:[2,7], 8:[2,4,8], 9:[1,3,5,9],
+  11:[1,2,11], 22:[4,8,22],
+};
+function isNumerologyMatch(userNum, stockName) {
+  if (!userNum || !stockName) return false;
+  const stockNum = getChaldeanNum(stockName);
+  const list = NUM_COMPATIBLE[userNum] || [];
+  return list.includes(stockNum) || stockNum === userNum;
+}
+
+// ✅ COMBO SIGNAL COMPONENT
+function ComboSignal({ result, stockName, userDob, isDark, C }) {
+  const lpn = getLifePathNum(userDob);
+  if (!lpn || !result) return null;
+  const stockNum = getChaldeanNum(stockName);
+  const isMatch = isNumerologyMatch(lpn, stockName);
+  const isBullish = result.trend === 'Bullish';
+  const techScore = isBullish ? result.longScore : result.shortScore;
+  const comboScore = isMatch ? Math.min(100, Math.round(techScore * 1.2)) : Math.round(techScore * 0.85);
+  const isDoubleConfirmed = isMatch && isBullish;
+  const isWeakSignal = !isMatch || !isBullish;
+
+  return (
+    <div style={{
+      background: isDoubleConfirmed
+        ? isDark ? 'linear-gradient(135deg, #1a1a00, #0D2B1F)' : 'linear-gradient(135deg, #FFFBEB, #ECFDF5)'
+        : isDark ? 'linear-gradient(135deg, #1a0a00, #161B22)' : 'linear-gradient(135deg, #FEF2F2, #F8FAFC)',
+      border: `2px solid ${isDoubleConfirmed ? '#D8A33D' : '#374151'}`,
+      borderRadius: 20, padding: 20, marginBottom: 16,
+      boxShadow: isDoubleConfirmed ? '0 8px 32px rgba(216,163,61,0.2)' : 'none',
+    }}>
+      {/* Badge */}
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6,
+        background: isDoubleConfirmed
+          ? 'linear-gradient(135deg, #D8A33D, #F59E0B)'
+          : '#374151',
+        color: isDoubleConfirmed ? '#0D1117' : '#8B92A0',
+        padding: '6px 16px', borderRadius: 20,
+        fontSize: 11, fontWeight: 900, letterSpacing: 1,
+        marginBottom: 14,
+      }}>
+        {isDoubleConfirmed ? '🔥 DOUBLE CONFIRMED SIGNAL' : '⚠️ WEAK SIGNAL — CAREFUL'}
+      </div>
+
+      {/* Stock + Numbers */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 22, fontWeight: 900, color: C.text }}>{stockName}</div>
+          <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>
+            Stock Number: #{stockNum} | Tera Number: #{lpn}
+          </div>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: 11, color: isMatch ? '#D8A33D' : C.muted, fontWeight: 700 }}>
+            {isMatch ? '⭐ Lucky Match!' : '❌ No Match'}
+          </div>
+        </div>
+      </div>
+
+      {/* Signal boxes */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
+        <div style={{
+          flex: 1, borderRadius: 12, padding: '12px 10px', textAlign: 'center',
+          background: isBullish ? 'rgba(63,174,124,0.15)' : 'rgba(248,113,113,0.15)',
+          border: `1px solid ${isBullish ? 'rgba(63,174,124,0.3)' : 'rgba(248,113,113,0.3)'}`,
+        }}>
+          <div style={{ fontSize: 20, marginBottom: 4 }}>📊</div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: isBullish ? '#3FAE7C' : '#F87171', marginBottom: 4 }}>TECHNICAL</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{isBullish ? '🟢 Bullish' : '🔴 Bearish'}</div>
+          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Score: {techScore}/100</div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', fontSize: 20, color: isMatch ? '#D8A33D' : '#374151', fontWeight: 900 }}>
+          {isMatch ? '+' : '≠'}
+        </div>
+
+        <div style={{
+          flex: 1, borderRadius: 12, padding: '12px 10px', textAlign: 'center',
+          background: isMatch ? 'rgba(167,139,250,0.15)' : 'rgba(55,65,81,0.3)',
+          border: `1px solid ${isMatch ? 'rgba(167,139,250,0.3)' : '#374151'}`,
+          opacity: isMatch ? 1 : 0.6,
+        }}>
+          <div style={{ fontSize: 20, marginBottom: 4 }}>🔢</div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1, color: '#A78BFA', marginBottom: 4 }}>NUMEROLOGY</div>
+          <div style={{ fontSize: 13, fontWeight: 800, color: C.text }}>{isMatch ? '✅ Match' : 'No Match'}</div>
+          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>#{stockNum} ↔ #{lpn}</div>
+        </div>
+      </div>
+
+      {/* Combo Score */}
+      <div style={{
+        background: isDoubleConfirmed ? 'rgba(216,163,61,0.1)' : 'rgba(55,65,81,0.2)',
+        border: `1px solid ${isDoubleConfirmed ? 'rgba(216,163,61,0.3)' : '#374151'}`,
+        borderRadius: 12, padding: '12px 16px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        marginBottom: 12,
+      }}>
+        <div>
+          <div style={{ fontSize: 11, color: isDoubleConfirmed ? '#D8A33D' : C.muted, fontWeight: 700 }}>⚡ COMBO PULSE SCORE</div>
+          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Technical + Numerology combined</div>
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 900, color: isDoubleConfirmed ? '#D8A33D' : C.muted }}>
+          {comboScore}/100 {isDoubleConfirmed ? '🔥' : ''}
+        </div>
+      </div>
+
+      {/* Message */}
+      <div style={{
+        background: isDoubleConfirmed ? 'rgba(63,174,124,0.1)' : 'rgba(248,113,113,0.1)',
+        borderLeft: `3px solid ${isDoubleConfirmed ? '#3FAE7C' : '#F87171'}`,
+        borderRadius: '0 10px 10px 0', padding: '10px 14px',
+        fontSize: 13, color: C.text, lineHeight: 1.6, fontWeight: 600,
+      }}>
+        {isDoubleConfirmed
+          ? `🎯 ${stockName} aaj ke liye perfect hai! Technical trend bullish hai aur numerology bhi confirm kar raha hai — high confidence trade!`
+          : isMatch && !isBullish
+          ? `⚠️ ${stockName} tera lucky stock hai lekin technical trend weak hai — abhi entry mat lo!`
+          : `❌ ${stockName} ke dono signals match nahi karte — is trade se door raho ya SL tight rakho!`
+        }
+      </div>
+    </div>
+  );
+}
+
 export default function StockDashboard({ user, isDark, onTabChange, defaultTab }) {
   const dark = isDark ?? false;
   const C = dark ? DARK : LIGHT;
@@ -917,6 +1061,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               {result && (
                 <>
                   <PulseHeroBanner result={result} stockName={stockName} stockInfo={stockInfo} C={C} />
+                  <ComboSignal result={result} stockName={stockName} userDob={userDob} isDark={dark} C={C} />
                   <MoodTracker isDark={dark} />
                   <AITradeCoach stockData={pulseData} C={C} isDark={dark} />
 
