@@ -39,50 +39,70 @@ function SplashScreen() {
   }, []);
   return (
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0D1117 0%, #0D2B1F 100%)',
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 99999,
+      background: 'linear-gradient(160deg, #0a1628 0%, #0d2b4e 50%, #0a1628 100%)',
       display: 'flex', flexDirection: 'column',
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'Inter, system-ui, sans-serif',
-      gap: 20,
+      gap: 20, overflow: 'hidden',
     }}>
       <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 40px rgba(63,174,124,0.4); }
-          50% { box-shadow: 0 0 80px rgba(63,174,124,0.8); }
+        @keyframes pulse-glow-blue {
+          0%, 100% { box-shadow: 0 0 40px rgba(45,90,142,0.4); }
+          50% { box-shadow: 0 0 80px rgba(45,90,142,0.9); }
         }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes float-3d {
+          0%, 100% { transform: translateY(0px) rotateY(0deg); }
+          25% { transform: translateY(-10px) rotateY(8deg); }
+          50% { transform: translateY(-6px) rotateY(0deg); }
+          75% { transform: translateY(-10px) rotateY(-8deg); }
+        }
+        @keyframes ring-expand {
+          0% { opacity: 0.4; transform: scale(0.8); }
+          100% { opacity: 0; transform: scale(1.4); }
+        }
+        @keyframes loading-bar { 0% { width: 0%; } 100% { width: 100%; } }
       `}</style>
-      <div style={{
-        width: 110, height: 110, borderRadius: '50%',
-        background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
-        border: '3px solid #3FAE7C',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 60,
-        animation: 'pulse-glow 2s ease-in-out infinite',
-      }}>🐼</div>
-      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
-        <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
-          Pulse<span style={{ color: '#C8920A' }}>Trade</span>
+      {[200, 320, 450].map((size, i) => (
+        <div key={i} style={{
+          position: 'absolute', width: size, height: size, borderRadius: '50%',
+          border: '1px solid rgba(45,90,142,0.2)',
+          animation: 'ring-expand 4s ease-out ' + i + 's infinite',
+        }} />
+      ))}
+      <div style={{ animation: 'float-3d 3s ease-in-out infinite', position: 'relative', zIndex: 10 }}>
+        <div style={{
+          width: 130, height: 130, borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0d2b4e 0%, #1E3A5F 50%, #2D5A8E 100%)',
+          border: '3px solid #2D5A8E',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 68, animation: 'pulse-glow-blue 2s ease-in-out infinite',
+        }}>🐼</div>
+      </div>
+      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease', zIndex: 10 }}>
+        <div style={{ fontSize: 36, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
+          Pulse<span style={{ color: '#F59E0B' }}>Trade</span>
         </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-          Trade with Pulse, Profit with Discipline
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)', marginTop: 6 }}>
+          Bazaar ka pulse dekho, faisla khud karo
         </div>
       </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+      <div style={{ display: 'flex', gap: 8, zIndex: 10 }}>
         {[0, 1, 2].map(i => (
           <div key={i} style={{
             width: 8, height: 8, borderRadius: '50%',
-            backgroundColor: dot === i ? '#C8920A' : 'rgba(255,255,255,0.2)',
+            backgroundColor: dot === i ? '#F59E0B' : 'rgba(255,255,255,0.2)',
+            boxShadow: dot === i ? '0 0 8px #F59E0B' : 'none',
             transition: 'background 0.3s ease',
           }} />
         ))}
       </div>
-      <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
-        🔱 हर हर महादेव 🔱
+      <div style={{ width: 120, height: 3, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden', zIndex: 10 }}>
+        <div style={{ height: '100%', background: 'linear-gradient(90deg, #1E3A5F, #2D5A8E, #F59E0B)', borderRadius: 99, animation: 'loading-bar 2.5s ease-in-out forwards' }} />
       </div>
     </div>
   );
@@ -303,8 +323,8 @@ function App() {
   const [showGreeting, setShowGreeting] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
-  const [activeTab, setActiveTab] = useState('check');
   const [splashDone, setSplashDone] = useState(false);
+  const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
