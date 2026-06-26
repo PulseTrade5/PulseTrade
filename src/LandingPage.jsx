@@ -9,6 +9,8 @@ const COLORS = {
   navy: "#1E3A5F", navyLight: "#EFF6FF",
 };
 
+const LOGO_URL = "/file_00000000b7687208b27c366287ff7e00.png";
+
 const FEATURES = [
   { icon: '📈', title: 'Swing Trade Signals', desc: '10 din se 2 mahine — sahi entry, sahi exit.' },
   { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish mein.' },
@@ -43,12 +45,17 @@ export default function LandingPage({ onLogin }) {
           backgroundColor: scrolled ? COLORS.surface : 'transparent',
           borderBottom: scrolled ? `1px solid ${COLORS.surfaceBorder}` : 'none',
           boxShadow: scrolled ? '0 1px 8px rgba(0,0,0,0.06)' : 'none',
-          padding: '14px 20px',
+          padding: '10px 20px',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           transition: 'all 0.3s ease',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img
+              src={LOGO_URL}
+              alt="PulseTrade Logo"
+              style={{ height: 42, width: 42, borderRadius: '50%', objectFit: 'cover' }}
+            />
+            <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.5px' }}>
               Pulse<span style={{ color: COLORS.gold }}>Trade</span>
             </div>
           </div>
@@ -86,8 +93,19 @@ export default function LandingPage({ onLogin }) {
           textAlign: 'center',
         }}>
           {/* Logo */}
-          <div style={{ marginBottom: 20, width: 110, height: 110, borderRadius: '50%', background: 'linear-gradient(135deg, #0d2b4e, #1E3A5F)', border: '3px solid #2D5A8E', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 60, margin: '0 auto 20px' }}>
-            🐼
+          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={LOGO_URL}
+              alt="PulseTrade Logo"
+              style={{
+                width: 130,
+                height: 130,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '3px solid rgba(200,146,10,0.5)',
+                boxShadow: '0 0 30px rgba(200,146,10,0.3)',
+              }}
+            />
           </div>
 
           <div style={{
@@ -244,8 +262,11 @@ export default function LandingPage({ onLogin }) {
           padding: '16px 20px 32px', textAlign: 'center',
           borderTop: `1px solid ${COLORS.surfaceBorder}`,
         }}>
-          <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 4 }}>
-            Pulse<span style={{ color: COLORS.gold }}>Trade</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+            <img src={LOGO_URL} alt="PulseTrade" style={{ height: 28, width: 28, borderRadius: '50%', objectFit: 'cover' }} />
+            <div style={{ fontSize: 20, fontWeight: 800 }}>
+              Pulse<span style={{ color: COLORS.gold }}>Trade</span>
+            </div>
           </div>
           <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 12 }}>🔱 हर हर महादेव 🔱</div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
