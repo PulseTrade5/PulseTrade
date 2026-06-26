@@ -8,6 +8,7 @@ import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
 import WelcomeScreen from './WelcomeScreen';
 import PulseScreener from './PulseScreener.jsx';
+import Academy from './Academy';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -303,11 +304,12 @@ function App() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('check');
+  const [splashDone, setSplashDone] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setShowSplash(false), 2500);
+    const t = setTimeout(() => { setShowSplash(false); setSplashDone(true); }, 2500);
     return () => clearTimeout(t);
   }, []);
 
@@ -423,6 +425,8 @@ function App() {
         return <ProfileTab profile={profile} session={session} isDark={isDark} />;
       case 'screener':
         return <PulseScreener isDark={isDark} />;
+      case 'academy':
+        return <Academy isDark={isDark} />;
       default:
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
     }
