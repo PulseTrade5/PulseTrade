@@ -1,6 +1,4 @@
 // src/BottomNav.jsx
-import { useState } from 'react';
-
 const DARK = {
   bg: '#0D1117',
   surface: '#161B22',
@@ -23,13 +21,12 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
   const C = isDark ? DARK : LIGHT;
 
   const tabs = [
-    { id: 'check', icon: '📊', label: 'Check' },
-    { id: 'watchlist', icon: '⭐', label: 'Watchlist' },
-    { id: 'screener', icon: '🚀', label: 'Screener' },
-    { id: 'challenge', icon: '🎯', label: 'Challenge' },
-    { id: 'academy', icon: '🎓', label: 'Academy' },
-    { id: 'settings', icon: '⚙️', label: 'Settings' },
-    { id: 'profile', icon: '👤', label: 'Profile' },
+    { id: 'check',       icon: '📊', label: 'Check' },
+    { id: 'watchlist',   icon: '⭐', label: 'Watchlist' },
+    { id: 'screener',    icon: '🚀', label: 'Screener' },
+    { id: 'challenge',   icon: '🎯', label: 'Challenge' },
+    { id: 'numerology',  icon: '🔢', label: 'Numero' },
+    { id: 'settings',    icon: '⚙️', label: 'Settings' },
   ];
 
   return (
@@ -45,7 +42,7 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
-      padding: '8px 0 12px',
+      padding: '6px 0 10px',
       zIndex: 1000,
       boxShadow: '0 -4px 20px rgba(0,0,0,0.12)',
     }}>
@@ -59,17 +56,19 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 3,
+              gap: 2,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
-              padding: '4px 12px',
+              padding: '4px 8px',
               borderRadius: 12,
               transition: 'all 0.2s ease',
+              minWidth: 0,
+              flex: 1,
             }}
           >
             <div style={{
-              fontSize: 22,
+              fontSize: 20,
               filter: isActive ? 'none' : 'grayscale(60%)',
               transform: isActive ? 'scale(1.15)' : 'scale(1)',
               transition: 'all 0.2s ease',
@@ -77,10 +76,11 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
               {tab.icon}
             </div>
             <div style={{
-              fontSize: 10,
+              fontSize: 9,
               fontWeight: isActive ? 700 : 500,
               color: isActive ? C.gold : C.muted,
               transition: 'color 0.2s ease',
+              whiteSpace: 'nowrap',
             }}>
               {tab.label}
             </div>
