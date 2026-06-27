@@ -303,7 +303,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
-  
+  const [showWelcome, setShowWelcome] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
@@ -334,7 +334,7 @@ function App() {
             trial_start_date: new Date().toISOString(),
           }).then(() => {
             setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
-            
+            setShowWelcome(true);
           });
         } else {
           setProfile(data);
@@ -342,7 +342,7 @@ function App() {
           setShowLogin(false);
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
-          if (!data.onboarding_done) 
+          if (!data.onboarding_done) setShowWelcome(true);
         }
         setLoadingProfile(false);
       });
@@ -354,6 +354,12 @@ function App() {
     setActiveTab('check');
   };
 
+  const handleWelcomeDone = async () => {
+    setShowWelcome(false);
+    if (session?.user?.id) {
+      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
+    }
+  };
 
   const checkAccess = () => {
     if (!profile) return 'loading';
