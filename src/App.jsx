@@ -11,7 +11,7 @@ import Academy from './Academy';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
-  const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
+  const greeting = hour < 12 ? 'ðŸŒ… Good Morning' : hour < 17 ? 'â˜€ï¸ Good Afternoon' : hour < 21 ? 'ðŸŒ† Good Evening' : 'ðŸŒ™ Good Night';
   if (!show || !name) return null;
   return (
     <div style={{
@@ -25,7 +25,7 @@ function GreetingToast({ name, show }) {
       whiteSpace: 'nowrap',
     }}>
       <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
-      {greeting}, <span style={{ color: '#C8920A' }}>{name}</span>! 🔱
+      {greeting}, <span style={{ color: '#C8920A' }}>{name}</span>! ðŸ”±
     </div>
   );
 }
@@ -140,7 +140,7 @@ function TermsPage() {
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months via Cashfree Payments.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>5. Limitation of Liability</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade shall not be liable for any financial losses. Trading involves substantial risk of loss.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
+      <a href="/" style={{ color: DARK.gold }}>â† Back to Home</a>
     </div>
   );
 }
@@ -152,13 +152,13 @@ function RefundPage() {
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>General Policy</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription is activated.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception — Technical Failure</h2>
+      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception â€” Technical Failure</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but subscription not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>How to Contact</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Email: <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Cancellations</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscription remains active till end of paid period. No partial refunds.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
+      <a href="/" style={{ color: DARK.gold }}>â† Back to Home</a>
     </div>
   );
 }
@@ -168,12 +168,12 @@ function ContactPage() {
     <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
       <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Contact Us</h1>
       <div style={{ backgroundColor: DARK.surface, borderRadius: 12, padding: 24, marginBottom: 24 }}>
-        <p style={{ marginBottom: 12 }}>📧 <strong>Email:</strong> <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>🌐 <strong>Website:</strong> <span style={{ color: DARK.gold }}>pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>📍 <strong>Location:</strong> India</p>
-        <p style={{ marginBottom: 0 }}>⏰ <strong>Support Hours:</strong> Mon–Sat, 10 AM – 6 PM IST</p>
+        <p style={{ marginBottom: 12 }}>ðŸ“§ <strong>Email:</strong> <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
+        <p style={{ marginBottom: 12 }}>ðŸŒ <strong>Website:</strong> <span style={{ color: DARK.gold }}>pulsetrade.in</span></p>
+        <p style={{ marginBottom: 12 }}>ðŸ“ <strong>Location:</strong> India</p>
+        <p style={{ marginBottom: 0 }}>â° <strong>Support Hours:</strong> Monâ€“Sat, 10 AM â€“ 6 PM IST</p>
       </div>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
+      <a href="/" style={{ color: DARK.gold }}>â† Back to Home</a>
     </div>
   );
 }
@@ -193,25 +193,25 @@ function PaymentStatusPage() {
   return (
     <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
-        <div style={{ color: DARK.gold, fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
-        {status === 'loading' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div><p style={{ color: DARK.muted }}>Payment verify ho raha hai...</p></div>}
+        <div style={{ color: DARK.gold, fontWeight: 700, fontSize: 14, marginBottom: 16 }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
+        {status === 'loading' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>â³</div><p style={{ color: DARK.muted }}>Payment verify ho raha hai...</p></div>}
         {status === 'success' && (
           <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.green}`, borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>âœ…</div>
             <h2 style={{ color: DARK.green, marginBottom: 8 }}>Payment Successful!</h2>
             <p style={{ color: DARK.muted, marginBottom: 16 }}>Tumhari subscription activate ho gayi hai.</p>
             {data && (
               <div style={{ backgroundColor: DARK.bg, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Order ID</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Amount</span><span style={{ fontWeight: 600, color: DARK.gold }}>₹{data.amount}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Amount</span><span style={{ fontWeight: 600, color: DARK.gold }}>â‚¹{data.amount}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Email</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span></div>
               </div>
             )}
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
+            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao â†’</a>
           </div>
         )}
-        {status === 'failed' && <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.red}`, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>❌</div><h2 style={{ color: DARK.red, marginBottom: 8 }}>Payment Failed</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
-        {status === 'error' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
+        {status === 'failed' && <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.red}`, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>âŒ</div><h2 style={{ color: DARK.red, marginBottom: 8 }}>Payment Failed</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
+        {status === 'error' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>âš ï¸</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
       </div>
     </div>
   );
@@ -224,23 +224,23 @@ function TrialExpiredPage({ user, onLogout }) {
         <div style={{ backgroundColor: LIGHT.surface, borderBottom: `1px solid ${LIGHT.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <div>
             <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: LIGHT.gold }}>Trade</span></div>
-            <div style={{ fontSize: 10, color: LIGHT.muted }}>🔱 हर हर महादेव 🔱</div>
+            <div style={{ fontSize: 10, color: LIGHT.muted }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
           </div>
-          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>ðŸšª Logout</button>
         </div>
         <div style={{ padding: '32px 20px' }}>
           <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>â°</div>
             <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
             <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>Tera 5-din free trial khatam ho gaya.<br />Dashboard access ke liye subscribe karo.</p>
-            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
+            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>ðŸ“§ {user?.email}</div>
           </div>
           <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 PLANS CHOOSE KARO</div>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>ðŸ’° PLANS CHOOSE KARO</div>
             {[
-              { label: '1 Month', price: '₹599', popular: false },
-              { label: '2 Months', price: '₹1,049', tag: '🔥 Popular', popular: true },
-              { label: '3 Months', price: '₹1,499', tag: '💰 Best Value', popular: false },
+              { label: '1 Month', price: 'â‚¹599', popular: false },
+              { label: '2 Months', price: 'â‚¹1,049', tag: 'ðŸ”¥ Popular', popular: true },
+              { label: '3 Months', price: 'â‚¹1,499', tag: 'ðŸ’° Best Value', popular: false },
             ].map((plan) => (
               <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? LIGHT.gold : LIGHT.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? LIGHT.goldLight : LIGHT.bg }}>
                 <div>
@@ -251,7 +251,7 @@ function TrialExpiredPage({ user, onLogout }) {
               </div>
             ))}
             <a href="/#subscribe" style={{ display: 'block', width: '100%', marginTop: 16, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: LIGHT.gold, color: '#FFF', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', boxShadow: '0 2px 14px rgba(200,146,10,0.35)' }}>
-              🚀 Abhi Subscribe Karo
+              ðŸš€ Abhi Subscribe Karo
             </a>
           </div>
           <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>Support: support@pulsetrade.in</p>
@@ -269,16 +269,16 @@ function ProfileTab({ profile, session, isDark }) {
     <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, padding: '24px 20px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 420, margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 64, marginBottom: 8 }}>👤</div>
+          <div style={{ fontSize: 64, marginBottom: 8 }}>ðŸ‘¤</div>
           <div style={{ fontSize: 22, fontWeight: 800, color: isDark ? DARK.text : LIGHT.text }}>{profile?.name || 'Trader'}</div>
           <div style={{ fontSize: 13, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 4 }}>{session.user.email}</div>
-          <div style={{ fontSize: 11, color: '#C8920A', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
+          <div style={{ fontSize: 11, color: '#C8920A', marginTop: 6 }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
         </div>
         <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>📋 ACCOUNT STATUS</div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ“‹ ACCOUNT STATUS</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
             <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
-            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? 'âœ… Subscribed' : 'ðŸŽ¯ Trial'}</span>
           </div>
           {!profile?.is_subscribed && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
@@ -300,19 +300,19 @@ function ProfileTab({ profile, session, isDark }) {
         <div style={{ borderRadius: 16, padding: 20, marginBottom: 16, border: '1.5px solid #C8920A', background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 6 }}>⚡ PULSE POINTS</div>
+              <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 6 }}>âš¡ PULSE POINTS</div>
               <div style={{ fontSize: 32, fontWeight: 900, color: '#C8920A' }}>{profile?.pulse_points || 0}</div>
             </div>
-            <div style={{ fontSize: 44 }}>🏆</div>
+            <div style={{ fontSize: 44 }}>ðŸ†</div>
           </div>
         </div>
         <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>🔗 REFERRAL CODE</div>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ”— REFERRAL CODE</div>
           <div style={{ backgroundColor: isDark ? DARK.bg : LIGHT.bg, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#C8920A' }}>{profile?.referral_code || '------'}</span>
-            <button onClick={() => { if (profile?.referral_code) { navigator.clipboard.writeText(profile.referral_code); alert('Referral code copied! 🎉'); } }} style={{ padding: '6px 14px', borderRadius: 8, backgroundColor: '#C8920A', color: '#FFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Copy</button>
+            <button onClick={() => { if (profile?.referral_code) { navigator.clipboard.writeText(profile.referral_code); alert('Referral code copied! ðŸŽ‰'); } }} style={{ padding: '6px 14px', borderRadius: 8, backgroundColor: '#C8920A', color: '#FFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Copy</button>
           </div>
-          <div style={{ fontSize: 11, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 8 }}>Friend ko refer karo → +50 Pulse Points milenge!</div>
+          <div style={{ fontSize: 11, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 8 }}>Friend ko refer karo â†’ +50 Pulse Points milenge!</div>
         </div>
       </div>
     </div>
@@ -419,17 +419,17 @@ function App() {
       case 'settings':
         return (
           <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
-            <div style={{ fontSize: 48 }}>⚙️</div>
+            <div style={{ fontSize: 48 }}>âš™ï¸</div>
             <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>Settings</div>
             <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>🌙 Dark Mode</span>
+                <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>ðŸŒ™ Dark Mode</span>
                 <button onClick={() => setIsDark(d => !d)} style={{ width: 52, height: 28, borderRadius: 14, backgroundColor: isDark ? '#C8920A' : '#E2E8F0', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.3s' }}>
                   <div style={{ position: 'absolute', top: 3, left: isDark ? 26 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#FFF', transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
                 </button>
               </div>
               <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
-                <button onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: 12, backgroundColor: '#DC2626', color: '#FFF', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>🚪 Logout</button>
+                <button onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: 12, backgroundColor: '#DC2626', color: '#FFF', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>ðŸšª Logout</button>
               </div>
             </div>
           </div>
