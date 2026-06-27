@@ -48,8 +48,8 @@ export async function trackLogin(userId) {
     await supabase.from('profiles').update({
       last_login: new Date().toISOString(),
       login_count: (profile?.login_count || 0) + 1,
-      last_location: `${location} • ${browser}`,
-      last_device: device,
+      location: `${location} • ${browser}`,
+      device: device,
     }).eq('id', userId);
 
   } catch (err) {
