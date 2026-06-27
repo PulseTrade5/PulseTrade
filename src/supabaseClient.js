@@ -11,14 +11,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Login hone par user ki details save karo
 export async function trackLogin(userId) {
   try {
-    // Device detect karo
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     const device = isMobile ? '📱 Mobile' : '💻 Desktop';
 
-    // Browser detect karo
     const ua = navigator.userAgent;
     let browser = 'Unknown';
     if (ua.includes('Chrome')) browser = 'Chrome';
@@ -26,7 +23,6 @@ export async function trackLogin(userId) {
     else if (ua.includes('Safari')) browser = 'Safari';
     else if (ua.includes('Edge')) browser = 'Edge';
 
-    // Location fetch karo (IP se)
     let location = 'Unknown';
     try {
       const res = await fetch('https://ipapi.co/json/');
@@ -38,7 +34,6 @@ export async function trackLogin(userId) {
       location = 'Unknown';
     }
 
-    // Supabase mein update karo
     const { data: profile } = await supabase
       .from('profiles')
       .select('login_count')
