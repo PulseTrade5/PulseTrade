@@ -34,22 +34,26 @@ const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "I
 const TIERS = [3, 6, 10];
 
 // ✅ SESSION PERSISTENCE HELPERS
-// Saves/restores dashboard state across Chrome tab reloads (mobile Chrome often
-// kills background tabs to save RAM — sessionStorage survives that, unlike React state).
-const STORAGE_PREFIX = 'pulsetrade_dash_';
+// Saves/restores dashboard state across Chrome tab reloads (mobile Chrome on phones
+// like OnePlus/Xiaomi aggressively kills background tabs to save RAM — localStorage
+// survives that, unlike React state or sessionStorage on some devices).
+// Keys are scoped per-user so switching accounts on a shared device doesn't leak data.
+function getStoragePrefix(userId) {
+  return `pulsetrade_dash_${userId || 'guest'}_`;
+}
 
-function saveToSession(key, value) {
+function saveToSession(key, value, userId) {
   try {
     if (value === undefined) return;
-    sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+    localStorage.setItem(getStoragePrefix(userId) + key, JSON.stringify(value));
   } catch (e) {
-    // sessionStorage can fail in private/incognito mode or when full — fail silently
+    // localStorage can fail in private/incognito mode or when full — fail silently
   }
 }
 
-function loadFromSession(key, fallback) {
+function loadFromSession(key, fallback, userId) {
   try {
-    const raw = sessionStorage.getItem(STORAGE_PREFIX + key);
+    const raw = localStorage.getItem(getStoragePrefix(userId) + key);
     if (raw === null) return fallback;
     return JSON.parse(raw);
   } catch (e) {
@@ -794,39 +798,40 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   // ✅ All of these are lazily initialized from sessionStorage so that if Chrome
   // kills/reloads this tab (common on mobile when switching apps), the dashboard
   // restores exactly where the user left off instead of resetting to the front page.
-  const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', ''));
+  const uid = user?.id;
+  const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', '', uid));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState(() => loadFromSession('result', null));
-  const [stockInfo, setStockInfo] = useState(() => loadFromSession('stockInfo', null));
-  const [stockName, setStockName] = useState(() => loadFromSession('stockName', ''));
-  const [tab, setTab] = useState(() => loadFromSession('tab', defaultTab || 'check'));
-  const [watchlist, setWatchlist] = useState(() => loadFromSession('watchlist', []));
-  const [history, setHistory] = useState(() => loadFromSession('history', []));
+  const [result, setResult] = useState(() => loadFromSession('result', null, uid));
+  const [stockInfo, setStockInfo] = useState(() => loadFromSession('stockInfo', null, uid));
+  const [stockName, setStockName] = useState(() => loadFromSession('stockName', '', uid));
+  const [tab, setTab] = useState(() => loadFromSession('tab', defaultTab || 'check', uid));
+  const [watchlist, setWatchlist] = useState(() => loadFromSession('watchlist', [], uid));
+  const [history, setHistory] = useState(() => loadFromSession('history', [], uid));
   const [sizingMode, setSizingMode] = useState('risk');
   const [quantity, setQuantity] = useState(10);
   const [riskAmount, setRiskAmount] = useState(1000);
   const [slPercent, setSlPercent] = useState(3);
-  const [entryPrice, setEntryPrice] = useState(() => loadFromSession('entryPrice', 0));
-  const [direction, setDirection] = useState(() => loadFromSession('direction', 'BUY'));
+  const [entryPrice, setEntryPrice] = useState(() => loadFromSession('entryPrice', 0, uid));
+  const [direction, setDirection] = useState(() => loadFromSession('direction', 'BUY', uid));
   const [alertSent, setAlertSent] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
-  const [pulseData, setPulseData] = useState(() => loadFromSession('pulseData', null));
+  const [pulseData, setPulseData] = useState(() => loadFromSession('pulseData', null, uid));
   const [userDob, setUserDob] = useState(null);
   const [showSupport, setShowSupport] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
   // ✅ Persist to sessionStorage whenever these change
-  useEffect(() => { saveToSession('symbolInput', symbolInput); }, [symbolInput]);
-  useEffect(() => { saveToSession('result', result); }, [result]);
-  useEffect(() => { saveToSession('stockInfo', stockInfo); }, [stockInfo]);
-  useEffect(() => { saveToSession('stockName', stockName); }, [stockName]);
-  useEffect(() => { saveToSession('tab', tab); }, [tab]);
-  useEffect(() => { saveToSession('watchlist', watchlist); }, [watchlist]);
-  useEffect(() => { saveToSession('history', history); }, [history]);
-  useEffect(() => { saveToSession('entryPrice', entryPrice); }, [entryPrice]);
-  useEffect(() => { saveToSession('direction', direction); }, [direction]);
-  useEffect(() => { saveToSession('pulseData', pulseData); }, [pulseData]);
+  useEffect(() => { saveToSession('symbolInput', symbolInput, uid); }, [symbolInput, uid]);
+  useEffect(() => { saveToSession('result', result, uid); }, [result, uid]);
+  useEffect(() => { saveToSession('stockInfo', stockInfo, uid); }, [stockInfo, uid]);
+  useEffect(() => { saveToSession('stockName', stockName, uid); }, [stockName, uid]);
+  useEffect(() => { saveToSession('tab', tab, uid); }, [tab, uid]);
+  useEffect(() => { saveToSession('watchlist', watchlist, uid); }, [watchlist, uid]);
+  useEffect(() => { saveToSession('history', history, uid); }, [history, uid]);
+  useEffect(() => { saveToSession('entryPrice', entryPrice, uid); }, [entryPrice, uid]);
+  useEffect(() => { saveToSession('direction', direction, uid); }, [direction, uid]);
+  useEffect(() => { saveToSession('pulseData', pulseData, uid); }, [pulseData, uid]);
 
   const startVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
