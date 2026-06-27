@@ -18,17 +18,17 @@ export async function trackLogin(userId) {
 
     const ua = navigator.userAgent;
     let browser = 'Unknown';
-    if (ua.includes('Chrome')) browser = 'Chrome';
+    if (ua.includes('Edg')) browser = 'Edge';
+    else if (ua.includes('Chrome')) browser = 'Chrome';
     else if (ua.includes('Firefox')) browser = 'Firefox';
     else if (ua.includes('Safari')) browser = 'Safari';
-    else if (ua.includes('Edge')) browser = 'Edge';
 
     let location = 'Unknown';
     try {
-      const res = await fetch('https://ipapi.co/json/');
+      const res = await fetch('https://ip-api.com/json/?fields=city,regionName,country,status');
       const data = await res.json();
-      if (data.city && data.country_name) {
-        location = `${data.city}, ${data.region}, ${data.country_name}`;
+      if (data.status === 'success' && data.city && data.country) {
+        location = `${data.city}, ${data.regionName}, ${data.country}`;
       }
     } catch {
       location = 'Unknown';
