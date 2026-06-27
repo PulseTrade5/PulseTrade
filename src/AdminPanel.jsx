@@ -9,6 +9,7 @@ const COLORS = {
   green: "#059669", greenLight: "#ECFDF5",
   red: "#DC2626", redLight: "#FEF2F2",
   purple: "#7C3AED", purpleLight: "#EDE9FE",
+  blue: "#2563EB", blueLight: "#EFF6FF",
   text: "#0F172A", textSecondary: "#334155", muted: "#64748B",
 };
 
@@ -35,7 +36,7 @@ function StatusBadge({ status }) {
   return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
 }
 
-export default function AdminPanel({ user, onLogout, onBack }) {
+export default function AdminPanel({ user, onLogout }) {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -50,6 +51,7 @@ export default function AdminPanel({ user, onLogout, onBack }) {
   const [selectedUser, setSelectedUser] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [replying, setReplying] = useState(false);
+  const [expandedUser, setExpandedUser] = useState(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -162,6 +164,13 @@ export default function AdminPanel({ user, onLogout, onBack }) {
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' };
   const rowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` };
 
+  // Aaj ke signups
+  const todaySignups = profiles.filter(p => {
+    const created = new Date(p.created_at);
+    const today = new Date();
+    return created.toDateString() === today.toDateString();
+  }).length;
+
   return (
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 48px' }}>
@@ -197,13 +206,23 @@ export default function AdminPanel({ user, onLogout, onBack }) {
           {/* USERS TAB */}
           {activeTab === 'users' && (
             <>
-              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              {/* STATS */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
                 {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight]].map(([label, value, color, bg]) => (
                   <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
                     <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
                     <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
                   </div>
                 ))}
+              </div>
+
+              {/* Aaj ke signups */}
+              <div style={{ backgroundColor: COLORS.blueLight, border: `1px solid #BFDBFE`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: COLORS.blue, fontWeight: 700 }}>📅 AAJ KE NAYE SIGNUPS</div>
+                  <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                </div>
+                <div style={{ fontSize: 32, fontWeight: 900, color: COLORS.blue }}>{todaySignups}</div>
               </div>
 
               <div style={cardStyle}>
@@ -224,6 +243,7 @@ export default function AdminPanel({ user, onLogout, onBack }) {
                 ) : filtered.map(p => {
                   const status = getStatus(p);
                   const daysLeft = getDaysLeft(p.trial_start_date);
+                  const isExpanded = expandedUser === p.id;
                   return (
                     <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
@@ -237,8 +257,43 @@ export default function AdminPanel({ user, onLogout, onBack }) {
                             {p.referred_by && <span style={{ color: COLORS.purple }}> • Ref: {p.referred_by}</span>}
                           </div>
                         </div>
-                        <StatusBadge status={status} />
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                          <StatusBadge status={status} />
+                          <button onClick={() => setExpandedUser(isExpanded ? null : p.id)} style={{ fontSize: 10, color: COLORS.blue, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                            {isExpanded ? '▲ Hide' : '▼ Details'}
+                          </button>
+                        </div>
                       </div>
+
+                      {/* EXPANDED DETAILS */}
+                      {isExpanded && (
+                        <div style={{ backgroundColor: COLORS.bg, borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${COLORS.surfaceBorder}` }}>
+                          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>📊 USER DETAILS</div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🕐 Last Login</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>
+                              {p.last_login ? new Date(p.last_login).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🔢 Login Count</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold }}>{p.login_count || 0} baar</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>📱 Device</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>{p.last_device || 'Unknown'}</span>
+                          </div>
+
+                          <div style={{ padding: '5px 0' }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌍 Location</span>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.text, marginTop: 3, wordBreak: 'break-all' }}>{p.last_location || 'Unknown'}</div>
+                          </div>
+                        </div>
+                      )}
+
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
                         <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
@@ -346,6 +401,7 @@ export default function AdminPanel({ user, onLogout, onBack }) {
         </div>
       </div>
 
+      {/* SUBSCRIBE MODAL */}
       {editUser && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
