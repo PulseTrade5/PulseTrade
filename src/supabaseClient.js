@@ -26,28 +26,41 @@ export async function trackLogin(userId) {
     let location = 'Unknown';
     try {
       const res = await fetch('https://ipwho.is/');
+      console.log('[trackLogin] ipwho.is status:', res.status);
       const data = await res.json();
+      console.log('[trackLogin] ipwho.is response:', data);
       if (data.success && data.city && data.country) {
         location = `${data.city}, ${data.region}, ${data.country}`;
+      } else {
+        console.log('[trackLogin] ipwho.is returned success=false or missing fields');
       }
-    } catch {
+    } catch (locErr) {
+      console.log('[trackLogin] ipwho.is fetch FAILED:', locErr.message || locErr);
       location = 'Unknown';
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: fetchErr } = await supabase
       .from('profiles')
       .select('login_count')
       .eq('id', userId)
       .single();
 
-    await supabase.from('profiles').update({
+    if (fetchErr) console.log('[trackLogin] profile fetch error:', fetchErr.message);
+
+    const { error: updateErr } = await supabase.from('profiles').update({
       last_login: new Date().toISOString(),
       login_count: (profile?.login_count || 0) + 1,
       location: `${location} • ${browser}`,
       device: device,
     }).eq('id', userId);
 
+    if (updateErr) {
+      console.log('[trackLogin] profile UPDATE FAILED:', updateErr.message);
+    } else {
+      console.log('[trackLogin] profile updated successfully — location:', location, 'device:', device);
+    }
+
   } catch (err) {
-    console.log('Login track error:', err);
+    console.log('[trackLogin] Login track error:', err.message || err);
   }
 }
