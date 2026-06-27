@@ -25,10 +25,10 @@ export async function trackLogin(userId) {
 
     let location = 'Unknown';
     try {
-      const res = await fetch('https://ip-api.com/json/?fields=city,regionName,country,status');
+      const res = await fetch('https://ipwho.is/');
       const data = await res.json();
-      if (data.status === 'success' && data.city && data.country) {
-        location = `${data.city}, ${data.regionName}, ${data.country}`;
+      if (data.success && data.city && data.country) {
+        location = `${data.city}, ${data.region}, ${data.country}`;
       }
     } catch {
       location = 'Unknown';
