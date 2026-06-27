@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { supabase } from './supabaseClient';
+import { supabase, trackLogin } from './supabaseClient';
 
 const COLORS = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
@@ -157,6 +157,9 @@ export default function LoginPage() {
           }
         }
 
+        // ✅ LOCATION + DEVICE TRACK KARO
+        await trackLogin(data.session.user.id);
+
         await new Promise(r => setTimeout(r, 800));
         window.location.href = '/';
       } else {
@@ -262,15 +265,12 @@ export default function LoginPage() {
 
             {step === 'email' ? (
               <div>
-                {/* NAAM */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
                 <input type="text" value={name} onChange={e => { setName(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="e.g. Rahul, Priya" style={{ ...inputStyle, marginBottom: 12 }} />
 
-                {/* EMAIL */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
                 <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={{ ...inputStyle, marginBottom: 12 }} />
 
-                {/* DOB */}
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
                   Janam Tithi 🪐 <span style={{ fontSize: 10, color: COLORS.mutedLight, fontWeight: 400 }}>(optional — Pulse Astro ke liye)</span>
                 </label>
@@ -282,7 +282,6 @@ export default function LoginPage() {
                   style={{ ...inputStyle, marginBottom: 8 }}
                 />
 
-                {/* RASHI PREVIEW */}
                 {rashi && (
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 10,
@@ -368,10 +367,10 @@ export default function LoginPage() {
 
           <div style={{ textAlign: 'center', paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
             <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
-            <a href="/refund" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Refund Policy</a>
+            <a href="/privacy" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Privacy</a>
             <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
           </div>
-          <p style={{ textAlign: 'center', marginTop: 16, fontSize: 12, color: COLORS.mutedLight }}>🔱 हर हर महादेव 🔱</p>
+
         </div>
       </div>
     </div>
