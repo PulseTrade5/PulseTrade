@@ -33,6 +33,30 @@ const DARK = {
 const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "ICICIBANK", "ITC"];
 const TIERS = [3, 6, 10];
 
+// ✅ SESSION PERSISTENCE HELPERS
+// Saves/restores dashboard state across Chrome tab reloads (mobile Chrome often
+// kills background tabs to save RAM — sessionStorage survives that, unlike React state).
+const STORAGE_PREFIX = 'pulsetrade_dash_';
+
+function saveToSession(key, value) {
+  try {
+    if (value === undefined) return;
+    sessionStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+  } catch (e) {
+    // sessionStorage can fail in private/incognito mode or when full — fail silently
+  }
+}
+
+function loadFromSession(key, fallback) {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_PREFIX + key);
+    if (raw === null) return fallback;
+    return JSON.parse(raw);
+  } catch (e) {
+    return fallback;
+  }
+}
+
 function fmtINR(n) {
   if (n === null || n === undefined || isNaN(n)) return "—";
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -767,27 +791,42 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const dark = isDark ?? false;
   const C = dark ? DARK : LIGHT;
 
-  const [symbolInput, setSymbolInput] = useState('');
+  // ✅ All of these are lazily initialized from sessionStorage so that if Chrome
+  // kills/reloads this tab (common on mobile when switching apps), the dashboard
+  // restores exactly where the user left off instead of resetting to the front page.
+  const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', ''));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [result, setResult] = useState(null);
-  const [stockInfo, setStockInfo] = useState(null);
-  const [stockName, setStockName] = useState('');
-  const [tab, setTab] = useState(defaultTab || 'check');
-  const [watchlist, setWatchlist] = useState([]);
-  const [history, setHistory] = useState([]);
+  const [result, setResult] = useState(() => loadFromSession('result', null));
+  const [stockInfo, setStockInfo] = useState(() => loadFromSession('stockInfo', null));
+  const [stockName, setStockName] = useState(() => loadFromSession('stockName', ''));
+  const [tab, setTab] = useState(() => loadFromSession('tab', defaultTab || 'check'));
+  const [watchlist, setWatchlist] = useState(() => loadFromSession('watchlist', []));
+  const [history, setHistory] = useState(() => loadFromSession('history', []));
   const [sizingMode, setSizingMode] = useState('risk');
   const [quantity, setQuantity] = useState(10);
   const [riskAmount, setRiskAmount] = useState(1000);
   const [slPercent, setSlPercent] = useState(3);
-  const [entryPrice, setEntryPrice] = useState(0);
-  const [direction, setDirection] = useState('BUY');
+  const [entryPrice, setEntryPrice] = useState(() => loadFromSession('entryPrice', 0));
+  const [direction, setDirection] = useState(() => loadFromSession('direction', 'BUY'));
   const [alertSent, setAlertSent] = useState(false);
   const [alertSending, setAlertSending] = useState(false);
-  const [pulseData, setPulseData] = useState(null);
+  const [pulseData, setPulseData] = useState(() => loadFromSession('pulseData', null));
   const [userDob, setUserDob] = useState(null);
   const [showSupport, setShowSupport] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // ✅ Persist to sessionStorage whenever these change
+  useEffect(() => { saveToSession('symbolInput', symbolInput); }, [symbolInput]);
+  useEffect(() => { saveToSession('result', result); }, [result]);
+  useEffect(() => { saveToSession('stockInfo', stockInfo); }, [stockInfo]);
+  useEffect(() => { saveToSession('stockName', stockName); }, [stockName]);
+  useEffect(() => { saveToSession('tab', tab); }, [tab]);
+  useEffect(() => { saveToSession('watchlist', watchlist); }, [watchlist]);
+  useEffect(() => { saveToSession('history', history); }, [history]);
+  useEffect(() => { saveToSession('entryPrice', entryPrice); }, [entryPrice]);
+  useEffect(() => { saveToSession('direction', direction); }, [direction]);
+  useEffect(() => { saveToSession('pulseData', pulseData); }, [pulseData]);
 
   const startVoiceSearch = () => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
