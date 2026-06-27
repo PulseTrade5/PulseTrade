@@ -7,6 +7,7 @@ import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
 import PulseScreener from './PulseScreener';
+import NumerologyPanel from './NumerologyPanel';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -423,6 +424,8 @@ function App() {
         return <ProfileTab profile={profile} session={session} isDark={isDark} />;
       case 'screener':
         return <PulseScreener isDark={isDark} />;
+      case 'numerology':
+        return <NumerologyPanel isDark={isDark} />;
       default:
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
     }
