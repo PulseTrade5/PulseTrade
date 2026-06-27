@@ -6,7 +6,6 @@ import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
 import ChallengeBoard from './ChallengeBoard';
 import BottomNav from './BottomNav';
-import WelcomeScreen from './WelcomeScreen';
 import PulseScreener from './PulseScreener';
 
 function GreetingToast({ name, show }) {
@@ -304,7 +303,7 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
+  
 
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
@@ -335,7 +334,7 @@ function App() {
             trial_start_date: new Date().toISOString(),
           }).then(() => {
             setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
-            setShowWelcome(true);
+            
           });
         } else {
           setProfile(data);
@@ -343,7 +342,7 @@ function App() {
           setShowLogin(false);
           setShowGreeting(true);
           setTimeout(() => setShowGreeting(false), 4000);
-          if (!data.onboarding_done) setShowWelcome(true);
+          if (!data.onboarding_done) 
         }
         setLoadingProfile(false);
       });
@@ -355,12 +354,6 @@ function App() {
     setActiveTab('check');
   };
 
-  const handleWelcomeDone = async () => {
-    setShowWelcome(false);
-    if (session?.user?.id) {
-      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
-    }
-  };
 
   const checkAccess = () => {
     if (!profile) return 'loading';
@@ -431,7 +424,7 @@ function App() {
 
   return (
     <>
-      {showWelcome && <WelcomeScreen onDone={handleWelcomeDone} />}
+      
       <GreetingToast name={profile?.name} show={showGreeting} />
       <div style={{ paddingBottom: 70 }}>
         {renderTab()}
