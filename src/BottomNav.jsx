@@ -26,6 +26,7 @@ export default function BottomNav({ activeTab, onTabChange, isDark }) {
     { id: 'screener',    icon: '🚀', label: 'Screener' },
     { id: 'challenge',   icon: '🎯', label: 'Challenge' },
     { id: 'numerology',  icon: '🔢', label: 'Numero' },
+    { id: 'academy',     icon: '🎓', label: 'Academy' },
     { id: 'settings',    icon: '⚙️', label: 'Settings' },
   ];
 
