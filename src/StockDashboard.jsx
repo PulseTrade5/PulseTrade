@@ -10,6 +10,7 @@ import FearGreedMeter from './FearGreedMeter';
 import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
 import NumerologyInsightCard from './components/NumerologyInsightCard';
+import Academy from './Academy';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -1017,6 +1018,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               ['track','📋 Record'],
               ['screener','🚀 Screener'],
               ['numerology','🔢 Numero'],
+              ['academy','🎓 Academy'],
             ].map(([key,label]) => (
               <button key={key} onClick={() => setTab(key)} style={{
                 flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700,
@@ -1393,6 +1395,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               userDob={userDob}
               userName={user?.email?.split('@')[0]}
             />
+          )}
+
+          {tab === 'academy' && (
+            <Academy isDark={dark} />
           )}
 
           {/* FOOTER */}
