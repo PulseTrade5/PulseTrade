@@ -3,15 +3,15 @@ import { supabase } from "./supabaseClient";
 
 const COURSES = [
   {
-    id: "candlestick-patterns",
-    emoji: "🕯️",
-    title: "Candlestick Patterns",
-    description: "Hammer, Doji, Engulfing — sabhi major patterns Hindi mein. Charts ke saath practical examples.",
-    price: 299,
-    pages: "30+ pages",
-    level: "Beginner",
+    id: "complete-stock-market-course",
+    emoji: "🎓",
+    title: "PulseTrade Complete Stock Market Course",
+    description: "Basic se Advance tak — 9 chapters mein poora stock market: Share Market basics, Market Capital, Fundamental Analysis, Candlestick Patterns, Support/Resistance, Risk Management aur Trading vs Investing.",
+    price: 399,
+    pages: "9 Chapters",
+    level: "Beginner to Advance",
     available: true,
-    pdfKey: "candlestick_course.pdf",
+    pdfKey: "pulsetrade_complete_course.pdf",
   },
   {
     id: "rsi-mastery",
@@ -71,6 +71,7 @@ const COURSES = [
 ];
 
 const LEVEL_COLOR = {
+  "Beginner to Advance": "#7C3AED",
   Beginner: "#22c55e",
   Intermediate: "#f59e0b",
   Advanced: "#ef4444",
@@ -254,7 +255,7 @@ export default function Academy({ isDark }) {
           Trading seekho — apni bhasha mein, apni pace mein 🚀
         </p>
         <div style={{ marginTop: "14px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
-          {[{ label: "6 Courses", icon: "📚" }, { label: "Hindi PDFs", icon: "📄" }, { label: "NSE/BSE Focus", icon: "📈" }].map((tag) => (
+          {[{ label: "Complete Course", icon: "🎓" }, { label: "Hindi PDFs", icon: "📄" }, { label: "NSE/BSE Focus", icon: "📈" }].map((tag) => (
             <span key={tag.label} style={{
               background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)",
               color: gold, fontSize: "11px", fontWeight: "600", padding: "4px 10px", borderRadius: "20px"
