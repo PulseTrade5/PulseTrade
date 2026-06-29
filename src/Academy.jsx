@@ -11,7 +11,7 @@ const COURSES = [
     pages: "9 Chapters",
     level: "Beginner to Advance",
     available: true,
-    pdfKey: "pulsetrade_complete_course.pdf",
+    pdfKey: "PulseTrade_Complete_Stock_Market_Course-1.pdf",
   },
   {
     id: "rsi-mastery",
@@ -385,4 +385,4 @@ export default function Academy({ isDark }) {
       </div>
     </div>
   );
-}
+                      }
