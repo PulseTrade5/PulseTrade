@@ -11,5 +11,11 @@
         { "key": "Expires", "value": "0" }
       ]
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/fii-dii?action=fetch",
+      "schedule": "30 13 * * 1-5"
+    }
   ]
 }
