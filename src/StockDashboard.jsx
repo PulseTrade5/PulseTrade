@@ -11,6 +11,7 @@ import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
 import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
+import FIITracker from './FIITracker';
 
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
@@ -1040,6 +1041,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <NumerologyInsightCard isDark={dark} C={C} />
               <GlobalMarkets isDark={dark} />
               <FearGreedMeter isDark={dark} />
+              <FIITracker />
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
 
               <div style={cardStyle}>
