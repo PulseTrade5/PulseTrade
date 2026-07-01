@@ -1,86 +1,4 @@
-import { useState } from "react";
-
-const SAMPLE_IPOS = [
-  {
-    id: 1,
-    company: "Ola Electric",
-    logo: "🚗",
-    status: "open",
-    openDate: "29 Jun 2026",
-    closeDate: "1 Jul 2026",
-    priceMin: 72,
-    priceMax: 76,
-    gmp: 45,
-    gmpPercent: 59,
-    subscription: 2.4,
-    lotSize: 195,
-    minInvestment: 14820,
-    numerologyScore: 8,
-    numerologyMsg: "Number 8 = Prosperity! Strong listing expected!",
-    category: "EV & Clean Energy",
-    rating: "⭐⭐⭐⭐",
-  },
-  {
-    id: 2,
-    company: "Swiggy",
-    logo: "🍔",
-    status: "upcoming",
-    openDate: "5 Jul 2026",
-    closeDate: "7 Jul 2026",
-    priceMin: 371,
-    priceMax: 390,
-    gmp: 28,
-    gmpPercent: 7,
-    subscription: 0,
-    lotSize: 38,
-    minInvestment: 14820,
-    numerologyScore: 6,
-    numerologyMsg: "Number 6 = Balance & Harmony. Moderate listing expected.",
-    category: "Food Delivery",
-    rating: "⭐⭐⭐",
-  },
-  {
-    id: 3,
-    company: "NTPC Green",
-    logo: "⚡",
-    status: "upcoming",
-    openDate: "10 Jul 2026",
-    closeDate: "12 Jul 2026",
-    priceMin: 108,
-    priceMax: 114,
-    gmp: 62,
-    gmpPercent: 54,
-    subscription: 0,
-    lotSize: 130,
-    minInvestment: 14820,
-    numerologyScore: 9,
-    numerologyMsg: "Number 9 = Completion & Success! High listing gain expected!",
-    category: "Renewable Energy",
-    rating: "⭐⭐⭐⭐⭐",
-  },
-  {
-    id: 4,
-    company: "Bajaj Housing",
-    logo: "🏠",
-    status: "listed",
-    openDate: "9 Jun 2026",
-    closeDate: "11 Jun 2026",
-    priceMin: 66,
-    priceMax: 70,
-    gmp: 0,
-    gmpPercent: 0,
-    subscription: 64.2,
-    listingPrice: 150,
-    listingGain: 114,
-    listingGainPercent: 114,
-    lotSize: 214,
-    minInvestment: 14980,
-    numerologyScore: 4,
-    numerologyMsg: "Number 4 = Stability. Strong fundamentals.",
-    category: "Housing Finance",
-    rating: "⭐⭐⭐⭐",
-  },
-];
+import { useState, useEffect } from "react";
 
 const NUM_COLORS = {
   1: "#ef4444", 2: "#f97316", 3: "#eab308",
@@ -88,9 +6,55 @@ const NUM_COLORS = {
   7: "#ec4899", 8: "#f59e0b", 9: "#10b981",
 };
 
+function formatDate(d) {
+  if (!d) return "TBA";
+  const dt = new Date(d);
+  return dt.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function mapIpo(row) {
+  return {
+    id: row.id,
+    company: row.company_name,
+    logo: row.sector?.toLowerCase().includes("energy") ? "⚡" :
+          row.sector?.toLowerCase().includes("food") ? "🍔" :
+          row.sector?.toLowerCase().includes("housing") || row.sector?.toLowerCase().includes("finance") ? "🏠" :
+          row.sector?.toLowerCase().includes("ev") || row.sector?.toLowerCase().includes("auto") ? "🚗" : "🚀",
+    status: row.status || "upcoming",
+    openDate: formatDate(row.open_date),
+    closeDate: formatDate(row.close_date),
+    listingDate: formatDate(row.listing_date),
+    priceMin: row.price_band_low,
+    priceMax: row.price_band_high,
+    gmp: row.gmp || 0,
+    gmpPercent: row.gmp_percent || 0,
+    subscription: row.subscription_times || 0,
+    lotSize: row.lot_size,
+    minInvestment: row.lot_size && row.price_band_high ? row.lot_size * row.price_band_high : null,
+    numerologyScore: row.numerology_score,
+    numerologyMsg: row.numerology_msg,
+    category: row.sector || "General",
+    applyLink: row.apply_link || "https://www.nseindia.com/market-data/all-upcoming-issues-ipo",
+  };
+}
+
 export default function IPOTracker({ isDark = true }) {
   const [filter, setFilter] = useState("all");
   const [expanded, setExpanded] = useState(null);
+  const [ipos, setIpos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    fetch("/api/ipo-data")
+      .then((res) => res.json())
+      .then((json) => {
+        if (!json.ok) throw new Error(json.error || "Failed to load");
+        setIpos((json.data || []).map(mapIpo));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const bg = isDark ? "#0D1117" : "#F4F6FA";
   const card = isDark ? "#161B22" : "#FFFFFF";
@@ -99,13 +63,31 @@ export default function IPOTracker({ isDark = true }) {
   const border = isDark ? "#30363D" : "#E2E8F0";
   const gold = isDark ? "#D8A33D" : "#C8920A";
 
-  const filtered = filter === "all" ? SAMPLE_IPOS : SAMPLE_IPOS.filter(i => i.status === filter);
+  const filtered = filter === "all" ? ipos : ipos.filter(i => i.status === filter);
 
   const statusConfig = {
     open: { label: "🟢 OPEN", color: "#22c55e", bg: "rgba(34,197,94,0.15)" },
     upcoming: { label: "🔵 UPCOMING", color: "#3b82f6", bg: "rgba(59,130,246,0.15)" },
     listed: { label: "🏁 LISTED", color: "#8b5cf6", bg: "rgba(139,92,246,0.15)" },
   };
+
+  if (loading) {
+    return (
+      <div style={{ background: bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
+        <div style={{ fontSize: 32 }}>🚀</div>
+        <div style={{ color: muted, fontSize: 14 }}>IPO data load ho raha hai...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ background: bg, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12, padding: 20 }}>
+        <div style={{ fontSize: 32 }}>⚠️</div>
+        <div style={{ color: muted, fontSize: 14, textAlign: "center" }}>IPO data abhi available nahi hai. Kal subah try karein.</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ background: bg, minHeight: "100vh", paddingBottom: 90, fontFamily: "Inter, system-ui, sans-serif" }}>
@@ -127,9 +109,9 @@ export default function IPOTracker({ isDark = true }) {
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
           {[
-            { label: "Open", count: SAMPLE_IPOS.filter(i => i.status === "open").length, color: "#22c55e" },
-            { label: "Upcoming", count: SAMPLE_IPOS.filter(i => i.status === "upcoming").length, color: "#3b82f6" },
-            { label: "Listed", count: SAMPLE_IPOS.filter(i => i.status === "listed").length, color: "#8b5cf6" },
+            { label: "Open", count: ipos.filter(i => i.status === "open").length, color: "#22c55e" },
+            { label: "Upcoming", count: ipos.filter(i => i.status === "upcoming").length, color: "#3b82f6" },
+            { label: "Listed", count: ipos.filter(i => i.status === "listed").length, color: "#8b5cf6" },
           ].map(s => (
             <div key={s.label} style={{
               flex: 1, background: "rgba(255,255,255,0.07)",
@@ -162,10 +144,16 @@ export default function IPOTracker({ isDark = true }) {
           ))}
         </div>
 
+        {filtered.length === 0 && (
+          <div style={{ textAlign: "center", color: muted, padding: 40, fontSize: 14 }}>
+            Is category mein koi IPO nahi hai abhi.
+          </div>
+        )}
+
         {/* IPO Cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           {filtered.map(ipo => {
-            const sc = statusConfig[ipo.status];
+            const sc = statusConfig[ipo.status] || statusConfig.upcoming;
             const isExpanded = expanded === ipo.id;
             const numColor = NUM_COLORS[ipo.numerologyScore] || gold;
 
@@ -207,7 +195,9 @@ export default function IPOTracker({ isDark = true }) {
                       border: `1px solid ${border}`,
                     }}>
                       <div style={{ fontSize: 10, color: muted, fontWeight: 600, marginBottom: 4 }}>💰 PRICE BAND</div>
-                      <div style={{ fontSize: 15, fontWeight: 800, color: text }}>₹{ipo.priceMin} – ₹{ipo.priceMax}</div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: text }}>
+                        {ipo.priceMin && ipo.priceMax ? `₹${ipo.priceMin} – ₹${ipo.priceMax}` : "TBA"}
+                      </div>
                     </div>
 
                     {ipo.status !== "listed" ? (
@@ -224,12 +214,14 @@ export default function IPOTracker({ isDark = true }) {
                       </div>
                     ) : (
                       <div style={{
-                        flex: 1, background: "rgba(34,197,94,0.08)",
+                        flex: 1, background: "rgba(139,92,246,0.08)",
                         borderRadius: 10, padding: "10px 12px",
-                        border: "1px solid rgba(34,197,94,0.2)",
+                        border: "1px solid rgba(139,92,246,0.2)",
                       }}>
-                        <div style={{ fontSize: 10, color: muted, fontWeight: 600, marginBottom: 4 }}>🚀 LISTING GAIN</div>
-                        <div style={{ fontSize: 15, fontWeight: 800, color: "#22c55e" }}>+{ipo.listingGainPercent}%</div>
+                        <div style={{ fontSize: 10, color: muted, fontWeight: 600, marginBottom: 4 }}>🏁 LISTED</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: "#8b5cf6" }}>
+                          {ipo.listingDate}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -241,7 +233,7 @@ export default function IPOTracker({ isDark = true }) {
                   </div>
 
                   {/* Subscription Bar */}
-                  {ipo.status === "open" && (
+                  {ipo.status === "open" && ipo.subscription > 0 && (
                     <div style={{ marginBottom: 12 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
                         <span style={{ color: muted, fontWeight: 600 }}>📊 Subscription</span>
@@ -258,24 +250,26 @@ export default function IPOTracker({ isDark = true }) {
                   )}
 
                   {/* Numerology Score */}
-                  <div style={{
-                    background: isDark ? "rgba(255,255,255,0.04)" : "#FAFAFA",
-                    border: `1px solid ${numColor}33`,
-                    borderRadius: 10, padding: "10px 12px",
-                    display: "flex", alignItems: "center", gap: 10,
-                    marginBottom: 12,
-                  }}>
+                  {ipo.numerologyScore && (
                     <div style={{
-                      width: 36, height: 36, borderRadius: "50%",
-                      background: `linear-gradient(135deg, ${numColor}, ${numColor}88)`,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 16, fontWeight: 900, color: "#FFF", flexShrink: 0,
-                    }}>{ipo.numerologyScore}</div>
-                    <div>
-                      <div style={{ fontSize: 10, color: numColor, fontWeight: 700, marginBottom: 2 }}>🔢 NUMEROLOGY SCORE</div>
-                      <div style={{ fontSize: 12, color: text, lineHeight: 1.4 }}>{ipo.numerologyMsg}</div>
+                      background: isDark ? "rgba(255,255,255,0.04)" : "#FAFAFA",
+                      border: `1px solid ${numColor}33`,
+                      borderRadius: 10, padding: "10px 12px",
+                      display: "flex", alignItems: "center", gap: 10,
+                      marginBottom: 12,
+                    }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: "50%",
+                        background: `linear-gradient(135deg, ${numColor}, ${numColor}88)`,
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 16, fontWeight: 900, color: "#FFF", flexShrink: 0,
+                      }}>{ipo.numerologyScore}</div>
+                      <div>
+                        <div style={{ fontSize: 10, color: numColor, fontWeight: 700, marginBottom: 2 }}>🔢 NUMEROLOGY SCORE</div>
+                        <div style={{ fontSize: 12, color: text, lineHeight: 1.4 }}>{ipo.numerologyMsg}</div>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
                   {/* Buttons */}
                   <div style={{ display: "flex", gap: 8 }}>
@@ -288,14 +282,14 @@ export default function IPOTracker({ isDark = true }) {
                       {isExpanded ? "🔼 Less" : "🔽 More Details"}
                     </button>
                     {ipo.status === "open" && (
-                      <button style={{
+                      <button onClick={() => window.open(ipo.applyLink, "_blank")} style={{
                         flex: 1, padding: "10px", borderRadius: 10, border: "none",
                         background: "linear-gradient(135deg, #22c55e, #16a34a)",
                         color: "#FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
                       }}>📱 Apply Now</button>
                     )}
                     {ipo.status === "upcoming" && (
-                      <button style={{
+                      <button onClick={() => window.open(ipo.applyLink, "_blank")} style={{
                         flex: 1, padding: "10px", borderRadius: 10, border: "none",
                         background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
                         color: "#FFF", fontSize: 12, fontWeight: 700, cursor: "pointer",
@@ -311,9 +305,8 @@ export default function IPOTracker({ isDark = true }) {
                       borderRadius: 10, border: `1px solid ${border}`,
                     }}>
                       {[
-                        ["Lot Size", `${ipo.lotSize} shares`],
-                        ["Min Investment", `₹${ipo.minInvestment.toLocaleString('en-IN')}`],
-                        ["Rating", ipo.rating],
+                        ipo.lotSize ? ["Lot Size", `${ipo.lotSize} shares`] : null,
+                        ipo.minInvestment ? ["Min Investment", `₹${Math.round(ipo.minInvestment).toLocaleString("en-IN")}`] : null,
                         ipo.subscription > 0 ? ["Subscription", `${ipo.subscription}x`] : null,
                       ].filter(Boolean).map(([label, value]) => (
                         <div key={label} style={{
@@ -347,4 +340,4 @@ export default function IPOTracker({ isDark = true }) {
       </div>
     </div>
   );
-}
+                                     }
