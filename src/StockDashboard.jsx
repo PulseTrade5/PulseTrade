@@ -11,7 +11,6 @@ import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
 import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
-
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
   gold: "#F59E0B", goldLight: "#FFFBEB", goldDim: "#D97706",
