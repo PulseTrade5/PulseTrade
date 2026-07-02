@@ -140,8 +140,8 @@ export default function LandingPage({ onLogin }) {
           }}>
             🚀 5 Din FREE Trial Shuru Karo
           </button>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0 }}>
-            No credit card • Cancel anytime
+          <p style={{ fontSize: 12, color: COLORS.gold, margin: 0, fontWeight: 700 }}>
+            🔢 Technical + Numerology — Double Confirmation Har Trade Pe
           </p>
         </div>
 
