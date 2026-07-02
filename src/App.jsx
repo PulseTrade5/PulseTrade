@@ -9,7 +9,6 @@ import BottomNav from './BottomNav';
 import PulseScreener from './PulseScreener';
 import NumerologyPanel from './NumerologyPanel';
 import Academy from './Academy';
-import IPOTracker from './IPOTracker';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -410,8 +409,6 @@ function App() {
         return <NumerologyPanel isDark={isDark} />;
       case 'academy':
         return <Academy isDark={isDark} />;
-      case 'ipo':
-        return <IPOTracker isDark={isDark} />;
       case 'settings':
         return (
           <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
