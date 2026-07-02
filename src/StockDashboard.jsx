@@ -1039,7 +1039,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <NumerologyInsightCard isDark={dark} C={C} />
               <GlobalMarkets isDark={dark} />
               <FearGreedMeter isDark={dark} />
-              <FIITracker />
+              
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
 
               <div style={cardStyle}>
