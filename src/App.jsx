@@ -9,6 +9,8 @@ import BottomNav from './BottomNav';
 import PulseScreener from './PulseScreener';
 import NumerologyPanel from './NumerologyPanel';
 import Academy from './Academy';
+import BlogList from './BlogList';
+import BlogPost from './BlogPost';
 
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -380,6 +382,8 @@ function App() {
   if (path === '/refund') return <RefundPage />;
   if (path === '/contact') return <ContactPage />;
   if (path === '/payment-status') return <PaymentStatusPage />;
+  if (path === '/blog') return <BlogList />;
+  if (path.startsWith('/blog/')) return <BlogPost slug={path.replace('/blog/', '')} />;
 
   if (showSplash) return <SplashScreen />;
   if (loadingSession || loadingProfile) return <SplashScreen />;
