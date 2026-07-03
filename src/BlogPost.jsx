@@ -11,6 +11,19 @@ export default function BlogPost({ slug }) {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareData = { title: post?.title || 'PulseTrade Blog', text: post?.excerpt || '', url };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
+    } else {
+      navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     supabase
@@ -69,7 +82,12 @@ export default function BlogPost({ slug }) {
         <div style={{ padding: '32px 20px 0' }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, backgroundColor: COLORS.goldLight, padding: '3px 10px', borderRadius: 20 }}>{post.category}</span>
           <h1 style={{ fontSize: 26, fontWeight: 900, margin: '14px 0 8px', lineHeight: 1.3 }}>{post.title}</h1>
-          <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 24 }}>{new Date(post.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+            <div style={{ fontSize: 12, color: COLORS.muted }}>{new Date(post.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+            <button onClick={handleShare} style={{ fontSize: 12, fontWeight: 700, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.border}`, backgroundColor: 'transparent', color: COLORS.text, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {copied ? '✅ Copied!' : '📤 Share'}
+            </button>
+          </div>
 
           <div style={{ fontSize: 15, lineHeight: 1.9, color: COLORS.text, whiteSpace: 'pre-wrap' }}>
             {post.content}
