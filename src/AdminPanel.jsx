@@ -26,6 +26,13 @@ function getStatus(profile) {
   return getDaysLeft(profile.trial_start_date) > 0 ? 'trial' : 'expired';
 }
 
+function slugify(text) {
+  return text.toLowerCase().trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function StatusBadge({ status }) {
   const config = {
     paid: { label: '💰 Paid', color: COLORS.green, bg: COLORS.greenLight },
@@ -53,6 +60,12 @@ export default function AdminPanel({ user, onLogout }) {
   const [replying, setReplying] = useState(false);
   const [expandedUser, setExpandedUser] = useState(null);
 
+  // BLOG STATE
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [editingPost, setEditingPost] = useState(null); // null = closed, {} = new, {...} = editing
+  const [postForm, setPostForm] = useState({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
+  const [savingPost, setSavingPost] = useState(false);
+
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const fetchProfiles = async () => {
@@ -78,11 +91,17 @@ export default function AdminPanel({ user, onLogout }) {
     setSupportMessages(data || []);
   };
 
+  const fetchBlogPosts = async () => {
+    const { data } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+    setBlogPosts(data || []);
+  };
+
   useEffect(() => {
     if (isAdmin) {
       fetchProfiles();
       fetchReferrals();
       fetchSupportMessages();
+      fetchBlogPosts();
     }
   }, [isAdmin]);
 
@@ -161,8 +180,71 @@ export default function AdminPanel({ user, onLogout }) {
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
+  // BLOG HANDLERS
+  const openNewPost = () => {
+    setPostForm({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
+    setEditingPost({});
+  };
+
+  const openEditPost = (post) => {
+    setPostForm({
+      title: post.title || '', slug: post.slug || '', excerpt: post.excerpt || '',
+      content: post.content || '', category: post.category || 'Numerology',
+      meta_description: post.meta_description || '', published: post.published || false,
+    });
+    setEditingPost(post);
+  };
+
+  const handleSavePost = async () => {
+    if (!postForm.title.trim() || !postForm.content.trim()) {
+      alert('Title aur Content dono zaroori hain');
+      return;
+    }
+    setSavingPost(true);
+    const slug = postForm.slug.trim() || slugify(postForm.title);
+    const payload = { ...postForm, slug, updated_at: new Date().toISOString() };
+
+    let error;
+    if (editingPost?.id) {
+      ({ error } = await supabase.from('blog_posts').update(payload).eq('id', editingPost.id));
+    } else {
+      ({ error } = await supabase.from('blog_posts').insert([payload]));
+    }
+
+    if (error) {
+      setSuccessMsg(`❌ Save fail hua: ${error.message}`);
+    } else {
+      setSuccessMsg(`✅ Post ${editingPost?.id ? 'update' : 'create'} ho gaya!`);
+      setEditingPost(null);
+      fetchBlogPosts();
+    }
+    setSavingPost(false);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleTogglePublish = async (post) => {
+    const { error } = await supabase.from('blog_posts').update({ published: !post.published }).eq('id', post.id);
+    if (!error) {
+      setSuccessMsg(post.published ? `📝 Draft mein daal diya` : `🚀 Post publish ho gaya!`);
+      fetchBlogPosts();
+    }
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!window.confirm(`"${post.title}" delete karna chahte ho?`)) return;
+    const { error } = await supabase.from('blog_posts').delete().eq('id', post.id);
+    if (!error) {
+      setSuccessMsg(`🗑️ Post delete ho gaya`);
+      fetchBlogPosts();
+    }
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' };
   const rowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` };
+  const inputStyle = { width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 10, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 14, fontFamily: 'Inter, sans-serif' };
+  const labelStyle = { fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 6 };
 
   // Aaj ke signups
   const todaySignups = profiles.filter(p => {
@@ -188,11 +270,11 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
 
         {/* TABS */}
-        <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support']].map(([key, label]) => (
+        <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['blog', '📝 Blog']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
-              borderRadius: 10, border: 'none',
+              borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
               backgroundColor: activeTab === key ? COLORS.gold : 'transparent',
               color: activeTab === key ? '#FFF' : COLORS.muted,
               cursor: 'pointer',
@@ -398,6 +480,42 @@ export default function AdminPanel({ user, onLogout }) {
               )}
             </>
           )}
+
+          {/* BLOG TAB */}
+          {activeTab === 'blog' && (
+            <>
+              <button onClick={openNewPost} style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 16 }}>
+                ✍️ Naya Post Likho
+              </button>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📝 BLOG POSTS ({blogPosts.length})</div>
+                {blogPosts.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi post nahi hai.</p>
+                ) : blogPosts.map(post => (
+                  <div key={post.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div style={{ flex: 1, marginRight: 8 }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{post.title}</div>
+                        <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
+                          {post.category} • {new Date(post.created_at).toLocaleDateString('en-IN')}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: post.published ? COLORS.green : COLORS.gold, backgroundColor: post.published ? COLORS.greenLight : COLORS.goldLight, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                        {post.published ? '🟢 Live' : '📝 Draft'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => openEditPost(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.blue, cursor: 'pointer', fontWeight: 700 }}>✏️ Edit</button>
+                      <button onClick={() => handleTogglePublish(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: post.published ? COLORS.goldLight : COLORS.green, color: post.published ? COLORS.goldDim : '#FFF', cursor: 'pointer', fontWeight: 700 }}>
+                        {post.published ? '📝 Unpublish' : '🚀 Publish'}
+                      </button>
+                      <button onClick={() => handleDeletePost(post)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🗑️</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -418,6 +536,42 @@ export default function AdminPanel({ user, onLogout }) {
               {saving ? '⏳ Save ho raha hai...' : '✅ Confirm Karo'}
             </button>
             <button onClick={() => setEditUser(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* BLOG POST MODAL */}
+      {editingPost !== null && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 200, padding: 20, overflowY: 'auto' }}>
+          <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, marginTop: 20, marginBottom: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? '✏️ Post Edit Karo' : '✍️ Naya Post'}</div>
+
+            <div style={labelStyle}>TITLE</div>
+            <input value={postForm.title} onChange={e => setPostForm(f => ({ ...f, title: e.target.value }))} placeholder="Post ka title..." style={inputStyle} />
+
+            <div style={labelStyle}>SLUG (URL) — khali chodo, auto ban jayega</div>
+            <input value={postForm.slug} onChange={e => setPostForm(f => ({ ...f, slug: e.target.value }))} placeholder="lucky-number-kaise-nikale" style={{ ...inputStyle, fontFamily: 'monospace' }} />
+
+            <div style={labelStyle}>CATEGORY</div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+              {['Numerology', 'Trading Tips', 'Market Analysis'].map(cat => (
+                <button key={cat} onClick={() => setPostForm(f => ({ ...f, category: cat }))} style={{ flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700, borderRadius: 8, border: 'none', backgroundColor: postForm.category === cat ? COLORS.gold : COLORS.bg, color: postForm.category === cat ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{cat}</button>
+              ))}
+            </div>
+
+            <div style={labelStyle}>EXCERPT (short summary, listing page ke liye)</div>
+            <textarea value={postForm.excerpt} onChange={e => setPostForm(f => ({ ...f, excerpt: e.target.value }))} placeholder="1-2 line ka summary..." rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+
+            <div style={labelStyle}>CONTENT (poora post)</div>
+            <textarea value={postForm.content} onChange={e => setPostForm(f => ({ ...f, content: e.target.value }))} placeholder="Poora blog post likho..." rows={10} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }} />
+
+            <div style={labelStyle}>META DESCRIPTION (Google search ke liye, ~150 chars)</div>
+            <textarea value={postForm.meta_description} onChange={e => setPostForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Google search results mein ye line dikhegi..." rows={2} style={{ ...inputStyle, resize: 'vertical', marginBottom: 20 }} />
+
+            <button onClick={handleSavePost} disabled={savingPost} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10 }}>
+              {savingPost ? '⏳ Save ho raha hai...' : '💾 Save Karo'}
+            </button>
+            <button onClick={() => setEditingPost(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
           </div>
         </div>
       )}
