@@ -270,7 +270,7 @@ export default function LandingPage({ onLogin }) {
           </div>
           <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 12 }}>🔱 हर हर महादेव 🔱</div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
-            {[['Terms', '/terms'], ['Privacy', '/privacy'], ['Refund', '/refund'], ['Contact', '/contact']].map(([l, h]) => (
+            {[['Blog', '/blog'], ['Terms', '/terms'], ['Privacy', '/privacy'], ['Refund', '/refund'], ['Contact', '/contact']].map(([l, h]) => (
               <span key={l} style={{ display: 'flex', alignItems: 'center' }}>
                 <a href={h} style={{ fontSize: 12, color: COLORS.muted, textDecoration: 'none', padding: '0 8px' }}>{l}</a>
                 <span style={{ color: COLORS.surfaceBorder }}>•</span>
@@ -283,4 +283,4 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-}
+              }
