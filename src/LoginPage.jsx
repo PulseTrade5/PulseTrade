@@ -330,6 +330,9 @@ export default function LoginPage() {
                 <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
                   New user? Naam + Email daalo — account + 5-din trial automatically shuru hoga ✨
                 </p>
+                <p style={{ fontSize: 11, color: COLORS.green, marginTop: 8, textAlign: 'center', fontWeight: 600 }}>
+                  🔒 Tumhara data 100% private hai, kisi ko share nahi hota
+                </p>
               </div>
             ) : (
               <div>
