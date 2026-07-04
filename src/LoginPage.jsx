@@ -242,7 +242,7 @@ export default function LoginPage() {
             ))}
           </div>
           <div style={{ fontSize: 12, color: '#FFF', fontWeight: 600 }}>
-            <span style={{ color: COLORS.gold, fontWeight: 800 }}>500+</span> Indian traders already joined! 🚀
+            🇮🇳 <span style={{ color: COLORS.gold, fontWeight: 800 }}>India Ka Pehla</span> Technical + Numerology Trading Tool 🚀
           </div>
         </div>
 
