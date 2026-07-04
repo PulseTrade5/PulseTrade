@@ -10,6 +10,15 @@ const COLORS = {
   purple: "#7C3AED", purpleLight: "#EDE9FE",
 };
 
+const MONTHS = [
+  ['01', 'Jan'], ['02', 'Feb'], ['03', 'Mar'], ['04', 'Apr'],
+  ['05', 'May'], ['06', 'Jun'], ['07', 'Jul'], ['08', 'Aug'],
+  ['09', 'Sep'], ['10', 'Oct'], ['11', 'Nov'], ['12', 'Dec'],
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: CURRENT_YEAR - 1939 }, (_, i) => String(CURRENT_YEAR - i));
+
 function getMsUntilMidnight() {
   const now = new Date();
   const midnight = new Date(now);
@@ -48,7 +57,9 @@ function getRashi(dob) {
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
-  const [dob, setDob] = useState('');
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState('email');
   const [loading, setLoading] = useState(false);
@@ -65,6 +76,7 @@ export default function LoginPage() {
     return () => clearInterval(t);
   }, []);
 
+  const dob = (dobDay && dobMonth && dobYear) ? `${dobYear}-${dobMonth}-${dobDay}` : '';
   const rashi = getRashi(dob);
 
   const handleSendOtp = async () => {
@@ -179,6 +191,10 @@ export default function LoginPage() {
     boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
   };
 
+  const dobSelectStyle = {
+    ...inputStyle, padding: '13px 8px', fontSize: 14, textAlign: 'center',
+  };
+
   const cardStyle = {
     backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`,
     borderRadius: 16, padding: 18, marginBottom: 14,
@@ -274,13 +290,20 @@ export default function LoginPage() {
                 <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
                   Janam Tithi 🪐 <span style={{ fontSize: 10, color: COLORS.mutedLight, fontWeight: 400 }}>(optional — Pulse Astro ke liye)</span>
                 </label>
-                <input
-                  type="date"
-                  value={dob}
-                  onChange={e => setDob(e.target.value)}
-                  max={new Date().toISOString().split('T')[0]}
-                  style={{ ...inputStyle, marginBottom: 8 }}
-                />
+                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+                  <select value={dobDay} onChange={e => setDobDay(e.target.value)} style={dobSelectStyle}>
+                    <option value="">Din</option>
+                    {DAYS.map(d => <option key={d} value={d}>{parseInt(d)}</option>)}
+                  </select>
+                  <select value={dobMonth} onChange={e => setDobMonth(e.target.value)} style={dobSelectStyle}>
+                    <option value="">Mahina</option>
+                    {MONTHS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                  </select>
+                  <select value={dobYear} onChange={e => setDobYear(e.target.value)} style={dobSelectStyle}>
+                    <option value="">Saal</option>
+                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                  </select>
+                </div>
 
                 {rashi && (
                   <div style={{
