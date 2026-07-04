@@ -18,6 +18,15 @@ const LIGHT = {
   purple: "#7C3AED", purpleLight: "#F5F0FF",
 };
 
+const MONTHS = [
+  ['01', 'Jan'], ['02', 'Feb'], ['03', 'Mar'], ['04', 'Apr'],
+  ['05', 'May'], ['06', 'Jun'], ['07', 'Jul'], ['08', 'Aug'],
+  ['09', 'Sep'], ['10', 'Oct'], ['11', 'Nov'], ['12', 'Dec'],
+];
+const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = Array.from({ length: CURRENT_YEAR - 1939 }, (_, i) => String(CURRENT_YEAR - i));
+
 // Chaldean Numerology Table
 const CHALDEAN = {
   A:1,I:1,J:1,Q:1,Y:1,
@@ -101,7 +110,9 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
   const C = isDark ? DARK : LIGHT;
   const [activeSection, setActiveSection] = useState('lucky');
   const [name, setName] = useState(userName || '');
-  const [dob, setDob] = useState(userDob || '');
+  const [dobDay, setDobDay] = useState('');
+  const [dobMonth, setDobMonth] = useState('');
+  const [dobYear, setDobYear] = useState('');
   const [lpn, setLpn] = useState(null);
   const [personalNum, setPersonalNum] = useState(null);
   const [stockName, setStockName] = useState('');
@@ -111,9 +122,18 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
   const [calculated, setCalculated] = useState(false);
 
   useEffect(() => {
-    if (userDob) setDob(userDob);
+    if (userDob) {
+      const parts = userDob.split('-');
+      if (parts.length === 3) {
+        setDobYear(parts[0]);
+        setDobMonth(parts[1]);
+        setDobDay(parts[2]);
+      }
+    }
     if (userName) setName(userName);
   }, [userDob, userName]);
+
+  const dob = (dobDay && dobMonth && dobYear) ? `${dobYear}-${dobMonth}-${dobDay}` : '';
 
   const calculate = () => {
     if (!dob) { alert('DOB daalo pehle!'); return; }
@@ -138,6 +158,13 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
   const cardStyle = {
     backgroundColor: C.surface, border: `1px solid ${C.border}`,
     borderRadius: 16, padding: 18, marginBottom: 14,
+  };
+
+  const dobSelectStyle = {
+    flex: 1, padding: '10px 8px', fontSize: 13, textAlign: 'center',
+    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFF',
+    border: `1.5px solid ${C.border}`, borderRadius: 10,
+    color: C.text, outline: 'none',
   };
 
   const sections = [
@@ -187,18 +214,20 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
                 boxSizing: 'border-box',
               }}
             />
-            <input
-              type="date"
-              value={dob}
-              onChange={e => setDob(e.target.value)}
-              style={{
-                width: '100%', padding: '10px 14px', fontSize: 13,
-                backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#FFF',
-                border: `1.5px solid ${C.border}`, borderRadius: 10,
-                color: C.text, outline: 'none', marginBottom: 12,
-                boxSizing: 'border-box',
-              }}
-            />
+            <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+              <select value={dobDay} onChange={e => setDobDay(e.target.value)} style={dobSelectStyle}>
+                <option value="">Din</option>
+                {DAYS.map(d => <option key={d} value={d}>{parseInt(d)}</option>)}
+              </select>
+              <select value={dobMonth} onChange={e => setDobMonth(e.target.value)} style={dobSelectStyle}>
+                <option value="">Mahina</option>
+                {MONTHS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+              </select>
+              <select value={dobYear} onChange={e => setDobYear(e.target.value)} style={dobSelectStyle}>
+                <option value="">Saal</option>
+                {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+              </select>
+            </div>
             <button onClick={calculate} style={{
               width: '100%', padding: '13px', borderRadius: 12, border: 'none',
               background: `linear-gradient(135deg, ${C.purple}, #A78BFA)`,
