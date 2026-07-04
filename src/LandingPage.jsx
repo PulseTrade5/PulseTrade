@@ -164,8 +164,8 @@ export default function LandingPage({ onLogin }) {
             borderRadius: 16, border: 'none',
             background: 'linear-gradient(160deg, #6366F1, #4F46E5 55%, #0EA5A4)',
             color: '#FFF', cursor: 'pointer',
-            boxShadow: '0 12px 28px rgba(79,70,229,0.45), 0 1px 0 rgba(255,255,255,0.3) inset',
-            marginBottom: 12, position: 'relative', zIndex: 1,
+            boxShadow: '0 6px 0 #3730A3, 0 16px 32px rgba(79,70,229,0.5)',
+            marginBottom: 18, position: 'relative', zIndex: 1,
           }}>
             🚀 5 Din FREE Trial Shuru Karo
           </button>
@@ -260,11 +260,11 @@ export default function LandingPage({ onLogin }) {
                 : 'linear-gradient(160deg, #FFFFFF, #FAFBFF)',
               border: plan.popular ? 'none' : `1px solid ${COLORS.surfaceBorder}`,
               borderRadius: 16, padding: '16px',
-              marginBottom: 10,
+              marginBottom: 14,
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
               boxShadow: plan.popular
-                ? '0 12px 28px rgba(79,70,229,0.32), 0 1px 0 rgba(255,255,255,0.25) inset'
-                : '0 4px 14px rgba(30,27,75,0.05), 0 1px 0 rgba(255,255,255,0.9) inset',
+                ? '0 6px 0 #3730A3, 0 16px 30px rgba(79,70,229,0.32)'
+                : `0 4px 0 ${COLORS.surfaceBorder}, 0 10px 20px rgba(30,27,75,0.06)`,
             }}>
               <div>
                 <div style={{ fontWeight: 700, fontSize: 14, color: plan.popular ? '#FFF' : COLORS.text }}>{plan.label}</div>
@@ -280,7 +280,7 @@ export default function LandingPage({ onLogin }) {
             borderRadius: 16, border: 'none',
             background: 'linear-gradient(160deg, #1E1B4B, #312E81)',
             color: '#FFF', cursor: 'pointer',
-            boxShadow: '0 10px 24px rgba(30,27,75,0.35), 0 1px 0 rgba(255,255,255,0.15) inset',
+            boxShadow: '0 6px 0 #0F0D2E, 0 14px 28px rgba(30,27,75,0.4)',
           }}>
             🎯 Abhi Subscribe Karo
           </button>
@@ -333,4 +333,4 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-                       }
+                }
