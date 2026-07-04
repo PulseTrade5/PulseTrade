@@ -4,14 +4,13 @@ import StockDashboard from './StockDashboard';
 import LoginPage from './LoginPage';
 import LandingPage from './LandingPage';
 import AdminPanel from './AdminPanel';
-import ChallengeBoard from './ChallengeBoard';
+import MuhuratCalendar from './MuhuratCalendar';
 import BottomNav from './BottomNav';
 import PulseScreener from './PulseScreener';
 import NumerologyPanel from './NumerologyPanel';
 import Academy from './Academy';
 import BlogList from './BlogList';
 import BlogPost from './BlogPost';
-
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
@@ -32,7 +31,6 @@ function GreetingToast({ name, show }) {
     </div>
   );
 }
-
 function SplashScreen() {
   const [dot, setDot] = useState(0);
   useEffect(() => {
@@ -89,20 +87,17 @@ function SplashScreen() {
     </div>
   );
 }
-
 const LIGHT = {
   bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
   goldLight: '#FEF3C7', goldDim: '#D97706',
   text: '#0F172A', muted: '#64748B', green: '#059669',
   greenLight: '#ECFDF5', red: '#DC2626', border: '#E2E8F0',
 };
-
 const DARK = {
   bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
   text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
   red: '#D1453B', border: '#30363D',
 };
-
 function TermsPage() {
   return (
     <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
@@ -122,7 +117,6 @@ function TermsPage() {
     </div>
   );
 }
-
 function RefundPage() {
   return (
     <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
@@ -140,7 +134,6 @@ function RefundPage() {
     </div>
   );
 }
-
 function ContactPage() {
   return (
     <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
@@ -155,7 +148,6 @@ function ContactPage() {
     </div>
   );
 }
-
 function PaymentStatusPage() {
   const [status, setStatus] = useState('loading');
   const [data, setData] = useState(null);
@@ -194,7 +186,6 @@ function PaymentStatusPage() {
     </div>
   );
 }
-
 function TrialExpiredPage({ user, onLogout }) {
   return (
     <div style={{ backgroundColor: LIGHT.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: LIGHT.text }}>
@@ -238,7 +229,6 @@ function TrialExpiredPage({ user, onLogout }) {
     </div>
   );
 }
-
 function ProfileTab({ profile, session, isDark }) {
   const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : null;
   const trialEnd = trialStart ? new Date(trialStart.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
@@ -296,7 +286,6 @@ function ProfileTab({ profile, session, isDark }) {
     </div>
   );
 }
-
 function App() {
   const [session, setSession] = useState(null);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -308,12 +297,10 @@ function App() {
   const [activeTab, setActiveTab] = useState('check');
   const [isDark, setIsDark] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
-
   useEffect(() => {
     const t = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(t);
   }, []);
-
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session?.user ? session : null);
@@ -325,7 +312,6 @@ function App() {
     });
     return () => subscription.unsubscribe();
   }, []);
-
   useEffect(() => {
     if (!session?.user) { setProfile(null); return; }
     setLoadingProfile(true);
@@ -351,20 +337,17 @@ function App() {
         setLoadingProfile(false);
       });
   }, [session]);
-
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setShowLogin(false);
     setActiveTab('check');
   };
-
   const handleWelcomeDone = async () => {
     setShowWelcome(false);
     if (session?.user?.id) {
       await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
     }
   };
-
   const checkAccess = () => {
     if (!profile) return 'loading';
     if (profile.is_subscribed) {
@@ -376,7 +359,6 @@ function App() {
     if (diffDays <= 5) return 'trial';
     return 'expired';
   };
-
   const path = window.location.pathname;
   if (path === '/terms') return <TermsPage />;
   if (path === '/refund') return <RefundPage />;
@@ -384,27 +366,22 @@ function App() {
   if (path === '/payment-status') return <PaymentStatusPage />;
   if (path === '/blog') return <BlogList />;
   if (path.startsWith('/blog/')) return <BlogPost slug={path.replace('/blog/', '')} />;
-
   if (showSplash) return <SplashScreen />;
   if (loadingSession || loadingProfile) return <SplashScreen />;
-
   if (!session) {
     if (showLogin) return <LoginPage />;
     return <LandingPage onLogin={() => setShowLogin(true)} />;
   }
-
   if (path === '/admin') return <AdminPanel user={session.user} onLogout={handleLogout} />;
-
   const access = checkAccess();
   if (access === 'loading') return <SplashScreen />;
   if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
-
   const renderTab = () => {
     switch (activeTab) {
       case 'check':
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
-      case 'challenge':
-        return <ChallengeBoard user={session.user} onBack={() => setActiveTab('check')} />;
+      case 'muhurat':
+        return <MuhuratCalendar isDark={isDark} userDob={profile?.dob} />;
       case 'watchlist':
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
       case 'screener':
@@ -437,7 +414,6 @@ function App() {
         return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
     }
   };
-
   return (
     <>
       <GreetingToast name={profile?.name} show={showGreeting} />
@@ -452,5 +428,4 @@ function App() {
     </>
   );
 }
-
 export default App;
