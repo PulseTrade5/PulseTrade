@@ -1,21 +1,21 @@
 import { useState, useEffect } from 'react';
 
 const DARK = {
-  bg: "#0D1117", surface: "#161B22", border: "#30363D",
-  gold: "#D8A33D", goldLight: "#2D2008", goldDim: "#F0B429",
-  green: "#3FAE7C", greenLight: "#0D2B1F",
+  bg: "#100E1F", surface: "#1A1830", border: "#2E2A52",
+  gold: "#8B5CF6", goldLight: "#241F42", goldDim: "#A78BFA",
+  green: "#4ADE80", greenLight: "#0F2A1E",
   red: "#F87171", redLight: "#2D1515",
-  text: "#E8E6E0", muted: "#8B92A0",
-  purple: "#A78BFA", purpleLight: "#1E1B4B",
+  text: "#F1F0FF", muted: "#9C9AC4",
+  purple: "#8B5CF6", purpleLight: "#241F42",
 };
 
 const LIGHT = {
-  bg: "#F4F6FA", surface: "#FFFFFF", border: "#E2E8F0",
-  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
-  green: "#059669", greenLight: "#ECFDF5",
-  red: "#DC2626", redLight: "#FEF2F2",
-  text: "#0F172A", muted: "#64748B",
-  purple: "#7C3AED", purpleLight: "#F5F0FF",
+  bg: "#F5F7FC", surface: "#FFFFFF", border: "#E5E9F5",
+  gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
+  green: "#16A34A", greenLight: "#F0FDF4",
+  red: "#EF4444", redLight: "#FEF2F2",
+  text: "#1E1B4B", muted: "#6B7280",
+  purple: "#4F46E5", purpleLight: "#EEF2FF",
 };
 
 const MONTHS = [
@@ -181,27 +181,36 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', color: C.text }}>
 
       {/* HEADER */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap');
+        @keyframes np-gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+      `}</style>
       <div style={{
-        background: isDark
-          ? 'linear-gradient(135deg, #0D0A1A, #1A0D2E)'
-          : 'linear-gradient(135deg, #F5F0FF, #EDE9FE)',
-        border: `1.5px solid ${C.purple}`,
-        borderRadius: 20, padding: '20px 18px', marginBottom: 16,
-        boxShadow: `0 4px 24px ${C.purple}22`,
+        position: 'relative', overflow: 'hidden',
+        background: 'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 55%, #0EA5A4 100%)',
+        backgroundSize: '200% 200%',
+        animation: 'np-gradient-shift 8s ease-in-out infinite',
+        borderRadius: 24, padding: '22px 18px', marginBottom: 16,
+        boxShadow: '0 16px 36px rgba(79,70,229,0.28), 0 2px 0 rgba(255,255,255,0.25) inset',
       }}>
-        <div style={{ fontSize: 10, letterSpacing: 2, color: C.purple, fontWeight: 800, marginBottom: 6 }}>
-          🔢 PULSE NUMEROLOGY
+        <div style={{
+          position: 'absolute', top: 0, left: 0, right: 0, height: '50%',
+          background: 'linear-gradient(180deg, rgba(255,255,255,0.16), transparent)',
+          borderRadius: '24px 24px 0 0', pointerEvents: 'none',
+        }} />
+        <div style={{ fontSize: 9.5, letterSpacing: 2.5, color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase', position: 'relative', zIndex: 1 }}>
+          🔢 Pulse Numerology
         </div>
-        <div style={{ fontSize: 20, fontWeight: 900, color: C.text, marginBottom: 4 }}>
+        <div style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 20, fontWeight: 800, color: '#FFF', marginBottom: 6, position: 'relative', zIndex: 1 }}>
           Trading + Numbers = 🎯
         </div>
-        <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', lineHeight: 1.6, position: 'relative', zIndex: 1 }}>
           Chaldean Numerology se apna lucky number, stock compatibility aur weekly forecast dekho!
         </div>
 
         {/* Input fields */}
         {!calculated && (
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 16, position: 'relative', zIndex: 1 }}>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
