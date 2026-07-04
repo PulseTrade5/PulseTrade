@@ -8,13 +8,14 @@ export default function MarketNewsBrief({ isDark, C }) {
   const getBrief = async () => {
     setLoading(true);
     try {
-      const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+      const now = new Date();
+      const today = now.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
       const response = await fetch('/api/ai-coach', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          question: `Aaj ${today} hai. NSE/BSE Indian stock market ke liye ek chhota market brief do — 3-4 lines mein Hinglish mein. Cover karo: 1) Global cues (US markets, Asian markets, crude/gold trend) 2) Aaj Nifty/Sensex ka overall mood kaisa reh sakta hai 3) Kis sector pe dhyan rakhna chahiye. Simple, general terms mein rakho — specific numbers ya predictions mat do, sirf general sentiment/context do.`,
-          context: `Date: ${today}, Market: NSE/BSE India`
+          question: `AAJ KI EXACT TAREEKH HAI: ${today} (year ${now.getFullYear()}). Kisi bhi aur saal ka mention mat karo, sirf yehi tareekh use karo. NSE/BSE Indian stock market ke liye ek chhota market brief do — 3-4 lines mein Hinglish mein. Cover karo: 1) Global cues (US markets, Asian markets, crude/gold trend) 2) Aaj Nifty/Sensex ka overall mood kaisa reh sakta hai 3) Kis sector pe dhyan rakhna chahiye. Simple, general terms mein rakho — specific numbers ya predictions mat do, sirf general sentiment/context do.`,
+          context: `Exact Date: ${today}, Year: ${now.getFullYear()}, Market: NSE/BSE India`
         })
       });
       const data = await response.json();
@@ -27,7 +28,7 @@ export default function MarketNewsBrief({ isDark, C }) {
     setLoading(false);
   };
 
-  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' });
+  const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
     <div style={{
