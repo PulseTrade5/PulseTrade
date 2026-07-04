@@ -6,6 +6,7 @@ import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
 import MarketNewsBrief from './MarketNewsBrief';
+import MuhuratCalendar from './MuhuratCalendar';
 import FearGreedMeter from './FearGreedMeter';
 import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
@@ -1028,6 +1029,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
               <MarketNewsBrief isDark={dark} C={C} />
+              <MuhuratCalendar isDark={dark} userDob={userDob} userName={userName} />
               <FearGreedMeter isDark={dark} />
               
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
