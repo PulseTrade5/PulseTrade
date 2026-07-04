@@ -49,6 +49,7 @@ const INSIGHTS_LOW = [
 
 export default function PulseSyncScore({ userDob, isDark, C }) {
   const [score, setScore] = useState(null);
+  const [displayScore, setDisplayScore] = useState(0);
   const [insight, setInsight] = useState('');
   const [factors, setFactors] = useState({ mood: null, lucky: null, matched: false });
 
@@ -70,85 +71,113 @@ export default function PulseSyncScore({ userDob, isDark, C }) {
     setInsight(pool[seededVariance(seed + '_insight', pool.length)]);
   }, [userDob]);
 
+  useEffect(() => {
+    if (score === null) return;
+    let frame;
+    const duration = 900;
+    const start = performance.now();
+    const tick = (now) => {
+      const progress = Math.min((now - start) / duration, 1);
+      setDisplayScore(Math.floor(progress * score));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [score]);
+
   if (score === null) return null;
 
-  const glowColor = score >= 70 ? (C.green || '#3FAE7C') : score >= 45 ? C.gold : (C.red || '#F87171');
+  const isPositive = score >= 45;
+  const trendColor = score >= 70 ? '#16A34A' : score >= 45 ? '#4F46E5' : '#EF4444';
   const syncLabel = score >= 70 ? 'High Sync' : score >= 45 ? 'Moderate Sync' : 'Low Sync';
+  const arcDeg = displayScore * 3.6;
 
   return (
     <div style={{
-      background: isDark
-        ? 'linear-gradient(160deg, #161B22, #0D1117)'
-        : 'linear-gradient(160deg, #FFFFFF, #F4F6FA)',
-      border: `1.5px solid ${glowColor}55`,
-      borderRadius: 20, padding: '26px 20px', marginBottom: 16, textAlign: 'center',
-      boxShadow: `0 0 40px ${glowColor}14`,
-      position: 'relative', overflow: 'hidden',
+      position: 'relative', overflow: 'hidden', textAlign: 'center',
+      background: 'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 55%, #0EA5A4 100%)',
+      backgroundSize: '200% 200%',
+      animation: 'pss-gradient-shift 8s ease-in-out infinite',
+      borderRadius: 26, padding: '26px 20px', marginBottom: 16,
+      boxShadow: '0 16px 40px rgba(79,70,229,0.3), 0 2px 0 rgba(255,255,255,0.25) inset',
     }}>
       <style>{`
-        @keyframes pss-breathe { 0%,100% { transform: scale(0.94); opacity: 0.55; } 50% { transform: scale(1.06); opacity: 1; } }
+        @keyframes pss-gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         @keyframes pss-beat { to { stroke-dashoffset: -400; } }
       `}</style>
 
-      <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, fontWeight: 700, marginBottom: 18 }}>
-        🔱 AAJ KA PULSE SYNC SCORE
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '50%',
+        background: 'linear-gradient(180deg, rgba(255,255,255,0.16), transparent)',
+        borderRadius: '26px 26px 0 0', pointerEvents: 'none',
+      }} />
+
+      <div style={{ fontSize: 10, letterSpacing: 2, color: 'rgba(255,255,255,0.85)', fontWeight: 700, marginBottom: 18, textTransform: 'uppercase', position: 'relative', zIndex: 1 }}>
+        🔱 Aaj Ka Pulse Sync Score
       </div>
 
-      <div style={{ position: 'relative', width: 150, height: 150, margin: '0 auto 16px' }}>
+      <div style={{ position: 'relative', width: 132, height: 132, margin: '0 auto 18px' }}>
         <div style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          background: `radial-gradient(circle, ${glowColor}55, transparent 70%)`,
-          animation: 'pss-breathe 2.6s ease-in-out infinite',
+          background: `conic-gradient(from -90deg, #FFFFFF 0deg, #FFFFFF ${arcDeg}deg, rgba(255,255,255,0.25) ${arcDeg}deg, rgba(255,255,255,0.25) 360deg)`,
+          WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px))',
+          mask: 'radial-gradient(farthest-side, transparent calc(100% - 8px), #000 calc(100% - 8px))',
         }} />
         <div style={{
-          position: 'absolute', inset: 8, borderRadius: '50%',
-          border: `3px solid ${glowColor}44`,
+          position: 'absolute', inset: 12, borderRadius: '50%',
+          background: 'linear-gradient(160deg, #FFFFFF, #F3F4FA)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 6px 16px rgba(0,0,0,0.18), 0 1px 0 rgba(255,255,255,0.8) inset, 0 -4px 8px rgba(30,27,75,0.06) inset',
         }}>
           <div>
-            <div style={{ fontSize: 42, fontWeight: 900, color: glowColor, lineHeight: 1, textShadow: `0 0 18px ${glowColor}88` }}>
-              {score}<span style={{ fontSize: 18 }}>%</span>
+            <div style={{
+              fontFamily: "'Sora', system-ui, sans-serif", fontSize: 34, fontWeight: 800, lineHeight: 1,
+              background: 'linear-gradient(120deg, #4F46E5, #0EA5A4)',
+              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            }}>
+              {displayScore}
             </div>
-            <div style={{ fontSize: 10, color: C.muted, marginTop: 3, fontWeight: 700 }}>{syncLabel}</div>
+            <div style={{ fontSize: 9.5, color: '#6B7280', marginTop: 4, fontWeight: 700, letterSpacing: 0.5 }}>{syncLabel}</div>
           </div>
         </div>
       </div>
 
-      <div style={{ height: 32, marginBottom: 16 }}>
-        <svg viewBox="0 0 300 32" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
+      <div style={{ height: 26, marginBottom: 16, position: 'relative', zIndex: 1 }}>
+        <svg viewBox="0 0 300 26" preserveAspectRatio="none" style={{ width: '100%', height: '100%' }}>
           <path
-            d="M0,16 L60,16 L75,3 L90,29 L105,16 L300,16"
-            fill="none" stroke={glowColor} strokeWidth="2"
+            d="M0,13 L60,13 L75,3 L90,23 L105,13 L300,13"
+            fill="none" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.8"
             strokeDasharray="400" strokeDashoffset="400"
-            style={{ animation: 'pss-beat 2.6s linear infinite', filter: `drop-shadow(0 0 3px ${glowColor})` }}
+            style={{ animation: 'pss-beat 2.6s linear infinite' }}
           />
         </svg>
       </div>
 
       <div style={{
-        backgroundColor: `${glowColor}14`, border: `1px solid ${glowColor}33`,
-        borderRadius: 14, padding: '12px 16px', fontSize: 13, color: C.text, lineHeight: 1.6, marginBottom: 16,
+        backgroundColor: 'rgba(255,255,255,0.14)',
+        borderRadius: 14, padding: '13px 16px', fontSize: 12.5, color: '#FFF', lineHeight: 1.6, marginBottom: 16,
+        position: 'relative', zIndex: 1,
       }}>
         💡 {insight}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: 14, borderTop: `1px solid ${C.surfaceBorder}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-around', paddingTop: 15, borderTop: '1px solid rgba(255,255,255,0.2)', position: 'relative', zIndex: 1 }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: glowColor }}>{factors.mood}</div>
-          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Market Mood</div>
+          <div style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 16, fontWeight: 800, color: '#FFF' }}>{factors.mood}</div>
+          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.7)', marginTop: 3, letterSpacing: 0.8, textTransform: 'uppercase' }}>Market Mood</div>
         </div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: glowColor }}>{factors.lucky ?? '—'}</div>
-          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Lucky Number</div>
+          <div style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 16, fontWeight: 800, color: '#FFF' }}>{factors.lucky ?? '—'}</div>
+          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.7)', marginTop: 3, letterSpacing: 0.8, textTransform: 'uppercase' }}>Lucky Number</div>
         </div>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: glowColor }}>{factors.matched ? '⭐' : '—'}</div>
-          <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>Numerology</div>
+          <div style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 16, fontWeight: 800, color: '#FFF' }}>{factors.matched ? '⭐' : '—'}</div>
+          <div style={{ fontSize: 8.5, color: 'rgba(255,255,255,0.7)', marginTop: 3, letterSpacing: 0.8, textTransform: 'uppercase' }}>Numerology</div>
         </div>
       </div>
 
       {!userDob && (
-        <div style={{ fontSize: 11, color: C.muted, marginTop: 12 }}>
+        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 12, position: 'relative', zIndex: 1 }}>
           🪐 Profile mein DOB add karo — personal score ke liye
         </div>
       )}
