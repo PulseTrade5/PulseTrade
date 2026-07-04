@@ -80,7 +80,7 @@ export default function LandingPage({ onLogin }) {
               Founding Member Deal — Sirf 87 spots baaki!
             </div>
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)' }}>
-              ₹599 mein 2 Months + OG Trader Badge 🎁
+              ₹599 mein 2 Months 🎁
             </div>
           </div>
           <span style={{ fontSize: 18 }}>🏅</span>
