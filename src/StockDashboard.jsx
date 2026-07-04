@@ -220,9 +220,9 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   return (
     <div style={{
       background: `linear-gradient(160deg, ${C.surface}, ${accentLight})`,
-      borderRadius: 22, padding: '22px 20px', marginBottom: 16,
+      borderRadius: 22, padding: '22px 20px', marginBottom: 20,
       border: `1px solid ${accentColor}33`,
-      boxShadow: `0 10px 28px ${accentColor}22, 0 1px 0 rgba(255,255,255,0.6) inset`,
+      boxShadow: `0 6px 0 ${accentColor}55, 0 16px 32px ${accentColor}22`,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
@@ -938,10 +938,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   };
   const cardStyle = {
     backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
-    borderRadius: 20, padding: 18, marginBottom: 16,
+    borderRadius: 20, padding: 18, marginBottom: 20,
     boxShadow: dark
-      ? '0 10px 28px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.04) inset'
-      : '0 8px 24px rgba(30,27,75,0.07), 0 1px 0 rgba(255,255,255,0.9) inset',
+      ? `0 6px 0 ${C.surfaceBorder}, 0 14px 30px rgba(0,0,0,0.35)`
+      : `0 6px 0 ${C.surfaceBorder}, 0 12px 26px rgba(30,27,75,0.08)`,
     transition: 'all 0.3s ease',
   };
 
