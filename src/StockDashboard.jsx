@@ -11,6 +11,7 @@ import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
 import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
+import PulseSyncScore from './PulseSyncScore';
 const LIGHT = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
   gold: "#F59E0B", goldLight: "#FFFBEB", goldDim: "#D97706",
@@ -33,11 +34,6 @@ const DARK = {
 const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "ICICIBANK", "ITC"];
 const TIERS = [3, 6, 10];
 
-// ✅ SESSION PERSISTENCE HELPERS
-// Saves/restores dashboard state across Chrome tab reloads (mobile Chrome on phones
-// like OnePlus/Xiaomi aggressively kills background tabs to save RAM — localStorage
-// survives that, unlike React state or sessionStorage on some devices).
-// Keys are scoped per-user so switching accounts on a shared device doesn't leak data.
 function getStoragePrefix(userId) {
   return `pulsetrade_dash_${userId || 'guest'}_`;
 }
@@ -47,7 +43,6 @@ function saveToSession(key, value, userId) {
     if (value === undefined) return;
     localStorage.setItem(getStoragePrefix(userId) + key, JSON.stringify(value));
   } catch (e) {
-    // localStorage can fail in private/incognito mode or when full — fail silently
   }
 }
 
@@ -647,7 +642,6 @@ function ReferralCard({ user, C }) {
   );
 }
 
-// ✅ NUMEROLOGY HELPERS
 const CHALDEAN_MAP = {
   A:1,I:1,J:1,Q:1,Y:1, B:2,K:2,R:2, C:3,G:3,L:3,S:3,
   D:4,M:4,T:4, E:5,H:5,N:5,X:5, U:6,V:6,W:6, O:7,Z:7, F:8,P:8,
@@ -676,7 +670,6 @@ function isNumerologyMatch(userNum, stockName) {
   return list.includes(stockNum) || stockNum === userNum;
 }
 
-// ✅ COMBO SIGNAL COMPONENT
 function ComboSignal({ result, stockName, userDob, isDark, C }) {
   const lpn = getLifePathNum(userDob);
   if (!lpn || !result) return null;
@@ -697,7 +690,6 @@ function ComboSignal({ result, stockName, userDob, isDark, C }) {
       borderRadius: 20, padding: 20, marginBottom: 16,
       boxShadow: isDoubleConfirmed ? '0 8px 32px rgba(216,163,61,0.2)' : 'none',
     }}>
-      {/* Badge */}
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 6,
         background: isDoubleConfirmed
@@ -711,7 +703,6 @@ function ComboSignal({ result, stockName, userDob, isDark, C }) {
         {isDoubleConfirmed ? '🔥 DOUBLE CONFIRMED SIGNAL' : '⚠️ WEAK SIGNAL — CAREFUL'}
       </div>
 
-      {/* Stock + Numbers */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
           <div style={{ fontSize: 22, fontWeight: 900, color: C.text }}>{stockName}</div>
@@ -726,7 +717,6 @@ function ComboSignal({ result, stockName, userDob, isDark, C }) {
         </div>
       </div>
 
-      {/* Signal boxes */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
         <div style={{
           flex: 1, borderRadius: 12, padding: '12px 10px', textAlign: 'center',
@@ -756,7 +746,6 @@ function ComboSignal({ result, stockName, userDob, isDark, C }) {
         </div>
       </div>
 
-      {/* Combo Score */}
       <div style={{
         background: isDoubleConfirmed ? 'rgba(216,163,61,0.1)' : 'rgba(55,65,81,0.2)',
         border: `1px solid ${isDoubleConfirmed ? 'rgba(216,163,61,0.3)' : '#374151'}`,
@@ -773,7 +762,6 @@ function ComboSignal({ result, stockName, userDob, isDark, C }) {
         </div>
       </div>
 
-      {/* Message */}
       <div style={{
         background: isDoubleConfirmed ? 'rgba(63,174,124,0.1)' : 'rgba(248,113,113,0.1)',
         borderLeft: `3px solid ${isDoubleConfirmed ? '#3FAE7C' : '#F87171'}`,
@@ -795,9 +783,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const dark = isDark ?? false;
   const C = dark ? DARK : LIGHT;
 
-  // ✅ All of these are lazily initialized from sessionStorage so that if Chrome
-  // kills/reloads this tab (common on mobile when switching apps), the dashboard
-  // restores exactly where the user left off instead of resetting to the front page.
   const uid = user?.id;
   const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', '', uid));
   const [loading, setLoading] = useState(false);
@@ -821,7 +806,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const [showSupport, setShowSupport] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
-  // ✅ Persist to sessionStorage whenever these change
   useEffect(() => { saveToSession('symbolInput', symbolInput, uid); }, [symbolInput, uid]);
   useEffect(() => { saveToSession('result', result, uid); }, [result, uid]);
   useEffect(() => { saveToSession('stockInfo', stockInfo, uid); }, [stockInfo, uid]);
@@ -956,7 +940,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
     <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', transition: 'all 0.3s ease' }}>
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* HEADER */}
         <div style={{
           background: dark
             ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
@@ -1004,7 +987,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
         <div style={{ padding: '20px 20px 0' }}>
           <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
 
-          {/* TABS */}
           <div style={{
             display: 'flex', gap: 4, marginBottom: 20,
             backgroundColor: C.surface, padding: 4,
@@ -1029,13 +1011,13 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             ))}
           </div>
 
-          {/* SUBSCRIBE */}
           <div style={{ textAlign: 'center', marginBottom: 20 }}>
             <SubscribeButton userEmail={user?.email} userId={user?.id} />
           </div>
 
           {tab === 'check' && (
             <>
+              <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
               <GlobalMarkets isDark={dark} />
               <FearGreedMeter isDark={dark} />
@@ -1401,7 +1383,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <Academy isDark={dark} />
           )}
 
-          {/* FOOTER */}
           <div style={{ marginTop: 32, borderRadius: 16, overflow: 'hidden', border: `1px solid ${C.surfaceBorder}` }}>
             <div style={{ background: dark ? 'rgba(200,146,10,0.06)' : '#EFF6FF', borderBottom: `1px solid ${dark ? 'rgba(200,146,10,0.15)' : '#BFDBFE'}`, padding: '14px 18px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontSize: 18, flexShrink: 0 }}>📊</span>
