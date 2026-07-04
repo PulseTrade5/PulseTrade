@@ -140,6 +140,14 @@ export default function LandingPage({ onLogin }) {
           }}>
             🚀 5 Din FREE Trial Shuru Karo
           </button>
+          <div style={{
+            display: 'inline-block', fontSize: 12, fontWeight: 800,
+            color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)',
+            padding: '6px 16px', borderRadius: 20,
+            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 12,
+          }}>
+            💳 Bina Card, Bina Paisa — Sirf Naam/Email
+          </div><br />
           <p style={{ fontSize: 12, color: COLORS.gold, margin: 0, fontWeight: 700 }}>
             🔢 Technical + Numerology — Double Confirmation Har Trade Pe
           </p>
@@ -283,4 +291,4 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-              }
+}
