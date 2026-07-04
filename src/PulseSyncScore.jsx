@@ -98,8 +98,9 @@ export default function PulseSyncScore({ userDob, isDark, C }) {
       background: 'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 55%, #0EA5A4 100%)',
       backgroundSize: '200% 200%',
       animation: 'pss-gradient-shift 8s ease-in-out infinite',
-      borderRadius: 26, padding: '26px 20px', marginBottom: 16,
-      boxShadow: '0 16px 40px rgba(79,70,229,0.3), 0 2px 0 rgba(255,255,255,0.25) inset',
+      borderRadius: 26, padding: '26px 20px', marginBottom: 24,
+      boxShadow: '0 10px 0 #3730A3, 0 20px 40px rgba(79,70,229,0.35), 0 2px 0 rgba(255,255,255,0.3) inset',
+      transform: 'translateZ(0)',
     }}>
       <style>{`
         @keyframes pss-gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
@@ -184,3 +185,4 @@ export default function PulseSyncScore({ userDob, isDark, C }) {
     </div>
   );
 }
+
