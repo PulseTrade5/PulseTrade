@@ -112,9 +112,17 @@ export default function LandingPage({ onLogin }) {
             display: 'inline-block', fontSize: 11, fontWeight: 800,
             color: '#22c55e', backgroundColor: 'rgba(34,197,94,0.15)',
             padding: '5px 14px', borderRadius: 20,
-            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 16,
+            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 10,
           }}>
             ✅ NSE • BSE Live Data
+          </div>
+          <br />
+          <div style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 700,
+            color: 'rgba(255,255,255,0.6)', backgroundColor: 'rgba(255,255,255,0.08)',
+            padding: '4px 12px', borderRadius: 20, marginBottom: 16,
+          }}>
+            📅 PulseTrade June 2026 se live hai
           </div>
 
           <h1 style={{ fontSize: 26, fontWeight: 900, lineHeight: 1.25, margin: '0 0 10px', letterSpacing: '-0.5px', color: '#FFFFFF' }}>
@@ -249,6 +257,9 @@ export default function LandingPage({ onLogin }) {
           }}>
             🎯 Abhi Subscribe Karo
           </button>
+          <p style={{ fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 10 }}>
+            🛡️ Payment fail hua? 48 ghante mein full refund
+          </p>
         </div>
 
         {/* DISCLAIMER */}
