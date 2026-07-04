@@ -206,7 +206,7 @@ export default function LandingPage({ onLogin }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-around' }}>
             {[
-              { num: '500+', label: 'Active Traders' },
+              { num: '🇮🇳', label: 'Made in India' },
               { num: '50+', label: 'Stocks Daily' },
               { num: '5★', label: 'Rating' },
             ].map((s) => (
