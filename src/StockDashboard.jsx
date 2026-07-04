@@ -5,7 +5,7 @@ import SubscribeButton from './SubscribeButton';
 import PulseBoltaHai from '../PulseBoltaHai';
 import MoodTracker from './MoodTracker';
 import SupportChat from './SupportChat';
-import GlobalMarkets from './GlobalMarkets';
+import MarketNewsBrief from './MarketNewsBrief';
 import FearGreedMeter from './FearGreedMeter';
 import PulseScreener from './PulseScreener.jsx';
 import NumerologyPanel from './NumerologyPanel';
@@ -1019,7 +1019,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <>
               <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
-              <GlobalMarkets isDark={dark} />
+              <MarketNewsBrief isDark={dark} C={C} />
               <FearGreedMeter isDark={dark} />
               
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
