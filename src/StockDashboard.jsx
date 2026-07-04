@@ -13,22 +13,22 @@ import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
 import PulseSyncScore from './PulseSyncScore';
 const LIGHT = {
-  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0", surfaceHover: "#F8FAFC",
-  gold: "#F59E0B", goldLight: "#FFFBEB", goldDim: "#D97706",
-  blue: "#1E3A5F", blueLight: "#EFF6FF",
-  green: "#059669", greenLight: "#ECFDF5",
-  red: "#DC2626", redLight: "#FEF2F2",
-  text: "#0F172A", textSecondary: "#334155", muted: "#64748B", mutedLight: "#94A3B8",
-  headerBg: "#1E3A5F", sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
+  bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5", surfaceHover: "#F0F2FA",
+  gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
+  blue: "#4F46E5", blueLight: "#EEF2FF",
+  green: "#16A34A", greenLight: "#F0FDF4",
+  red: "#EF4444", redLight: "#FEF2F2",
+  text: "#1E1B4B", textSecondary: "#3F3D6B", muted: "#6B7280", mutedLight: "#9CA3AF",
+  headerBg: "#1E1B4B", sebi: "#4F46E5", sebiBg: "#EEF2FF", sebiBorder: "#C7D2FE",
 };
 
 const DARK = {
-  bg: "#0D1117", surface: "#161B22", surfaceBorder: "#30363D", surfaceHover: "#1C2128",
-  gold: "#D8A33D", goldLight: "#2D2008", goldDim: "#F0B429",
-  green: "#3FAE7C", greenLight: "#0D2B1F",
+  bg: "#100E1F", surface: "#1A1830", surfaceBorder: "#2E2A52", surfaceHover: "#231F42",
+  gold: "#8B5CF6", goldLight: "#241F42", goldDim: "#A78BFA",
+  green: "#4ADE80", greenLight: "#0F2A1E",
   red: "#F87171", redLight: "#2D1515",
-  text: "#E8E6E0", textSecondary: "#C9D1D9", muted: "#8B92A0", mutedLight: "#6E7681",
-  headerBg: "#161B22", sebi: "#93C5FD", sebiBg: "#0D1F3C", sebiBorder: "#1D4ED8",
+  text: "#F1F0FF", textSecondary: "#D4D2F0", muted: "#9C9AC4", mutedLight: "#6E6B99",
+  headerBg: "#100E1F", sebi: "#A78BFA", sebiBg: "#241F42", sebiBorder: "#3F3970",
 };
 
 const POPULAR = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "TATAMOTORS", "SBIN", "ICICIBANK", "ITC"];
@@ -91,10 +91,15 @@ function WaveBar({ dark }) {
 
 function LiveDot({ C }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-      <style>{`@keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.3)} }`}</style>
-      <div style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: '#059669', animation: 'live-pulse 1.5s ease-in-out infinite', boxShadow: '0 0 6px #059669' }} />
-      <span style={{ fontSize: 10, fontWeight: 700, color: '#059669' }}>Live</span>
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      borderRadius: 20, padding: '6px 13px',
+      backgroundColor: '#F0FDF4',
+      boxShadow: '0 3px 8px rgba(22,163,74,0.15), 0 1px 0 rgba(255,255,255,0.6) inset',
+    }}>
+      <style>{`@keyframes live-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.3)} }`}</style>
+      <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#16A34A', animation: 'live-pulse 1.5s ease-in-out infinite' }} />
+      <span style={{ fontSize: 10.5, fontWeight: 700, color: '#16A34A' }}>Live</span>
     </div>
   );
 }
@@ -209,36 +214,38 @@ function TrendMeter({ longScore, shortScore, trend, C }) {
 function PulseHeroBanner({ result, stockName, stockInfo, C }) {
   const isBullish = result.trend === 'Bullish';
   const score = isBullish ? result.longScore : result.shortScore;
-  const gradientBg = isBullish
-    ? 'linear-gradient(135deg, #064E3B 0%, #065F46 50%, #0D2B1F 100%)'
-    : 'linear-gradient(135deg, #7F1D1D 0%, #991B1B 50%, #2D1515 100%)';
-  const accentColor = isBullish ? '#3FAE7C' : '#F87171';
-  const borderColor = isBullish ? '#3FAE7C' : '#F87171';
+  const accentColor = isBullish ? '#16A34A' : '#EF4444';
+  const accentLight = isBullish ? '#F0FDF4' : '#FEF2F2';
 
   return (
     <div style={{
-      background: gradientBg, borderRadius: 20, padding: '24px 20px', marginBottom: 16,
-      border: `1.5px solid ${borderColor}`, boxShadow: `0 8px 32px ${accentColor}33`,
+      background: `linear-gradient(160deg, ${C.surface}, ${accentLight})`,
+      borderRadius: 22, padding: '22px 20px', marginBottom: 16,
+      border: `1px solid ${accentColor}33`,
+      boxShadow: `0 10px 28px ${accentColor}22, 0 1px 0 rgba(255,255,255,0.6) inset`,
     }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#FFF', letterSpacing: '-0.5px' }}>{stockName}</div>
-          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{stockInfo?.longName || stockName}</div>
+          <div style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 19, fontWeight: 800, color: C.text }}>{stockName}</div>
+          <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{stockInfo?.longName || stockName}</div>
         </div>
-        <div style={{ fontSize: 12, fontWeight: 800, padding: '6px 14px', borderRadius: 20, backgroundColor: accentColor, color: '#FFF' }}>
-          {isBullish ? '🟢 BULLISH' : '🔴 BEARISH'}
+        <div style={{
+          fontSize: 10.5, fontWeight: 700, padding: '6px 13px', borderRadius: 20,
+          background: `linear-gradient(160deg, ${accentColor}, ${accentColor}CC)`, color: '#FFF',
+          boxShadow: `0 4px 10px ${accentColor}55, 0 1px 0 rgba(255,255,255,0.4) inset`,
+        }}>
+          {isBullish ? 'Bullish' : 'Bearish'}
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+        <span style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 28, fontWeight: 800, color: C.text }}>
           {fmtINR(stockInfo?.regularMarketPrice || result.lastClose)}
         </span>
         {stockInfo?.regularMarketChange !== undefined && (
           <span style={{
-            fontSize: 13, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
-            backgroundColor: stockInfo.regularMarketChange >= 0 ? 'rgba(63,174,124,0.25)' : 'rgba(248,113,113,0.25)',
-            color: stockInfo.regularMarketChange >= 0 ? '#3FAE7C' : '#F87171',
-            border: `1px solid ${stockInfo.regularMarketChange >= 0 ? '#3FAE7C' : '#F87171'}`,
+            fontSize: 12.5, fontWeight: 700, padding: '4px 12px', borderRadius: 20,
+            backgroundColor: stockInfo.regularMarketChange >= 0 ? '#F0FDF4' : '#FEF2F2',
+            color: stockInfo.regularMarketChange >= 0 ? '#16A34A' : '#EF4444',
           }}>
             {stockInfo.regularMarketChange >= 0 ? '▲' : '▼'} {Math.abs(stockInfo.regularMarketChangePercent || 0).toFixed(2)}%
           </span>
@@ -246,13 +253,13 @@ function PulseHeroBanner({ result, stockName, stockInfo, C }) {
       </div>
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', fontWeight: 700, letterSpacing: 1 }}>⚡ PULSE SCORE</span>
-          <span style={{ fontSize: 16, fontWeight: 900, color: accentColor }}>{score}/100</span>
+          <span style={{ fontSize: 10.5, color: C.muted, fontWeight: 700, letterSpacing: 0.3 }}>Pulse Score</span>
+          <span style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 15, fontWeight: 800, color: accentColor }}>{score}/100</span>
         </div>
-        <div style={{ height: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 99, overflow: 'hidden' }}>
+        <div style={{ height: 8, backgroundColor: accentLight, borderRadius: 99, overflow: 'hidden' }}>
           <div style={{
             height: '100%', width: `${score}%`,
-            background: isBullish ? 'linear-gradient(90deg, #059669, #34D399)' : 'linear-gradient(90deg, #DC2626, #FCA5A5)',
+            background: `linear-gradient(90deg, ${accentColor}, ${isBullish ? '#4ADE80' : '#FCA5A5'})`,
             borderRadius: 99, transition: 'width 1.2s ease',
           }} />
         </div>
@@ -931,8 +938,10 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   };
   const cardStyle = {
     backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`,
-    borderRadius: 16, padding: 18, marginBottom: 16,
-    boxShadow: dark ? '0 2px 16px rgba(0,0,0,0.4)' : '0 1px 6px rgba(0,0,0,0.05)',
+    borderRadius: 20, padding: 18, marginBottom: 16,
+    boxShadow: dark
+      ? '0 10px 28px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.04) inset'
+      : '0 8px 24px rgba(30,27,75,0.07), 0 1px 0 rgba(255,255,255,0.9) inset',
     transition: 'all 0.3s ease',
   };
 
@@ -941,50 +950,49 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
 
         <div style={{
-          background: dark
-            ? 'linear-gradient(135deg, #161B22 0%, #1a1400 100%)'
-            : 'linear-gradient(135deg, #1E3A5F 0%, #2D5A8E 100%)',
-          borderBottom: `1px solid ${C.surfaceBorder}`,
-          padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.08)',
-          transition: 'all 0.3s ease',
+          backgroundColor: C.bg,
+          padding: '20px 20px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+          position: 'sticky', top: 0, zIndex: 100, gap: 10,
         }}>
           <div>
-            <div style={{ fontSize: 11, color: dark ? C.gold : '#F59E0B', fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
-            <h1 style={{ fontSize: 22, fontWeight: 800, margin: 0, letterSpacing: '-0.5px', color: dark ? C.text : '#fff' }}>
-              Pulse<span style={{ color: C.gold }}>Trade</span>
+            <div style={{ fontSize: 10, color: '#D97706', fontWeight: 700, letterSpacing: 0.3 }}>श्री गणेशाय नमः</div>
+            <h1 style={{ fontFamily: "'Sora', system-ui, sans-serif", fontSize: 22, fontWeight: 800, margin: '3px 0 0' }}>
+              <span style={{ color: C.text }}>Pulse</span>
+              <span style={{
+                background: 'linear-gradient(120deg, #4F46E5, #0EA5A4)',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>Trade</span>
             </h1>
-            <div style={{ fontSize: 10, color: dark ? C.muted : 'rgba(255,255,255,0.6)', marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
+            <div style={{ fontSize: 10, color: C.muted, marginTop: 2 }}>🔱 हर हर महादेव 🔱</div>
           </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
             <LiveDot C={C} />
-            <button onClick={() => setShowSupport(true)} style={{
-              fontSize: 11, padding: '5px 10px', borderRadius: 20,
-              border: `1.5px solid ${dark ? C.surfaceBorder : 'rgba(255,255,255,0.3)'}`,
-              backgroundColor: dark ? 'transparent' : 'rgba(255,255,255,0.1)',
-              color: dark ? C.muted : '#fff', cursor: 'pointer', fontWeight: 700,
-            }}>💬 Hum Se Baat Karo</button>
-            {user?.email === 'prabhat3300@gmail.com' && (
-              <a href="/admin" style={{
-                fontSize: 11, padding: '5px 10px', borderRadius: 20,
-                border: `1.5px solid ${C.gold}`, backgroundColor: C.goldLight,
-                color: C.goldDim, cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
-              }}>⚙️ Admin</a>
-            )}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => setShowSupport(true)} style={{
+                fontSize: 10.5, padding: '6px 12px', borderRadius: 20,
+                border: 'none', backgroundColor: C.goldLight,
+                color: C.gold, cursor: 'pointer', fontWeight: 700,
+                boxShadow: '0 3px 8px rgba(79,70,229,0.12), 0 1px 0 rgba(255,255,255,0.15) inset',
+                whiteSpace: 'nowrap',
+              }}>💬 Baat Karo</button>
+              {user?.email === 'prabhat3300@gmail.com' && (
+                <a href="/admin" style={{
+                  fontSize: 10.5, padding: '6px 12px', borderRadius: 20,
+                  background: 'linear-gradient(160deg, #6366F1, #4F46E5 60%, #0EA5A4)',
+                  color: '#FFF', cursor: 'pointer', fontWeight: 700, textDecoration: 'none',
+                  boxShadow: '0 4px 10px rgba(79,70,229,0.3), 0 1px 0 rgba(255,255,255,0.35) inset',
+                  whiteSpace: 'nowrap',
+                }}>⚙️ Admin</a>
+              )}
+            </div>
           </div>
         </div>
 
-        <WaveBar dark={dark} />
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap');
+        `}</style>
 
-        <style>{`@keyframes shimmer-line { 0%{background-position:-200% center} 100%{background-position:200% center} }`}</style>
-        <div style={{
-          height: 3,
-          background: 'linear-gradient(90deg, #C8920A, #3FAE7C, #C8920A)',
-          backgroundSize: '200% auto',
-          animation: 'shimmer-line 3s linear infinite',
-        }} />
-
-        <div style={{ padding: '20px 20px 0' }}>
+        <div style={{ padding: '4px 20px 0' }}>
           <p style={{ fontSize: 13, color: C.muted, margin: '0 0 16px' }}>Bazaar ka pulse dekho, faisla khud karo.</p>
 
           <div style={{
