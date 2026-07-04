@@ -399,4 +399,89 @@ export default function PulseScreener({ isDark, userDob, userName }) {
                   <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>{luckyResult.symbol}</div>
                   <div style={{ fontSize: 12, color: C.muted }}>Numerology match + Bullish trend!</div>
                 </div>
-     
+                <div style={{
+                  fontSize: 14, fontWeight: 800, color: '#D8A33D',
+                  backgroundColor: '#D8A33D22', padding: '6px 14px', borderRadius: 20,
+                }}>
+                  ⚡ {luckyResult.longScore}/100
+                </div>
+              </div>
+            </div>
+          )}
+
+          {filteredResults.length > 0 && (
+            <>
+              <div style={{ fontSize: 11, color: C.muted, marginBottom: 10, fontWeight: 600 }}>
+                {scanDone ? '✅ Scan complete — ' : '🔄 Scanning — '}
+                <span style={{ color: C.green, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bullish').length} Bullish</span>
+                {' • '}
+                <span style={{ color: C.red, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bearish').length} Bearish</span>
+              </div>
+
+              {filteredResults.map((stock, i) => {
+                const isTopPick = topPickSymbols.has(stock.symbol);
+                return (
+                  <div key={stock.symbol} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '12px 10px',
+                    marginBottom: 4,
+                    borderBottom: i < filteredResults.length - 1 ? `1px solid ${C.border}` : 'none',
+                    backgroundColor: stock.isLucky ? '#D8A33D08' : isTopPick ? `${C.gold}08` : 'transparent',
+                    borderRadius: 8,
+                    border: isTopPick ? `1px solid ${C.gold}33` : 'none',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: 8,
+                        backgroundColor: stock.isLucky ? '#D8A33D22' : stock.trend === 'Bullish' ? C.greenBg : C.redBg,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 800,
+                        color: stock.isLucky ? '#D8A33D' : stock.trend === 'Bullish' ? C.green : C.red,
+                      }}>{stock.isLucky ? '🍀' : i + 1}</div>
+                      <div>
+                        <div style={{ fontWeight: 800, color: C.text, fontSize: 14, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          {stock.symbol}
+                          {isTopPick && <span style={{ fontSize: 10, color: C.gold, fontWeight: 700 }}>🏆</span>}
+                          {stock.isLucky && <span style={{ fontSize: 10, color: '#D8A33D', fontWeight: 700 }}>Lucky ⭐</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
+                          ₹{Number(stock.price).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                          {' • '}
+                          <span style={{ color: stock.change >= 0 ? C.green : C.red }}>
+                            {stock.change >= 0 ? '▲' : '▼'} {Math.abs(stock.change).toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{
+                        fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                        backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
+                        color: stock.trend === 'Bullish' ? C.green : C.red,
+                      }}>
+                        {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
+                      </div>
+                      <div style={{ fontSize: 10, color: C.muted, marginTop: 3 }}>
+                        ADX {stock.adx} • {stock.trendStrength}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {scanDone && filteredResults.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 13, color: C.muted }}>
+              Is filter mein koi stock nahi mila!
+            </div>
+          )}
+        </div>
+
+        <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
+          ⚠️ Sirf technical analysis — investment advice nahi. SEBI registered advisor se salah lein.
+        </div>
+      </div>
+    </div>
+  );
+}
