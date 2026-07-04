@@ -1029,7 +1029,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
               <MarketNewsBrief isDark={dark} C={C} />
-              <MuhuratCalendar isDark={dark} userDob={userDob} userName={userName} />
+              <MuhuratCalendar isDark={dark} userDob={userDob} />
               <FearGreedMeter isDark={dark} />
               
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
