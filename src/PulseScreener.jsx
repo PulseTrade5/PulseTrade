@@ -29,7 +29,6 @@ const ASTRO = {
   6: { day: "Shaniwar", planet: "⚫ Shani", vibe: "Shani ki nazar — cautious raho aaj", sectors: "Avoid risky trades", color: "#6B7280", caution: true },
 };
 
-// ✅ NUMEROLOGY FUNCTIONS
 function getLifePath(dob) {
   if (!dob) return null;
   const digits = dob.replace(/-/g, '').split('').map(Number);
@@ -68,7 +67,17 @@ function getAstroData() {
   return { ...ASTRO[dayOfWeek] };
 }
 
-// ✅ 1. NUMEROLOGY BANNER
+// ✅ RANKING SCORE — combines technical score + ADX strength + RSI sweet-spot + numerology match
+// Ye function decide karta hai ki 20 mein se konse 10 stocks "Top Recommended" honge
+function getRankScore(r) {
+  let score = r.trend === 'Bullish' ? r.longScore : r.shortScore;
+  if (r.adx >= 25) score += 10; // strong trend bonus
+  if (r.rsi >= 40 && r.rsi <= 65) score += 5; // healthy RSI zone, na overbought na oversold
+  if (r.isLucky) score += 15; // numerology match bonus
+  if (r.trend === 'Bearish') score -= 8; // bearish setups thoda niche rank honge by default
+  return score;
+}
+
 function NumerologyBanner({ userDob, userName, C }) {
   const lifePath = getLifePath(userDob);
   const nameNum = getChaldean(userName);
@@ -121,7 +130,6 @@ function NumerologyBanner({ userDob, userName, C }) {
   );
 }
 
-// ✅ 2. ASTRO CARD
 function AstroCard() {
   const [showAstro, setShowAstro] = useState(true);
   const astro = getAstroData();
@@ -162,7 +170,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState('top10');
   const [customInput, setCustomInput] = useState('');
   const [customLoading, setCustomLoading] = useState(false);
   const [customResult, setCustomResult] = useState(null);
@@ -208,7 +216,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
       const valid = batchResults.filter(Boolean);
       allResults.push(...valid);
       setProgress(Math.min(i + batchSize, NIFTY20.length));
-      setResults([...allResults].sort((a, b) => b.longScore - a.longScore));
+      setResults([...allResults].sort((a, b) => getRankScore(b) - getRankScore(a)));
     }
     setScanning(false);
     setScanDone(true);
@@ -226,15 +234,20 @@ export default function PulseScreener({ isDark, userDob, userName }) {
     setCustomLoading(false);
   };
 
+  // ✅ TOP 10 RECOMMENDED — 20 stocks mein se best rank score wale 10
+  const topPickSymbols = new Set(
+    [...results].sort((a, b) => getRankScore(b) - getRankScore(a)).slice(0, 10).map(r => r.symbol)
+  );
+
   const filteredResults = results.filter(r => {
+    if (filter === 'top10') return topPickSymbols.has(r.symbol);
     if (filter === 'bullish') return r.trend === 'Bullish';
     if (filter === 'bearish') return r.trend === 'Bearish';
     if (filter === 'strong') return r.adx >= 25;
     if (filter === 'lucky') return r.isLucky;
     return true;
-  });
+  }).sort((a, b) => getRankScore(b) - getRankScore(a));
 
-  // ✅ 3. LUCKY STOCK HIGHLIGHT — top result ke baad
   const luckyResult = scanDone ? filteredResults.find(r => r.isLucky && r.trend === 'Bullish') : null;
 
   const cardStyle = {
@@ -247,7 +260,6 @@ export default function PulseScreener({ isDark, userDob, userName }) {
     <div style={{ backgroundColor: C.bg, minHeight: '100vh', padding: '16px 16px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* TITLE */}
         <div style={{ marginBottom: 16 }}>
           <div style={{ fontSize: 22, fontWeight: 900, color: C.text }}>
             🔍 Pulse<span style={{ color: C.gold }}>Screener</span>
@@ -255,13 +267,10 @@ export default function PulseScreener({ isDark, userDob, userName }) {
           <div style={{ fontSize: 12, color: C.muted, marginTop: 4 }}>Top stocks dhundo — ek tap mein!</div>
         </div>
 
-        {/* 1. NUMEROLOGY BANNER */}
         <NumerologyBanner userDob={userDob} userName={userName} C={C} />
 
-        {/* 2. ASTRO CARD */}
         <AstroCard />
 
-        {/* CUSTOM SEARCH */}
         <div style={cardStyle}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>🔎 CUSTOM STOCK SEARCH</div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -326,11 +335,21 @@ export default function PulseScreener({ isDark, userDob, userName }) {
           )}
         </div>
 
-        {/* AUTO SCREENER */}
         <div style={cardStyle}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: C.gold, fontWeight: 800, marginBottom: 12 }}>🚀 AUTO SCREENER — NIFTY TOP 20</div>
+
+          {scanDone && (
+            <div style={{
+              marginBottom: 14, padding: '10px 14px', borderRadius: 10,
+              backgroundColor: `${C.gold}14`, border: `1px solid ${C.gold}44`,
+              fontSize: 12, color: C.text, lineHeight: 1.6,
+            }}>
+              🏆 <strong style={{ color: C.gold }}>20 stocks scan ho gaye</strong> — inme se best <strong style={{ color: C.gold }}>Top 10</strong> automatically rank kiye gaye hain (Technical Score + Trend Strength + Numerology combine karke). "🏆 Top 10" filter se dekho.
+            </div>
+          )}
+
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-            {[['all', '📊 Sab'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '💪 Strong'], ['lucky', '🍀 Lucky']].map(([key, label]) => (
+            {[['top10', '🏆 Top 10'], ['all', '📊 Sab 20'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '💪 Strong'], ['lucky', '🍀 Lucky']].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)} style={{
                 padding: '6px 12px', borderRadius: 20,
                 backgroundColor: filter === key ? C.gold : C.bg,
@@ -368,7 +387,6 @@ export default function PulseScreener({ isDark, userDob, userName }) {
             </div>
           )}
 
-          {/* 3. LUCKY STOCK HIGHLIGHT */}
           {luckyResult && (
             <div style={{
               marginBottom: 14, padding: 14, borderRadius: 12,
@@ -381,83 +399,4 @@ export default function PulseScreener({ isDark, userDob, userName }) {
                   <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>{luckyResult.symbol}</div>
                   <div style={{ fontSize: 12, color: C.muted }}>Numerology match + Bullish trend!</div>
                 </div>
-                <div style={{
-                  fontSize: 14, fontWeight: 800, color: '#D8A33D',
-                  backgroundColor: '#D8A33D22', padding: '6px 14px', borderRadius: 20,
-                }}>
-                  ⚡ {luckyResult.longScore}/100
-                </div>
-              </div>
-            </div>
-          )}
-
-          {filteredResults.length > 0 && (
-            <>
-              <div style={{ fontSize: 11, color: C.muted, marginBottom: 10, fontWeight: 600 }}>
-                {scanDone ? '✅ Scan complete — ' : '🔄 Scanning — '}
-                <span style={{ color: C.green, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bullish').length} Bullish</span>
-                {' • '}
-                <span style={{ color: C.red, fontWeight: 700 }}>{filteredResults.filter(r => r.trend === 'Bearish').length} Bearish</span>
-              </div>
-
-              {filteredResults.map((stock, i) => (
-                <div key={stock.symbol} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '12px 0',
-                  borderBottom: i < filteredResults.length - 1 ? `1px solid ${C.border}` : 'none',
-                  backgroundColor: stock.isLucky ? '#D8A33D08' : 'transparent',
-                  borderRadius: stock.isLucky ? 8 : 0,
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: 8,
-                      backgroundColor: stock.isLucky ? '#D8A33D22' : stock.trend === 'Bullish' ? C.greenBg : C.redBg,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 13, fontWeight: 800,
-                      color: stock.isLucky ? '#D8A33D' : stock.trend === 'Bullish' ? C.green : C.red,
-                    }}>{stock.isLucky ? '🍀' : i + 1}</div>
-                    <div>
-                      <div style={{ fontWeight: 800, color: C.text, fontSize: 14 }}>
-                        {stock.symbol}
-                        {stock.isLucky && <span style={{ fontSize: 10, color: '#D8A33D', fontWeight: 700, marginLeft: 6 }}>Lucky ⭐</span>}
-                      </div>
-                      <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
-                        ₹{Number(stock.price).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
-                        {' • '}
-                        <span style={{ color: stock.change >= 0 ? C.green : C.red }}>
-                          {stock.change >= 0 ? '▲' : '▼'} {Math.abs(stock.change).toFixed(2)}%
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{
-                      fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                      backgroundColor: stock.trend === 'Bullish' ? C.greenBg : C.redBg,
-                      color: stock.trend === 'Bullish' ? C.green : C.red,
-                    }}>
-                      {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
-                    </div>
-                    <div style={{ fontSize: 10, color: C.muted, marginTop: 3 }}>
-                      ADX {stock.adx} • {stock.trendStrength}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </>
-          )}
-
-          {scanDone && filteredResults.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '16px 0', fontSize: 13, color: C.muted }}>
-              Is filter mein koi stock nahi mila!
-            </div>
-          )}
-        </div>
-
-        <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
-          ⚠️ Sirf technical analysis — investment advice nahi. SEBI registered advisor se salah lein.
-        </div>
-      </div>
-    </div>
-  );
-}
+     
