@@ -190,8 +190,8 @@ export default function NumerologyPanel({ isDark, userDob, userName }) {
         background: 'linear-gradient(135deg, #4F46E5 0%, #8B5CF6 55%, #0EA5A4 100%)',
         backgroundSize: '200% 200%',
         animation: 'np-gradient-shift 8s ease-in-out infinite',
-        borderRadius: 24, padding: '22px 18px', marginBottom: 16,
-        boxShadow: '0 16px 36px rgba(79,70,229,0.28), 0 2px 0 rgba(255,255,255,0.25) inset',
+        borderRadius: 24, padding: '22px 18px', marginBottom: 24,
+        boxShadow: '0 8px 0 #3730A3, 0 18px 32px rgba(79,70,229,0.28), 0 2px 0 rgba(255,255,255,0.25) inset',
       }}>
         <div style={{
           position: 'absolute', top: 0, left: 0, right: 0, height: '50%',
