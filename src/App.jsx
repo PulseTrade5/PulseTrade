@@ -1,419 +1,647 @@
 import { useState, useEffect } from 'react';
-import { supabase, trackLogin } from './supabaseClient';
-import StockDashboard from './StockDashboard';
-import LoginPage from './LoginPage';
-import LandingPage from './LandingPage';
-import AdminPanel from './AdminPanel';
-import MuhuratCalendar from './MuhuratCalendar';
-import BottomNav from './BottomNav';
-import PulseScreener from './PulseScreener';
-import NumerologyPanel from './NumerologyPanel';
-import Academy from './Academy';
-import BlogList from './BlogList';
-import BlogPost from './BlogPost';
-import SubscribeButton from './SubscribeButton';
-import TrialFeedbackModal from './components/TrialFeedbackModal';
-function GreetingToast({ name, show }) {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
-  if (!show || !name) return null;
-  return (
-    <div style={{
-      position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)',
-      backgroundColor: '#0F172A', color: '#FFF',
-      padding: '14px 24px', borderRadius: 16, zIndex: 9999,
-      fontSize: 15, fontWeight: 700, textAlign: 'center',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.25)',
-      border: '1.5px solid #C8920A',
-      animation: 'toastIn 0.4s ease',
-      whiteSpace: 'nowrap',
-    }}>
-      <style>{`@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }`}</style>
-      {greeting}, <span style={{ color: '#C8920A' }}>{name}</span>! 🔱
-    </div>
-  );
-}
-function SplashScreen() {
-  const [dot, setDot] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setDot(d => (d + 1) % 3), 400);
-    return () => clearInterval(t);
-  }, []);
-  return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(160deg, #0D1117 0%, #0D2B1F 100%)',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      fontFamily: 'Inter, system-ui, sans-serif',
-      gap: 20,
-    }}>
-      <style>{`
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 40px rgba(63,174,124,0.4); }
-          50% { box-shadow: 0 0 80px rgba(63,174,124,0.8); }
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
-      <div style={{
-        width: 110, height: 110, borderRadius: '50%',
-        background: 'linear-gradient(135deg, #064E3B, #0D4A2E)',
-        border: '3px solid #3FAE7C',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 60,
-        animation: 'pulse-glow 2s ease-in-out infinite',
-      }}>🐼</div>
-      <div style={{ textAlign: 'center', animation: 'fadeUp 0.6s ease' }}>
-        <div style={{ fontSize: 34, fontWeight: 900, color: '#FFF', letterSpacing: '-1px' }}>
-          Pulse<span style={{ color: '#C8920A' }}>Trade</span>
-        </div>
-        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-          Trade with Pulse, Profit with Discipline
-        </div>
-      </div>
-      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-        {[0, 1, 2].map(i => (
-          <div key={i} style={{
-            width: 8, height: 8, borderRadius: '50%',
-            backgroundColor: dot === i ? '#C8920A' : 'rgba(255,255,255,0.2)',
-            transition: 'background 0.3s ease',
-          }} />
-        ))}
-      </div>
-      <div style={{ fontSize: 11, color: '#3FAE7C', marginTop: 4 }}>
-        🔱 हर हर महादेव 🔱
-      </div>
-    </div>
-  );
-}
-const LIGHT = {
-  bg: '#F4F6FA', surface: '#FFFFFF', gold: '#C8920A',
-  goldLight: '#FEF3C7', goldDim: '#D97706',
-  text: '#0F172A', muted: '#64748B', green: '#059669',
-  greenLight: '#ECFDF5', red: '#DC2626', border: '#E2E8F0',
+import { supabase } from './supabaseClient';
+
+const ADMIN_EMAIL = 'prabhat3300@gmail.com';
+
+const COLORS = {
+  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
+  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
+  green: "#059669", greenLight: "#ECFDF5",
+  red: "#DC2626", redLight: "#FEF2F2",
+  purple: "#7C3AED", purpleLight: "#EDE9FE",
+  blue: "#2563EB", blueLight: "#EFF6FF",
+  text: "#0F172A", textSecondary: "#334155", muted: "#64748B",
 };
-const DARK = {
-  bg: '#0D1117', surface: '#161B22', gold: '#D8A33D',
-  text: '#E8E6E0', muted: '#8B92A0', green: '#3FAE7C',
-  red: '#D1453B', border: '#30363D',
-};
-function TermsPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Terms & Conditions</h1>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>1. Acceptance</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>By using PulseTrade (pulsetrade.in), you agree to these terms.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>2. Service Description</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade provides technical analysis tools for NSE/BSE listed securities. All information is for educational purposes only.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>3. Disclaimer</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is NOT a SEBI registered investment advisor. Users must consult a SEBI registered advisor before making any investment decisions.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>4. Subscription</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months via Cashfree Payments.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>5. Limitation of Liability</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade shall not be liable for any financial losses. Trading involves substantial risk of loss.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
+
+function getDaysLeft(trialStart) {
+  const diff = (new Date() - new Date(trialStart)) / (1000 * 60 * 60 * 24);
+  return Math.max(0, Math.ceil(5 - diff));
 }
-function RefundPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Refunds & Cancellations</h1>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>General Policy</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription is activated.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception — Technical Failure</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but subscription not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>How to Contact</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Email: <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
-      <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Cancellations</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscription remains active till end of paid period. No partial refunds.</p>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
-}
-function ContactPage() {
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', padding: '40px 20px', maxWidth: 720, margin: '0 auto' }}>
-      <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Contact Us</h1>
-      <div style={{ backgroundColor: DARK.surface, borderRadius: 12, padding: 24, marginBottom: 24 }}>
-        <p style={{ marginBottom: 12 }}>📧 <strong>Email:</strong> <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>🌐 <strong>Website:</strong> <span style={{ color: DARK.gold }}>pulsetrade.in</span></p>
-        <p style={{ marginBottom: 12 }}>📍 <strong>Location:</strong> India</p>
-        <p style={{ marginBottom: 0 }}>⏰ <strong>Support Hours:</strong> Mon–Sat, 10 AM – 6 PM IST</p>
-      </div>
-      <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
-    </div>
-  );
-}
-function PaymentStatusPage() {
-  const [status, setStatus] = useState('loading');
-  const [data, setData] = useState(null);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const order_id = params.get('order_id');
-    if (!order_id) { setStatus('error'); return; }
-    fetch(`/api/verify-payment?order_id=${order_id}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setStatus(d.status === 'PAID' ? 'success' : 'failed'); })
-      .catch(() => setStatus('error'));
-  }, []);
-  return (
-    <div style={{ backgroundColor: DARK.bg, color: DARK.text, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ maxWidth: 400, width: '100%', textAlign: 'center' }}>
-        <div style={{ color: DARK.gold, fontWeight: 700, fontSize: 14, marginBottom: 16 }}>🔱 हर हर महादेव 🔱</div>
-        {status === 'loading' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 40, marginBottom: 16 }}>⏳</div><p style={{ color: DARK.muted }}>Payment verify ho raha hai...</p></div>}
-        {status === 'success' && (
-          <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.green}`, borderRadius: 16, padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-            <h2 style={{ color: DARK.green, marginBottom: 8 }}>Payment Successful!</h2>
-            <p style={{ color: DARK.muted, marginBottom: 16 }}>Tumhari subscription activate ho gayi hai.</p>
-            {data && (
-              <div style={{ backgroundColor: DARK.bg, borderRadius: 12, padding: 16, marginBottom: 20, textAlign: 'left' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Order ID</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.order_id}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Amount</span><span style={{ fontWeight: 600, color: DARK.gold }}>₹{data.amount}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 13 }}><span style={{ color: DARK.muted }}>Email</span><span style={{ fontWeight: 600, fontSize: 11 }}>{data.customer_email}</span></div>
-              </div>
-            )}
-            <a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Dashboard Pe Jao →</a>
-          </div>
-        )}
-        {status === 'failed' && <div style={{ backgroundColor: DARK.surface, border: `2px solid ${DARK.red}`, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>❌</div><h2 style={{ color: DARK.red, marginBottom: 8 }}>Payment Failed</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
-        {status === 'error' && <div style={{ backgroundColor: DARK.surface, borderRadius: 16, padding: 32 }}><div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div><h2 style={{ marginBottom: 8 }}>Kuch Gadbad Hui</h2><a href="/" style={{ display: 'block', padding: '12px', backgroundColor: DARK.gold, color: DARK.bg, borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Wapas Jao</a></div>}
-      </div>
-    </div>
-  );
-}
-function TrialExpiredPage({ user, onLogout }) {
-  return (
-    <div style={{ backgroundColor: LIGHT.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: LIGHT.text }}>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
-        <div style={{ backgroundColor: LIGHT.surface, borderBottom: `1px solid ${LIGHT.border}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
-          <div>
-            <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Pulse<span style={{ color: LIGHT.gold }}>Trade</span></div>
-            <div style={{ fontSize: 10, color: LIGHT.muted }}>🔱 हर हर महादेव 🔱</div>
-          </div>
-          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${LIGHT.border}`, backgroundColor: 'transparent', color: LIGHT.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
-        </div>
-        <div style={{ padding: '32px 20px' }}>
-          <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
-            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>Tera 5-din free trial khatam ho gaya.<br />Dashboard access ke liye subscribe karo.</p>
-            <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
-          </div>
-          <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 SUBSCRIBE KARO</div>
-            <SubscribeButton userEmail={user?.email} userId={user?.id} />
-          </div>
-          <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>Support: support@pulsetrade.in</p>
-        </div>
-      </div>
-      <TrialFeedbackModal user={user} />
-    </div>
-  );
-}
-function ProfileTab({ profile, session, isDark }) {
-  const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : null;
-  const trialEnd = trialStart ? new Date(trialStart.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
-  const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24))) : 0;
-  return (
-    <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, padding: '24px 20px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
-      <div style={{ maxWidth: 420, margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 64, marginBottom: 8 }}>👤</div>
-          <div style={{ fontSize: 22, fontWeight: 800, color: isDark ? DARK.text : LIGHT.text }}>{profile?.name || 'Trader'}</div>
-          <div style={{ fontSize: 13, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 4 }}>{session.user.email}</div>
-          <div style={{ fontSize: 11, color: '#C8920A', marginTop: 6 }}>🔱 हर हर महादेव 🔱</div>
-        </div>
-        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>📋 ACCOUNT STATUS</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-            <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
-            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}</span>
-          </div>
-          {!profile?.is_subscribed && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Trial Bacha</span>
-              <span style={{ fontWeight: 700, fontSize: 13, color: daysLeft <= 1 ? '#DC2626' : '#C8920A' }}>{daysLeft} din</span>
-            </div>
-          )}
-          {profile?.is_subscribed && profile?.subscription_end_date && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Subscription End</span>
-              <span style={{ fontWeight: 700, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{new Date(profile.subscription_end_date).toLocaleDateString('en-IN')}</span>
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
-            <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Member Since</span>
-            <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{trialStart ? trialStart.toLocaleDateString('en-IN') : '-'}</span>
-          </div>
-        </div>
-        <div style={{ borderRadius: 16, padding: 20, marginBottom: 16, border: '1.5px solid #C8920A', background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 6 }}>⚡ PULSE POINTS</div>
-              <div style={{ fontSize: 32, fontWeight: 900, color: '#C8920A' }}>{profile?.pulse_points || 0}</div>
-            </div>
-            <div style={{ fontSize: 44 }}>🏆</div>
-          </div>
-        </div>
-        <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 20, marginBottom: 16, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>🔗 REFERRAL CODE</div>
-          <div style={{ backgroundColor: isDark ? DARK.bg : LIGHT.bg, borderRadius: 10, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: 2, color: '#C8920A' }}>{profile?.referral_code || '------'}</span>
-            <button onClick={() => { if (profile?.referral_code) { navigator.clipboard.writeText(profile.referral_code); alert('Referral code copied! 🎉'); } }} style={{ padding: '6px 14px', borderRadius: 8, backgroundColor: '#C8920A', color: '#FFF', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700 }}>Copy</button>
-          </div>
-          <div style={{ fontSize: 11, color: isDark ? DARK.muted : LIGHT.muted, marginTop: 8 }}>Friend ko refer karo → +50 Pulse Points milenge!</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-function App() {
-  const [session, setSession] = useState(null);
-  const [loadingSession, setLoadingSession] = useState(true);
-  const [profile, setProfile] = useState(null);
-  const [loadingProfile, setLoadingProfile] = useState(false);
-  const [showGreeting, setShowGreeting] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSplash, setShowSplash] = useState(true);
-  const [activeTab, setActiveTab] = useState('check');
-  const [isDark, setIsDark] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setShowSplash(false), 2500);
-    return () => clearTimeout(t);
-  }, []);
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session?.user ? session : null);
-      setLoadingSession(false);
-    });
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session?.user ? session : null);
-      setLoadingSession(false);
-    });
-    return () => subscription.unsubscribe();
-  }, []);
-  useEffect(() => {
-    if (!session?.user) { setProfile(null); return; }
-    setLoadingProfile(true);
-    supabase.from('profiles').select('*').eq('id', session.user.id).single()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          supabase.from('profiles').insert({
-            id: session.user.id,
-            email: session.user.email,
-            trial_start_date: new Date().toISOString(),
-          }).then(() => {
-            setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
-            setShowWelcome(true);
-          });
-        } else {
-          setProfile(data);
-          trackLogin(session.user.id);
-          setShowLogin(false);
-          setShowGreeting(true);
-          setTimeout(() => setShowGreeting(false), 4000);
-          if (!data.onboarding_done) setShowWelcome(true);
-        }
-        setLoadingProfile(false);
-      });
-  }, [session]);
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setShowLogin(false);
-    setActiveTab('check');
-  };
-  const handleWelcomeDone = async () => {
-    setShowWelcome(false);
-    if (session?.user?.id) {
-      await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
-    }
-  };
-  const checkAccess = () => {
-    if (!profile) return 'loading';
-    if (profile.is_subscribed) {
-      if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
-      return 'active';
-    }
-    const trialStart = new Date(profile.trial_start_date);
-    const diffDays = (new Date() - trialStart) / (1000 * 60 * 60 * 24);
-    if (diffDays <= 5) return 'trial';
-    return 'expired';
-  };
-  const path = window.location.pathname;
-  if (path === '/terms') return <TermsPage />;
-  if (path === '/refund') return <RefundPage />;
-  if (path === '/contact') return <ContactPage />;
-  if (path === '/payment-status') return <PaymentStatusPage />;
-  if (path === '/blog') return <BlogList />;
-  if (path.startsWith('/blog/')) return <BlogPost slug={path.replace('/blog/', '')} />;
-  if (showSplash) return <SplashScreen />;
-  if (loadingSession || loadingProfile) return <SplashScreen />;
-  if (!session) {
-    if (showLogin) return <LoginPage />;
-    return <LandingPage onLogin={() => setShowLogin(true)} />;
+
+function getStatus(profile) {
+  if (profile.is_subscribed) {
+    if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
+    return 'paid';
   }
-  if (path === '/admin') return <AdminPanel user={session.user} onLogout={handleLogout} />;
-  const access = checkAccess();
-  if (access === 'loading') return <SplashScreen />;
-  if (access === 'expired') return <TrialExpiredPage user={session.user} onLogout={handleLogout} />;
-  const renderTab = () => {
-    switch (activeTab) {
-      case 'check':
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
-      case 'muhurat':
-        return <MuhuratCalendar isDark={isDark} userDob={profile?.dob} />;
-      case 'watchlist':
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
-      case 'screener':
-        return <PulseScreener isDark={isDark} />;
-      case 'numerology':
-        return <NumerologyPanel isDark={isDark} />;
-      case 'academy':
-        return <Academy isDark={isDark} />;
-      case 'settings':
-        return (
-          <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20, padding: 24 }}>
-            <div style={{ fontSize: 48 }}>⚙️</div>
-            <div style={{ fontSize: 20, fontWeight: 700, color: isDark ? DARK.text : LIGHT.text }}>Settings</div>
-            <div style={{ backgroundColor: isDark ? DARK.surface : LIGHT.surface, borderRadius: 16, padding: 24, width: '100%', maxWidth: 360, border: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                <span style={{ color: isDark ? DARK.text : LIGHT.text, fontWeight: 600 }}>🌙 Dark Mode</span>
-                <button onClick={() => setIsDark(d => !d)} style={{ width: 52, height: 28, borderRadius: 14, backgroundColor: isDark ? '#C8920A' : '#E2E8F0', border: 'none', cursor: 'pointer', position: 'relative', transition: 'background 0.3s' }}>
-                  <div style={{ position: 'absolute', top: 3, left: isDark ? 26 : 3, width: 22, height: 22, borderRadius: '50%', backgroundColor: '#FFF', transition: 'left 0.3s', boxShadow: '0 1px 4px rgba(0,0,0,0.2)' }} />
-                </button>
-              </div>
-              <div style={{ borderTop: `1px solid ${isDark ? DARK.border : LIGHT.border}`, paddingTop: 16 }}>
-                <button onClick={handleLogout} style={{ width: '100%', padding: '12px', borderRadius: 12, backgroundColor: '#DC2626', color: '#FFF', border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 14 }}>🚪 Logout</button>
-              </div>
+  return getDaysLeft(profile.trial_start_date) > 0 ? 'trial' : 'expired';
+}
+
+function slugify(text) {
+  return text.toLowerCase().trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function StatusBadge({ status }) {
+  const config = {
+    paid: { label: '💰 Paid', color: COLORS.green, bg: COLORS.greenLight },
+    trial: { label: '🎯 Trial', color: COLORS.gold, bg: COLORS.goldLight },
+    expired: { label: '❌ Expired', color: COLORS.red, bg: COLORS.redLight },
+  };
+  const c = config[status] || config.expired;
+  return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
+}
+
+export default function AdminPanel({ user, onLogout }) {
+  const [profiles, setProfiles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [editUser, setEditUser] = useState(null);
+  const [editMonths, setEditMonths] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
+  const [activeTab, setActiveTab] = useState('users');
+  const [referrals, setReferrals] = useState([]);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replying, setReplying] = useState(false);
+  const [expandedUser, setExpandedUser] = useState(null);
+
+  // BLOG STATE
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [editingPost, setEditingPost] = useState(null); // null = closed, {} = new, {...} = editing
+  const [postForm, setPostForm] = useState({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
+  const [savingPost, setSavingPost] = useState(false);
+
+  // FEEDBACK STATE
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
+  const fetchProfiles = async () => {
+    setLoading(true);
+    const { data } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
+    setProfiles(data || []);
+    setLoading(false);
+  };
+
+  const fetchReferrals = async () => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('name, email, referred_by, referral_code, referral_count, created_at')
+      .order('created_at', { ascending: false });
+    setReferrals(data || []);
+  };
+
+  const fetchSupportMessages = async () => {
+    const { data } = await supabase
+      .from('support_messages')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setSupportMessages(data || []);
+  };
+
+  const fetchBlogPosts = async () => {
+    const { data } = await supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
+    setBlogPosts(data || []);
+  };
+
+  const fetchFeedback = async () => {
+    setLoadingFeedback(true);
+    const { data } = await supabase.from('trial_feedback').select('*').order('created_at', { ascending: false });
+    setFeedbackList(data || []);
+    setLoadingFeedback(false);
+  };
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchProfiles();
+      fetchReferrals();
+      fetchSupportMessages();
+      fetchBlogPosts();
+      fetchFeedback();
+    }
+  }, [isAdmin]);
+
+  if (!isAdmin) {
+    return (
+      <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+        <div style={{ textAlign: 'center', color: COLORS.red, fontSize: 16, fontWeight: 700 }}>🚫 Access Denied</div>
+      </div>
+    );
+  }
+
+  const filtered = profiles.filter(p => {
+    const matchSearch = p.email?.toLowerCase().includes(search.toLowerCase()) || p.name?.toLowerCase().includes(search.toLowerCase());
+    const status = getStatus(p);
+    return matchSearch && (filter === 'all' || status === filter);
+  });
+
+  const stats = {
+    total: profiles.length,
+    paid: profiles.filter(p => getStatus(p) === 'paid').length,
+    trial: profiles.filter(p => getStatus(p) === 'trial').length,
+    expired: profiles.filter(p => getStatus(p) === 'expired').length,
+  };
+
+  const referralStats = {
+    totalReferrals: referrals.filter(r => r.referred_by).length,
+    topReferrer: [...referrals].sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0))[0],
+  };
+
+  const uniqueUsers = [...new Map(supportMessages.map(m => [m.user_id, m])).values()];
+
+  const userMessages = selectedUser
+    ? supportMessages.filter(m => m.user_id === selectedUser.user_id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+    : [];
+
+  // FEEDBACK STATS - count per reason
+  const feedbackReasonCounts = feedbackList.reduce((acc, f) => {
+    const reason = f.reason || 'Unknown';
+    acc[reason] = (acc[reason] || 0) + 1;
+    return acc;
+  }, {});
+  const sortedReasonCounts = Object.entries(feedbackReasonCounts).sort((a, b) => b[1] - a[1]);
+
+  const handleReply = async () => {
+    if (!replyText.trim() || !selectedUser) return;
+    setReplying(true);
+    await supabase.from('support_messages').insert([{
+      user_id: selectedUser.user_id,
+      user_email: selectedUser.user_email,
+      message: replyText.trim(),
+      sender: 'admin',
+    }]);
+    setReplyText('');
+    await fetchSupportMessages();
+    setReplying(false);
+  };
+
+  const handleSubscribe = async () => {
+    if (!editUser) return;
+    setSaving(true);
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + editMonths);
+    await supabase.from('profiles').update({ is_subscribed: true, subscription_end_date: endDate.toISOString() }).eq('id', editUser.id);
+    setSuccessMsg(`✅ ${editUser.email} ko ${editMonths} month subscription diya!`);
+    setEditUser(null);
+    fetchProfiles();
+    setSaving(false);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleExtendTrial = async (profile) => {
+    await supabase.from('profiles').update({ trial_start_date: new Date().toISOString() }).eq('id', profile.id);
+    setSuccessMsg(`✅ ${profile.email} ka trial 5 din extend kiya!`);
+    fetchProfiles();
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleBlock = async (profile) => {
+    if (!window.confirm(`${profile.email} ko block karna chahte ho?`)) return;
+    const pastDate = new Date('2020-01-01').toISOString();
+    await supabase.from('profiles').update({ is_subscribed: false, trial_start_date: pastDate, subscription_end_date: pastDate }).eq('id', profile.id);
+    setSuccessMsg(`🚫 ${profile.email} blocked!`);
+    fetchProfiles();
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  // BLOG HANDLERS
+  const openNewPost = () => {
+    setPostForm({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
+    setEditingPost({});
+  };
+
+  const openEditPost = (post) => {
+    setPostForm({
+      title: post.title || '', slug: post.slug || '', excerpt: post.excerpt || '',
+      content: post.content || '', category: post.category || 'Numerology',
+      meta_description: post.meta_description || '', published: post.published || false,
+    });
+    setEditingPost(post);
+  };
+
+  const handleSavePost = async () => {
+    if (!postForm.title.trim() || !postForm.content.trim()) {
+      alert('Title aur Content dono zaroori hain');
+      return;
+    }
+    setSavingPost(true);
+    const slug = postForm.slug.trim() || slugify(postForm.title);
+    const payload = { ...postForm, slug, updated_at: new Date().toISOString() };
+
+    let error;
+    if (editingPost?.id) {
+      ({ error } = await supabase.from('blog_posts').update(payload).eq('id', editingPost.id));
+    } else {
+      ({ error } = await supabase.from('blog_posts').insert([payload]));
+    }
+
+    if (error) {
+      setSuccessMsg(`❌ Save fail hua: ${error.message}`);
+    } else {
+      setSuccessMsg(`✅ Post ${editingPost?.id ? 'update' : 'create'} ho gaya!`);
+      setEditingPost(null);
+      fetchBlogPosts();
+    }
+    setSavingPost(false);
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleTogglePublish = async (post) => {
+    const { error } = await supabase.from('blog_posts').update({ published: !post.published }).eq('id', post.id);
+    if (!error) {
+      setSuccessMsg(post.published ? `📝 Draft mein daal diya` : `🚀 Post publish ho gaya!`);
+      fetchBlogPosts();
+    }
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleDeletePost = async (post) => {
+    if (!window.confirm(`"${post.title}" delete karna chahte ho?`)) return;
+    const { error } = await supabase.from('blog_posts').delete().eq('id', post.id);
+    if (!error) {
+      setSuccessMsg(`🗑️ Post delete ho gaya`);
+      fetchBlogPosts();
+    }
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' };
+  const rowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` };
+  const inputStyle = { width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 10, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 14, fontFamily: 'Inter, sans-serif' };
+  const labelStyle = { fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 6 };
+
+  // Aaj ke signups
+  const todaySignups = profiles.filter(p => {
+    const created = new Date(p.created_at);
+    const today = new Date();
+    return created.toDateString() === today.toDateString();
+  }).length;
+
+  return (
+    <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
+      <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 48px' }}>
+
+        {/* HEADER */}
+        <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button onClick={() => window.location.href = '/'} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>← Dashboard</button>
+            <div>
+              <div style={{ fontSize: 18, fontWeight: 800 }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 12, color: COLORS.muted }}>Admin</span></div>
+              <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
             </div>
           </div>
-        );
-      case 'profile':
-        return <ProfileTab profile={profile} session={session} isDark={isDark} />;
-      default:
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
-    }
-  };
-  return (
-    <>
-      <GreetingToast name={profile?.name} show={showGreeting} />
-      <div style={{ paddingBottom: 70 }}>
-        {renderTab()}
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+        </div>
+
+        {/* TABS */}
+        <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog']].map(([key, label]) => (
+            <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
+              flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
+              borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
+              backgroundColor: activeTab === key ? COLORS.gold : 'transparent',
+              color: activeTab === key ? '#FFF' : COLORS.muted,
+              cursor: 'pointer',
+            }}>{label}</button>
+          ))}
+        </div>
+
+        <div style={{ padding: '20px 20px 0' }}>
+          {successMsg && <div style={{ backgroundColor: COLORS.greenLight, border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>{successMsg}</div>}
+
+          {/* USERS TAB */}
+          {activeTab === 'users' && (
+            <>
+              {/* STATS */}
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight]].map(([label, value, color, bg]) => (
+                  <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                    <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
+                    <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Aaj ke signups */}
+              <div style={{ backgroundColor: COLORS.blueLight, border: `1px solid #BFDBFE`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: COLORS.blue, fontWeight: 700 }}>📅 AAJ KE NAYE SIGNUPS</div>
+                  <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+                </div>
+                <div style={{ fontSize: 32, fontWeight: 900, color: COLORS.blue }}>{todaySignups}</div>
+              </div>
+
+              <div style={cardStyle}>
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Naam ya Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
+                    <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>USERS ({filtered.length})</div>
+                {loading ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                ) : filtered.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>Koi user nahi mila.</div>
+                ) : filtered.map(p => {
+                  const status = getStatus(p);
+                  const daysLeft = getDaysLeft(p.trial_start_date);
+                  const isExpanded = expandedUser === p.id;
+                  return (
+                    <div key={p.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                        <div style={{ flex: 1, marginRight: 8 }}>
+                          {p.name && <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{p.name}</div>}
+                          <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
+                          <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
+                            Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
+                            {status === 'trial' && ` • ${daysLeft} din baaki`}
+                            {status === 'paid' && p.subscription_end_date && ` • Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
+                            {p.referred_by && <span style={{ color: COLORS.purple }}> • Ref: {p.referred_by}</span>}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                          <StatusBadge status={status} />
+                          <button onClick={() => setExpandedUser(isExpanded ? null : p.id)} style={{ fontSize: 10, color: COLORS.blue, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
+                            {isExpanded ? '▲ Hide' : '▼ Details'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* EXPANDED DETAILS */}
+                      {isExpanded && (
+                        <div style={{ backgroundColor: COLORS.bg, borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${COLORS.surfaceBorder}` }}>
+                          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>📊 USER DETAILS</div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🕐 Last Login</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>
+                              {p.last_login ? new Date(p.last_login).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🔢 Login Count</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold }}>{p.login_count || 0} baar</span>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>📱 Device</span>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>{p.last_device || 'Unknown'}</span>
+                          </div>
+
+                          <div style={{ padding: '5px 0' }}>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌍 Location</span>
+                            <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.text, marginTop: 3, wordBreak: 'break-all' }}>{p.last_location || 'Unknown'}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
+                        <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
+                        <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
+
+          {/* REFERRALS TAB */}
+          {activeTab === 'referrals' && (
+            <>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+                <div style={{ flex: 1, backgroundColor: COLORS.purpleLight, border: `1px solid #DDD6FE`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: COLORS.purple }}>{referralStats.totalReferrals}</div>
+                  <div style={{ fontSize: 11, color: COLORS.purple, fontWeight: 700 }}>Total Referrals</div>
+                </div>
+                <div style={{ flex: 1, backgroundColor: COLORS.goldLight, border: `1px solid #FDE68A`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.gold }}>
+                    {referralStats.topReferrer?.name || referralStats.topReferrer?.email?.split('@')[0] || '—'}
+                  </div>
+                  <div style={{ fontSize: 11, color: COLORS.gold, fontWeight: 700 }}>Top Referrer</div>
+                </div>
+              </div>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔗 KIS KE LINK SE AAYA</div>
+                {referrals.filter(r => r.referred_by).length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi referral nahi aaya.</p>
+                ) : referrals.filter(r => r.referred_by).map((r, i) => (
+                  <div key={i} style={rowStyle}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: COLORS.text, fontSize: 13 }}>{r.name || r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>{r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>{new Date(r.created_at).toLocaleDateString('en-IN')}</div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div style={{ fontSize: 12, color: COLORS.purple, fontWeight: 700, backgroundColor: COLORS.purpleLight, padding: '3px 10px', borderRadius: 20 }}>via {r.referred_by}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🏆 TOP REFERRERS</div>
+                {referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi referral nahi.</p>
+                ) : referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).map((r, i) => (
+                  <div key={i} style={rowStyle}>
+                    <div>
+                      <div style={{ fontWeight: 700, color: COLORS.text }}>{r.name || r.email}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted }}>Code: {r.referral_code}</div>
+                    </div>
+                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 18 }}>{r.referral_count} 🔗</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* SUPPORT TAB */}
+          {activeTab === 'support' && (
+            <>
+              {!selectedUser ? (
+                <div style={cardStyle}>
+                  <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>💬 CUSTOMER MESSAGES ({uniqueUsers.length})</div>
+                  {uniqueUsers.length === 0 ? (
+                    <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi message nahi.</p>
+                  ) : uniqueUsers.map((m, i) => (
+                    <div key={i} onClick={() => setSelectedUser(m)} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`, cursor: 'pointer' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{m.user_email}</div>
+                          <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 3 }}>{m.message?.substring(0, 50)}...</div>
+                          <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{new Date(m.created_at).toLocaleDateString('en-IN')}</div>
+                        </div>
+                        <span style={{ fontSize: 18 }}>→</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div>
+                  <button onClick={() => setSelectedUser(null)} style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>← Wapas</button>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.muted, marginBottom: 12 }}>{selectedUser.user_email}</div>
+                  <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 12, maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {userMessages.map((m) => (
+                      <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'user' ? 'flex-start' : 'flex-end' }}>
+                        <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: 16, backgroundColor: m.sender === 'user' ? COLORS.bg : COLORS.gold, color: m.sender === 'user' ? COLORS.text : '#FFF', fontSize: 13 }}>
+                          {m.sender === 'admin' && <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, marginBottom: 3 }}>🛡️ Admin</div>}
+                          {m.message}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleReply()} placeholder="Reply likho..." style={{ flex: 1, padding: '11px 14px', fontSize: 14, borderRadius: 24, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none' }} />
+                    <button onClick={handleReply} disabled={replying || !replyText.trim()} style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', backgroundColor: replying || !replyText.trim() ? COLORS.surfaceBorder : COLORS.gold, color: '#FFF', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>➤</button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* FEEDBACK TAB */}
+          {activeTab === 'feedback' && (
+            <>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📊 REASON BREAKDOWN ({feedbackList.length} total)</div>
+                {sortedReasonCounts.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
+                ) : sortedReasonCounts.map(([reason, count]) => {
+                  const pct = feedbackList.length ? Math.round((count / feedbackList.length) * 100) : 0;
+                  return (
+                    <div key={reason} style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ color: COLORS.text, fontWeight: 600 }}>{reason}</span>
+                        <span style={{ color: COLORS.gold, fontWeight: 700 }}>{count} ({pct}%)</span>
+                      </div>
+                      <div style={{ height: 8, backgroundColor: COLORS.bg, borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, backgroundColor: COLORS.gold, borderRadius: 99 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📋 SAB RESPONSES</div>
+                {loadingFeedback ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                ) : feedbackList.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
+                ) : feedbackList.map((f) => (
+                  <div key={f.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{f.email}</div>
+                      <div style={{ fontSize: 10, color: COLORS.muted, whiteSpace: 'nowrap', marginLeft: 8 }}>{new Date(f.created_at).toLocaleDateString('en-IN')}</div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, backgroundColor: COLORS.goldLight, padding: '3px 10px', borderRadius: 20 }}>{f.reason}</span>
+                    {f.message && (
+                      <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 8, backgroundColor: COLORS.bg, borderRadius: 10, padding: '8px 12px', lineHeight: 1.5 }}>
+                        "{f.message}"
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* BLOG TAB */}
+          {activeTab === 'blog' && (
+            <>
+              <button onClick={openNewPost} style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 16 }}>
+                ✏️ Naya Post Likho
+              </button>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📝 BLOG POSTS ({blogPosts.length})</div>
+                {blogPosts.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi post nahi hai.</p>
+                ) : blogPosts.map(post => (
+                  <div key={post.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
+                      <div style={{ flex: 1, marginRight: 8 }}>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{post.title}</div>
+                        <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
+                          {post.category} • {new Date(post.created_at).toLocaleDateString('en-IN')}
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: post.published ? COLORS.green : COLORS.gold, backgroundColor: post.published ? COLORS.greenLight : COLORS.goldLight, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
+                        {post.published ? '🟢 Live' : '📝 Draft'}
+                      </span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => openEditPost(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.blue, cursor: 'pointer', fontWeight: 700 }}>✏️ Edit</button>
+                      <button onClick={() => handleTogglePublish(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: post.published ? COLORS.goldLight : COLORS.green, color: post.published ? COLORS.goldDim : '#FFF', cursor: 'pointer', fontWeight: 700 }}>
+                        {post.published ? '📝 Unpublish' : '🚀 Publish'}
+                      </button>
+                      <button onClick={() => handleDeletePost(post)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🗑️</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
-      <BottomNav
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        isDark={isDark}
-      />
-    </>
+
+      {/* SUBSCRIBE MODAL */}
+      {editUser && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
+          <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>💰 Subscription Do</div>
+            {editUser.name && <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, marginBottom: 2 }}>{editUser.name}</div>}
+            <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16, wordBreak: 'break-all' }}>{editUser.email}</div>
+            <div style={{ fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>MONTHS CHOOSE KARO</div>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
+              {[1, 2, 3].map(m => (
+                <button key={m} onClick={() => setEditMonths(m)} style={{ flex: 1, padding: '12px 8px', fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: editMonths===m ? COLORS.gold : COLORS.bg, color: editMonths===m ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{m} Month</button>
+              ))}
+            </div>
+            <button onClick={handleSubscribe} disabled={saving} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10 }}>
+              {saving ? '⏳ Save ho raha hai...' : '✅ Confirm Karo'}
+            </button>
+            <button onClick={() => setEditUser(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* BLOG POST MODAL */}
+      {editingPost !== null && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 200, padding: 20, overflowY: 'auto' }}>
+          <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, marginTop: 20, marginBottom: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? '✏️ Post Edit Karo' : '✏️ Naya Post'}</div>
+
+            <div style={labelStyle}>TITLE</div>
+            <input value={postForm.title} onChange={e => setPostForm(f => ({ ...f, title: e.target.value }))} placeholder="Post ka title..." style={inputStyle} />
+
+            <div style={labelStyle}>SLUG (URL) — khali chodo, auto ban jayega</div>
+            <input value={postForm.slug} onChange={e => setPostForm(f => ({ ...f, slug: e.target.value }))} placeholder="lucky-number-kaise-nikale" style={{ ...inputStyle, fontFamily: 'monospace' }} />
+
+            <div style={labelStyle}>CATEGORY</div>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 14 }}>
+              {['Numerology', 'Trading Tips', 'Market Analysis'].map(cat => (
+                <button key={cat} onClick={() => setPostForm(f => ({ ...f, category: cat }))} style={{ flex: 1, padding: '8px 4px', fontSize: 11, fontWeight: 700, borderRadius: 8, border: 'none', backgroundColor: postForm.category === cat ? COLORS.gold : COLORS.bg, color: postForm.category === cat ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{cat}</button>
+              ))}
+            </div>
+
+            <div style={labelStyle}>EXCERPT (short summary, listing page ke liye)</div>
+            <textarea value={postForm.excerpt} onChange={e => setPostForm(f => ({ ...f, excerpt: e.target.value }))} placeholder="1-2 line ka summary..." rows={2} style={{ ...inputStyle, resize: 'vertical' }} />
+
+            <div style={labelStyle}>CONTENT (poora post)</div>
+            <textarea value={postForm.content} onChange={e => setPostForm(f => ({ ...f, content: e.target.value }))} placeholder="Poora blog post likho..." rows={10} style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }} />
+
+            <div style={labelStyle}>META DESCRIPTION (Google search ke liye, ~150 chars)</div>
+            <textarea value={postForm.meta_description} onChange={e => setPostForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Google search results mein ye line dikhegi..." rows={2} style={{ ...inputStyle, resize: 'vertical', marginBottom: 20 }} />
+
+            <button onClick={handleSavePost} disabled={savingPost} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10 }}>
+              {savingPost ? '⏳ Save ho raha hai...' : '💾 Save Karo'}
+            </button>
+            <button onClick={() => setEditingPost(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
-export default App;
