@@ -4,6 +4,7 @@ export default function MarketNewsBrief({ isDark, C }) {
   const [brief, setBrief] = useState(null);
   const [loading, setLoading] = useState(false);
   const [shown, setShown] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const getBrief = async () => {
     setLoading(true);
@@ -26,6 +27,15 @@ export default function MarketNewsBrief({ isDark, C }) {
       setShown(true);
     }
     setLoading(false);
+  };
+
+  const copyForWhatsApp = () => {
+    if (!brief) return;
+    const cleanBrief = brief.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '');
+    const formatted = `🔱 *PulseTrade Market Update* — ${today}\n\n${cleanBrief}\n\n🔍 Detailed analysis: pulsetrade.in\n🔱 हर हर महादेव 🔱`;
+    navigator.clipboard.writeText(formatted);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const today = new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -66,8 +76,20 @@ export default function MarketNewsBrief({ isDark, C }) {
           }}>
             {brief.replace(/\*\*/g, '').replace(/\*/g, '').replace(/##/g, '')}
           </div>
+
+          <button onClick={copyForWhatsApp} style={{
+            width: '100%', marginTop: 10, padding: '11px',
+            fontSize: 13, fontWeight: 700, borderRadius: 10, border: 'none',
+            background: copied ? '#16A34A' : 'linear-gradient(135deg, #25D366, #128C7E)',
+            color: '#FFF', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}>
+            <span style={{ fontSize: 16 }}>📱</span>
+            {copied ? '✅ Copy Ho Gaya! WhatsApp Channel Pe Paste Karo' : 'WhatsApp Channel Ke Liye Copy Karo'}
+          </button>
+
           <button onClick={() => { setShown(false); setBrief(null); }} style={{
-            width: '100%', marginTop: 10, padding: '8px',
+            width: '100%', marginTop: 8, padding: '8px',
             backgroundColor: 'transparent', border: `1px solid rgba(37,99,235,0.3)`,
             borderRadius: 8, color: '#2563EB', fontSize: 12, fontWeight: 700, cursor: 'pointer',
           }}>🔄 Refresh Karo</button>
