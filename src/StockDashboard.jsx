@@ -13,6 +13,7 @@ import NumerologyPanel from './NumerologyPanel';
 import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
 import PulseSyncScore from './PulseSyncScore';
+import TradeTimeOptimizer from './components/TradeTimeOptimizer';
 const LIGHT = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5", surfaceHover: "#F0F2FA",
   gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
@@ -1031,6 +1032,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
               <MarketNewsBrief isDark={dark} C={C} />
               <MuhuratCalendar isDark={dark} userDob={userDob} />
               <FearGreedMeter isDark={dark} />
+              <TradeTimeOptimizer isDark={dark} userDob={userDob} />
               
               <PulseOracle userDob={userDob} isDark={dark} C={C} />
 
