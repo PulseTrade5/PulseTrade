@@ -6,43 +6,55 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+const TRIAL_DAYS = 5;
+
 export default async function handler(req, res) {
-  // Allow Vercel Cron (GET) and manual testing (GET/POST both work)
   if (req.method !== 'GET' && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Optional security: protect this route so randoms can't trigger it
   const authHeader = req.headers['authorization'];
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-
-    const todayStr = now.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-    // ⚠️ ADJUST table/column names below to match your actual Supabase schema
     const { data: users, error } = await supabase
       .from('profiles')
-      .select('email, trial_end, is_subscribed')
+      .select('email, trial_start_date, is_subscribed')
       .eq('is_subscribed', false)
-      .in('trial_end', [todayStr, tomorrowStr]);
+      .not('trial_start_date', 'is', null);
 
     if (error) throw error;
 
     if (!users || users.length === 0) {
-      return res.status(200).json({ success: true, message: 'No trial reminders to send today', count: 0 });
+      return res.status(200).json({ success: true, message: 'No unsubscribed users found', count: 0 });
+    }
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    const usersToRemind = users
+      .map(u => {
+        const start = new Date(u.trial_start_date);
+        const trialEnd = new Date(start);
+        trialEnd.setDate(start.getDate() + TRIAL_DAYS);
+        const trialEndStr = trialEnd.toISOString().split('T')[0];
+        return { ...u, trialEndStr };
+      })
+      .filter(u => u.trialEndStr === todayStr || u.trialEndStr === tomorrowStr);
+
+    if (usersToRemind.length === 0) {
+      return res.status(200).json({ success: true, message: 'No trial reminders due today', count: 0 });
     }
 
     const results = [];
 
-    for (const user of users) {
-      const isLastDay = user.trial_end === todayStr;
+    for (const user of usersToRemind) {
+      const isLastDay = user.trialEndStr === todayStr;
       const subject = isLastDay
         ? `⏰ Aaj Aakhri Din Hai — PulseTrade Trial Khatam Ho Raha Hai!`
         : `🔱 Kal Trial Khatam — Abhi Renew Karo, Miss Na Karo`;
@@ -88,7 +100,7 @@ export default async function handler(req, res) {
     }
 
     const sentCount = results.filter(r => r.sent).length;
-    return res.status(200).json({ success: true, totalUsers: users.length, sentCount, results });
+    return res.status(200).json({ success: true, totalChecked: users.length, dueToday: usersToRemind.length, sentCount, results });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
