@@ -65,12 +65,24 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
       .then(data => {
         const candles = data?.candles;
         if (candles && candles.length >= 2) {
-          const last = candles[candles.length - 1].close;
-          const prev = candles[candles.length - 2].close;
-          if (last != null && prev != null) {
+          const todayCandle = candles[candles.length - 1];
+          const prevCandle = candles[candles.length - 2];
+          const last = todayCandle.close;
+          const prev = prevCandle.close;
+
+          if (last != null && prev != null && todayCandle.high != null && todayCandle.low != null) {
             const change = last - prev;
             const changePercent = (change / prev) * 100;
-            setNiftyData({ price: last, change, changePercent });
+
+            // Classic pivot point formula — uses today's H/L/C to project tomorrow's levels
+            const pivot = (todayCandle.high + todayCandle.low + todayCandle.close) / 3;
+            const range = todayCandle.high - todayCandle.low;
+            const r1 = 2 * pivot - todayCandle.low;
+            const s1 = 2 * pivot - todayCandle.high;
+            const r2 = pivot + range;
+            const s2 = pivot - range;
+
+            setNiftyData({ price: last, change, changePercent, pivot, r1, r2, s1, s2 });
           }
         }
       })
@@ -99,7 +111,7 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
       text = `🔱 *PulseTrade — Kal Kya Hoga* — ${tomorrowStr}\n\n🏖️ Kal ${weekdayInfo.name} hai — market band rahega. Weekend pe watchlist review kar lo!\n\n🔍 pulsetrade.in\n🔱 हर हर महादेव 🔱`;
     } else {
       const niftyLine = niftyData
-        ? `\n📊 Nifty 50: ${niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (${niftyData.change >= 0 ? '▲' : '▼'} ${Math.abs(niftyData.changePercent || 0).toFixed(2)}%)\n`
+        ? `\n📊 Nifty 50: ${niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (${niftyData.change >= 0 ? '▲' : '▼'} ${Math.abs(niftyData.changePercent || 0).toFixed(2)}%)\n🔴 Resistance: ${niftyData.r1.toLocaleString('en-IN', { maximumFractionDigits: 0 })} / ${niftyData.r2.toLocaleString('en-IN', { maximumFractionDigits: 0 })}\n🟢 Support: ${niftyData.s1.toLocaleString('en-IN', { maximumFractionDigits: 0 })} / ${niftyData.s2.toLocaleString('en-IN', { maximumFractionDigits: 0 })}\n`
         : '\n';
       text = `🔱 *PulseTrade — Kal Kya Hoga* — ${tomorrowStr}\n${niftyLine}✨ Lucky Number: #${dayNum}\n${weekdayInfo.planet} · Favorable Sector: ${weekdayInfo.sector}${isPersonalMatch ? `\n⭐ Personal Lucky Din (Life Path ${lifePath} se match!)` : ''}\n\n🔍 pulsetrade.in\n🔱 हर हर महादेव 🔱`;
     }
@@ -143,22 +155,44 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
       ) : (
         <>
           {niftyData && (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '10px 16px',
-              marginBottom: 14, position: 'relative', zIndex: 1,
-            }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>NIFTY 50 (Aaj Band)</span>
-              <span style={{ fontSize: 16, fontWeight: 800, color: '#FFF' }}>
-                {niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-              </span>
-              <span style={{
-                fontSize: 12, fontWeight: 700,
-                color: niftyData.change >= 0 ? '#4ADE80' : '#F87171',
+            <>
+              <div style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '10px 16px',
+                marginBottom: 10, position: 'relative', zIndex: 1,
               }}>
-                {niftyData.change >= 0 ? '▲' : '▼'} {Math.abs(niftyData.changePercent || 0).toFixed(2)}%
-              </span>
-            </div>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>NIFTY 50 (Aaj Band)</span>
+                <span style={{ fontSize: 16, fontWeight: 800, color: '#FFF' }}>
+                  {niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                </span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700,
+                  color: niftyData.change >= 0 ? '#4ADE80' : '#F87171',
+                }}>
+                  {niftyData.change >= 0 ? '▲' : '▼'} {Math.abs(niftyData.changePercent || 0).toFixed(2)}%
+                </span>
+              </div>
+
+              <div style={{
+                backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '12px 14px',
+                marginBottom: 14, position: 'relative', zIndex: 1,
+              }}>
+                <div style={{ fontSize: 10, letterSpacing: 1, color: 'rgba(255,255,255,0.7)', fontWeight: 700, marginBottom: 8, textTransform: 'uppercase' }}>
+                  Kal Ke Support / Resistance
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                  <span style={{ fontSize: 11.5, color: '#F87171', fontWeight: 700 }}>R2 {niftyData.r2.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                  <span style={{ fontSize: 11.5, color: '#FCA5A5', fontWeight: 700 }}>R1 {niftyData.r1.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                </div>
+                <div style={{ textAlign: 'center', fontSize: 12, color: '#FFF', fontWeight: 800, padding: '4px 0', borderTop: '1px solid rgba(255,255,255,0.15)', borderBottom: '1px solid rgba(255,255,255,0.15)', margin: '4px 0' }}>
+                  Pivot {niftyData.pivot.toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+                  <span style={{ fontSize: 11.5, color: '#86EFAC', fontWeight: 700 }}>S1 {niftyData.s1.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                  <span style={{ fontSize: 11.5, color: '#4ADE80', fontWeight: 700 }}>S2 {niftyData.s2.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                </div>
+              </div>
+            </>
           )}
 
           <div style={{
