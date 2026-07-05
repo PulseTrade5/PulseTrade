@@ -796,6 +796,26 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const C = dark ? DARK : LIGHT;
 
   const uid = user?.id;
+
+  // 🔱 Subscription gate — checks if trial has ended and user hasn't subscribed
+  const [subStatus, setSubStatus] = useState('loading'); // 'loading' | 'active' | 'expired'
+  useEffect(() => {
+    if (!uid) return;
+    supabase
+      .from('profiles')
+      .select('is_subscribed, trial_start_date')
+      .eq('id', uid)
+      .single()
+      .then(({ data, error }) => {
+        if (error || !data) { setSubStatus('active'); return; } // fail-safe: don't lock out on error
+        if (data.is_subscribed) { setSubStatus('active'); return; }
+        if (!data.trial_start_date) { setSubStatus('active'); return; }
+        const trialEnd = new Date(data.trial_start_date);
+        trialEnd.setDate(trialEnd.getDate() + 5);
+        setSubStatus(new Date() > trialEnd ? 'expired' : 'active');
+      });
+  }, [uid]);
+
   const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', '', uid));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -949,6 +969,30 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       : `0 6px 0 ${C.surfaceBorder}, 0 12px 26px rgba(30,27,75,0.08)`,
     transition: 'all 0.3s ease',
   };
+
+  // 🔱 Trial expired & not subscribed — block the dashboard, show paywall only
+  if (subStatus === 'expired') {
+    return (
+      <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div style={{ maxWidth: 420, width: '100%', backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`, borderRadius: 20, padding: 28, textAlign: 'center', boxShadow: dark ? '0 12px 30px rgba(0,0,0,0.35)' : '0 12px 26px rgba(30,27,75,0.08)' }}>
+          <div style={{ fontSize: 36, marginBottom: 8 }}>🔱</div>
+          <h2 style={{ color: C.gold, fontSize: 20, marginBottom: 8 }}>Aapka Free Trial Khatam Ho Gaya</h2>
+          <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
+            Numerology + Technical signals, PulseScreener, AI Trade Coach — sab kuch continue rakhne ke liye subscribe karo.
+          </p>
+          <SubscribeButton userEmail={user?.email} userId={user?.id} />
+        </div>
+      </div>
+    );
+  }
+
+  if (subStatus === 'loading') {
+    return (
+      <div style={{ backgroundColor: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: C.muted, fontSize: 14 }}>Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', transition: 'all 0.3s ease' }}>
