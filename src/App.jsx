@@ -11,6 +11,8 @@ import NumerologyPanel from './NumerologyPanel';
 import Academy from './Academy';
 import BlogList from './BlogList';
 import BlogPost from './BlogPost';
+import SubscribeButton from './SubscribeButton';
+import TrialFeedbackModal from './components/TrialFeedbackModal';
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? '🌅 Good Morning' : hour < 17 ? '☀️ Good Afternoon' : hour < 21 ? '🌆 Good Evening' : '🌙 Good Night';
@@ -205,27 +207,13 @@ function TrialExpiredPage({ user, onLogout }) {
             <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
           </div>
           <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 PLANS CHOOSE KARO</div>
-            {[
-              { label: '1 Month', price: '₹599', popular: false },
-              { label: '2 Months', price: '₹1,049', tag: '🔥 Popular', popular: true },
-              { label: '3 Months', price: '₹1,499', tag: '💰 Best Value', popular: false },
-            ].map((plan) => (
-              <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? LIGHT.gold : LIGHT.border}`, borderRadius: 12, padding: '14px 16px', marginBottom: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? LIGHT.goldLight : LIGHT.bg }}>
-                <div>
-                  <span style={{ fontWeight: 700, color: LIGHT.text, fontSize: 14 }}>{plan.label}</span>
-                  {plan.tag && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: LIGHT.goldDim }}>{plan.tag}</span>}
-                </div>
-                <span style={{ color: LIGHT.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
-              </div>
-            ))}
-            <a href="/#subscribe" style={{ display: 'block', width: '100%', marginTop: 16, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: LIGHT.gold, color: '#FFF', cursor: 'pointer', textAlign: 'center', textDecoration: 'none', boxShadow: '0 2px 14px rgba(200,146,10,0.35)' }}>
-              🚀 Abhi Subscribe Karo
-            </a>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 SUBSCRIBE KARO</div>
+            <SubscribeButton userEmail={user?.email} userId={user?.id} />
           </div>
           <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>Support: support@pulsetrade.in</p>
         </div>
       </div>
+      <TrialFeedbackModal user={user} />
     </div>
   );
 }
