@@ -209,4 +209,3 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
     </div>
   );
 }
-
