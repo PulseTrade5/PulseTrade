@@ -982,6 +982,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
           </p>
           <SubscribeButton userEmail={user?.email} userId={user?.id} />
         </div>
+        <TrialFeedbackModal user={user} />
       </div>
     );
   }
