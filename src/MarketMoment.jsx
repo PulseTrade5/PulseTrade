@@ -182,4 +182,3 @@ export default function MarketMoment({ isDark, userDob, userName, watchlist = []
     </div>
   );
 }
-
