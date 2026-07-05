@@ -66,6 +66,10 @@ export default function AdminPanel({ user, onLogout }) {
   const [postForm, setPostForm] = useState({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
   const [savingPost, setSavingPost] = useState(false);
 
+  // FEEDBACK STATE
+  const [feedbackList, setFeedbackList] = useState([]);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
+
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   const fetchProfiles = async () => {
@@ -96,19 +100,33 @@ export default function AdminPanel({ user, onLogout }) {
     setBlogPosts(data || []);
   };
 
+  const fetchFeedback = async () => {
+    setLoadingFeedback(true);
+    const { data } = await supabase.from('trial_feedback').select('*').order('created_at', { ascending: false });
+    setFeedbackList(data || []);
+    setLoadingFeedback(false);
+  };
+
   useEffect(() => {
     if (isAdmin) {
       fetchProfiles();
       fetchReferrals();
       fetchSupportMessages();
       fetchBlogPosts();
+      fetchFeedback();
     }
   }, [isAdmin]);
 
   if (!isAdmin) {
     return (
-      <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', flexDirection: 'column', gap: 12, padding: 20 }}>
         <div style={{ textAlign: 'center', color: COLORS.red, fontSize: 16, fontWeight: 700 }}>🚫 Access Denied</div>
+        <div style={{ textAlign: 'center', color: COLORS.muted, fontSize: 13 }}>
+          Detected login email: <strong>{user?.email || 'NONE (not logged in)'}</strong>
+        </div>
+        <div style={{ textAlign: 'center', color: COLORS.muted, fontSize: 13 }}>
+          Required admin email: <strong>{ADMIN_EMAIL}</strong>
+        </div>
       </div>
     );
   }
@@ -136,6 +154,14 @@ export default function AdminPanel({ user, onLogout }) {
   const userMessages = selectedUser
     ? supportMessages.filter(m => m.user_id === selectedUser.user_id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
     : [];
+
+  // FEEDBACK STATS - count per reason
+  const feedbackReasonCounts = feedbackList.reduce((acc, f) => {
+    const reason = f.reason || 'Unknown';
+    acc[reason] = (acc[reason] || 0) + 1;
+    return acc;
+  }, {});
+  const sortedReasonCounts = Object.entries(feedbackReasonCounts).sort((a, b) => b[1] - a[1]);
 
   const handleReply = async () => {
     if (!replyText.trim() || !selectedUser) return;
@@ -271,7 +297,7 @@ export default function AdminPanel({ user, onLogout }) {
 
         {/* TABS */}
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['blog', '📝 Blog']].map(([key, label]) => (
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
               borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
@@ -481,11 +507,58 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
+          {/* FEEDBACK TAB */}
+          {activeTab === 'feedback' && (
+            <>
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📊 REASON BREAKDOWN ({feedbackList.length} total)</div>
+                {sortedReasonCounts.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
+                ) : sortedReasonCounts.map(([reason, count]) => {
+                  const pct = feedbackList.length ? Math.round((count / feedbackList.length) * 100) : 0;
+                  return (
+                    <div key={reason} style={{ marginBottom: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+                        <span style={{ color: COLORS.text, fontWeight: 600 }}>{reason}</span>
+                        <span style={{ color: COLORS.gold, fontWeight: 700 }}>{count} ({pct}%)</span>
+                      </div>
+                      <div style={{ height: 8, backgroundColor: COLORS.bg, borderRadius: 99, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${pct}%`, backgroundColor: COLORS.gold, borderRadius: 99 }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div style={cardStyle}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📋 SAB RESPONSES</div>
+                {loadingFeedback ? (
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                ) : feedbackList.length === 0 ? (
+                  <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
+                ) : feedbackList.map((f) => (
+                  <div key={f.id} style={{ padding: '14px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, wordBreak: 'break-all' }}>{f.email}</div>
+                      <div style={{ fontSize: 10, color: COLORS.muted, whiteSpace: 'nowrap', marginLeft: 8 }}>{new Date(f.created_at).toLocaleDateString('en-IN')}</div>
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, backgroundColor: COLORS.goldLight, padding: '3px 10px', borderRadius: 20 }}>{f.reason}</span>
+                    {f.message && (
+                      <div style={{ fontSize: 12, color: COLORS.textSecondary, marginTop: 8, backgroundColor: COLORS.bg, borderRadius: 10, padding: '8px 12px', lineHeight: 1.5 }}>
+                        "{f.message}"
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
           {/* BLOG TAB */}
           {activeTab === 'blog' && (
             <>
               <button onClick={openNewPost} style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 16 }}>
-                ✍️ Naya Post Likho
+                ✏️ Naya Post Likho
               </button>
               <div style={cardStyle}>
                 <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📝 BLOG POSTS ({blogPosts.length})</div>
@@ -544,7 +617,7 @@ export default function AdminPanel({ user, onLogout }) {
       {editingPost !== null && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 200, padding: 20, overflowY: 'auto' }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, marginTop: 20, marginBottom: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? '✏️ Post Edit Karo' : '✍️ Naya Post'}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? '✏️ Post Edit Karo' : '✏️ Naya Post'}</div>
 
             <div style={labelStyle}>TITLE</div>
             <input value={postForm.title} onChange={e => setPostForm(f => ({ ...f, title: e.target.value }))} placeholder="Post ka title..." style={inputStyle} />
