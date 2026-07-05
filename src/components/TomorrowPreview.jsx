@@ -45,6 +45,8 @@ function pickLine(pool, seed) {
 export default function TomorrowPreview({ isDark, userDob, C }) {
   const [now, setNow] = useState(new Date());
   const [copied, setCopied] = useState(false);
+  const [niftyData, setNiftyData] = useState(null);
+  const [niftyLoading, setNiftyLoading] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 60000); // refresh every minute
@@ -54,6 +56,28 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
   const hour = now.getHours();
   const minute = now.getMinutes();
   const isEveningWindow = (hour >= 18 && hour < 20) || (hour === 20 && minute <= 30); // 6:00 PM – 8:30 PM
+
+  useEffect(() => {
+    if (!isEveningWindow || niftyData || niftyLoading) return;
+    setNiftyLoading(true);
+    fetch('/api/get-stock-data?symbol=%5ENSEI&range=5d')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        const candles = data?.candles;
+        if (candles && candles.length >= 2) {
+          const last = candles[candles.length - 1].close;
+          const prev = candles[candles.length - 2].close;
+          if (last != null && prev != null) {
+            const change = last - prev;
+            const changePercent = (change / prev) * 100;
+            setNiftyData({ price: last, change, changePercent });
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => setNiftyLoading(false));
+  }, [isEveningWindow]);
+
 
   if (!isEveningWindow) return null;
 
@@ -74,7 +98,10 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
     if (isMarketClosed) {
       text = `🔱 *PulseTrade — Kal Kya Hoga* — ${tomorrowStr}\n\n🏖️ Kal ${weekdayInfo.name} hai — market band rahega. Weekend pe watchlist review kar lo!\n\n🔍 pulsetrade.in\n🔱 हर हर महादेव 🔱`;
     } else {
-      text = `🔱 *PulseTrade — Kal Kya Hoga* — ${tomorrowStr}\n\n✨ Lucky Number: #${dayNum}\n${weekdayInfo.planet} · Favorable Sector: ${weekdayInfo.sector}${isPersonalMatch ? `\n⭐ Personal Lucky Din (Life Path ${lifePath} se match!)` : ''}\n\n🔍 pulsetrade.in\n🔱 हर हर महादेव 🔱`;
+      const niftyLine = niftyData
+        ? `\n📊 Nifty 50: ${niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })} (${niftyData.change >= 0 ? '▲' : '▼'} ${Math.abs(niftyData.changePercent || 0).toFixed(2)}%)\n`
+        : '\n';
+      text = `🔱 *PulseTrade — Kal Kya Hoga* — ${tomorrowStr}\n${niftyLine}✨ Lucky Number: #${dayNum}\n${weekdayInfo.planet} · Favorable Sector: ${weekdayInfo.sector}${isPersonalMatch ? `\n⭐ Personal Lucky Din (Life Path ${lifePath} se match!)` : ''}\n\n🔍 pulsetrade.in\n🔱 हर हर महादेव 🔱`;
     }
     navigator.clipboard.writeText(text);
     setCopied(true);
@@ -115,6 +142,25 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
         </div>
       ) : (
         <>
+          {niftyData && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 14, padding: '10px 16px',
+              marginBottom: 14, position: 'relative', zIndex: 1,
+            }}>
+              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>NIFTY 50 (Aaj Band)</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: '#FFF' }}>
+                {niftyData.price.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+              </span>
+              <span style={{
+                fontSize: 12, fontWeight: 700,
+                color: niftyData.change >= 0 ? '#4ADE80' : '#F87171',
+              }}>
+                {niftyData.change >= 0 ? '▲' : '▼'} {Math.abs(niftyData.changePercent || 0).toFixed(2)}%
+              </span>
+            </div>
+          )}
+
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 10,
             backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 16, padding: '10px 18px',
@@ -163,3 +209,4 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
     </div>
   );
 }
+
