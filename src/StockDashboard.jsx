@@ -16,6 +16,7 @@ import PulseSyncScore from './PulseSyncScore';
 import TradeTimeOptimizer from './components/TradeTimeOptimizer';
 import MarketMoment from './components/MarketMoment';
 import TomorrowPreview from './components/TomorrowPreview';
+import TrialFeedbackModal from './components/TrialFeedbackModal';
 const LIGHT = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5", surfaceHover: "#F0F2FA",
   gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
@@ -1424,6 +1425,8 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       {showSupport && (
         <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
       )}
+
+      <TrialFeedbackModal user={user} />
     </div>
   );
 }
