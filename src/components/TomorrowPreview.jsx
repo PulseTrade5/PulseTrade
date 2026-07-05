@@ -52,7 +52,8 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
   }, []);
 
   const hour = now.getHours();
-  const isEveningWindow = hour === 18; // 6:00 PM – 6:59 PM
+  const minute = now.getMinutes();
+  const isEveningWindow = (hour >= 18 && hour < 20) || (hour === 20 && minute <= 30); // 6:00 PM – 8:30 PM
 
   if (!isEveningWindow) return null;
 
@@ -162,4 +163,3 @@ export default function TomorrowPreview({ isDark, userDob, C }) {
     </div>
   );
 }
-
