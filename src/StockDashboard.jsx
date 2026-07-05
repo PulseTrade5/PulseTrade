@@ -14,6 +14,7 @@ import NumerologyInsightCard from './components/NumerologyInsightCard';
 import Academy from './Academy';
 import PulseSyncScore from './PulseSyncScore';
 import TradeTimeOptimizer from './components/TradeTimeOptimizer';
+import MarketMoment from './components/MarketMoment';
 const LIGHT = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5", surfaceHover: "#F0F2FA",
   gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
@@ -1027,6 +1028,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
 
           {tab === 'check' && (
             <>
+              <MarketMoment isDark={dark} userDob={userDob} userName={user?.email?.split('@')[0]} watchlist={watchlist} history={history} C={C} />
               <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
               <MarketNewsBrief isDark={dark} C={C} />
