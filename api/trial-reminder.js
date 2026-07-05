@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 // Uses Supabase service role key so it can read all user rows (not just the logged-in user's)
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 const TRIAL_DAYS = 5;
@@ -13,12 +13,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Optional security: protect this route so randoms can't trigger it
   const authHeader = req.headers['authorization'];
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
+    // Fetch all non-subscribed users who have a trial_start_date
     const { data: users, error } = await supabase
       .from('profiles')
       .select('email, trial_start_date, is_subscribed')
@@ -37,6 +39,7 @@ export default async function handler(req, res) {
     tomorrow.setDate(now.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
 
+    // Compute trial_end_date = trial_start_date + TRIAL_DAYS, then filter to today/tomorrow
     const usersToRemind = users
       .map(u => {
         const start = new Date(u.trial_start_date);
