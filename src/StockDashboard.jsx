@@ -16,7 +16,6 @@ import PulseSyncScore from './PulseSyncScore';
 import TradeTimeOptimizer from './components/TradeTimeOptimizer';
 import MarketMoment from './components/MarketMoment';
 import TomorrowPreview from './components/TomorrowPreview';
-import TrialFeedbackModal from './components/TrialFeedbackModal';
 const LIGHT = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5", surfaceHover: "#F0F2FA",
   gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
@@ -796,26 +795,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
   const C = dark ? DARK : LIGHT;
 
   const uid = user?.id;
-
-  // 🔱 Subscription gate — checks if trial has ended and user hasn't subscribed
-  const [subStatus, setSubStatus] = useState('loading'); // 'loading' | 'active' | 'expired'
-  useEffect(() => {
-    if (!uid) return;
-    supabase
-      .from('profiles')
-      .select('is_subscribed, trial_start_date')
-      .eq('id', uid)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) { setSubStatus('active'); return; } // fail-safe: don't lock out on error
-        if (data.is_subscribed) { setSubStatus('active'); return; }
-        if (!data.trial_start_date) { setSubStatus('active'); return; }
-        const trialEnd = new Date(data.trial_start_date);
-        trialEnd.setDate(trialEnd.getDate() + 5);
-        setSubStatus(new Date() > trialEnd ? 'expired' : 'active');
-      });
-  }, [uid]);
-
   const [symbolInput, setSymbolInput] = useState(() => loadFromSession('symbolInput', '', uid));
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -922,6 +901,16 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
     }
   };
 
+  const handleClearPending = () => {
+    if (!window.confirm('Sirf Pending wale trades hatana chahte ho? Wins/Losses safe rahenge.')) return;
+    setHistory(prev => prev.filter(h => h.outcome !== 'pending'));
+  };
+
+  const handleClearAllHistory = () => {
+    if (!window.confirm('Sara Track Record delete karna chahte ho? Ye wapas nahi aayega!')) return;
+    setHistory([]);
+  };
+
   const handleSendAlert = async () => {
     if (!user?.email || !result?.signal) return;
     setAlertSending(true);
@@ -969,31 +958,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       : `0 6px 0 ${C.surfaceBorder}, 0 12px 26px rgba(30,27,75,0.08)`,
     transition: 'all 0.3s ease',
   };
-
-  // 🔱 Trial expired & not subscribed — block the dashboard, show paywall only
-  if (subStatus === 'expired') {
-    return (
-      <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-        <div style={{ maxWidth: 420, width: '100%', backgroundColor: C.surface, border: `1px solid ${C.surfaceBorder}`, borderRadius: 20, padding: 28, textAlign: 'center', boxShadow: dark ? '0 12px 30px rgba(0,0,0,0.35)' : '0 12px 26px rgba(30,27,75,0.08)' }}>
-          <div style={{ fontSize: 36, marginBottom: 8 }}>🔱</div>
-          <h2 style={{ color: C.gold, fontSize: 20, marginBottom: 8 }}>Aapka Free Trial Khatam Ho Gaya</h2>
-          <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.6, marginBottom: 20 }}>
-            Numerology + Technical signals, PulseScreener, AI Trade Coach — sab kuch continue rakhne ke liye subscribe karo.
-          </p>
-          <SubscribeButton userEmail={user?.email} userId={user?.id} />
-        </div>
-        <TrialFeedbackModal user={user} />
-      </div>
-    );
-  }
-
-  if (subStatus === 'loading') {
-    return (
-      <div style={{ backgroundColor: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: C.muted, fontSize: 14 }}>Loading...</div>
-      </div>
-    );
-  }
 
   return (
     <div style={{ backgroundColor: C.bg, color: C.text, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', transition: 'all 0.3s ease' }}>
@@ -1387,6 +1351,16 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
             <div style={cardStyle}>
               <div style={{ fontSize: 10, letterSpacing: 2, color: C.muted, marginBottom: 12, fontWeight: 700 }}>TRACK RECORD</div>
               {history.length > 0 && (
+                <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                  <button onClick={handleClearPending} style={{ flex: 1, padding: '9px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: `1.5px solid ${C.surfaceBorder}`, backgroundColor: 'transparent', color: C.muted, cursor: 'pointer' }}>
+                    ⏳ Sirf Pending Hatao
+                  </button>
+                  <button onClick={handleClearAllHistory} style={{ flex: 1, padding: '9px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: C.red, color: '#FFF', cursor: 'pointer' }}>
+                    🗑️ Sab Clear Karo
+                  </button>
+                </div>
+              )}
+              {history.length > 0 && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                   {[
                     ['Wins', history.filter(h=>h.outcome==='win').length, C.green, C.greenLight],
@@ -1470,8 +1444,6 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab }
       {showSupport && (
         <SupportChat user={user} isDark={dark} onClose={() => setShowSupport(false)} />
       )}
-
-      <TrialFeedbackModal user={user} />
     </div>
   );
 }
