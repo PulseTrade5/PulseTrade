@@ -19,6 +19,7 @@ function getDaysLeft(trialStart) {
 }
 
 function getStatus(profile) {
+  if (profile.is_blocked) return 'blocked';
   if (profile.is_subscribed) {
     if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
     return 'paid';
@@ -38,6 +39,7 @@ function StatusBadge({ status }) {
     paid: { label: '💰 Paid', color: COLORS.green, bg: COLORS.greenLight },
     trial: { label: '🎯 Trial', color: COLORS.gold, bg: COLORS.goldLight },
     expired: { label: '❌ Expired', color: COLORS.red, bg: COLORS.redLight },
+    blocked: { label: '🚫 Blocked', color: '#7F1D1D', bg: '#FEE2E2' },
   };
   const c = config[status] || config.expired;
   return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
@@ -60,13 +62,11 @@ export default function AdminPanel({ user, onLogout }) {
   const [replying, setReplying] = useState(false);
   const [expandedUser, setExpandedUser] = useState(null);
 
-  // BLOG STATE
   const [blogPosts, setBlogPosts] = useState([]);
-  const [editingPost, setEditingPost] = useState(null); // null = closed, {} = new, {...} = editing
+  const [editingPost, setEditingPost] = useState(null);
   const [postForm, setPostForm] = useState({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
   const [savingPost, setSavingPost] = useState(false);
 
-  // FEEDBACK STATE
   const [feedbackList, setFeedbackList] = useState([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
 
@@ -142,6 +142,7 @@ export default function AdminPanel({ user, onLogout }) {
     paid: profiles.filter(p => getStatus(p) === 'paid').length,
     trial: profiles.filter(p => getStatus(p) === 'trial').length,
     expired: profiles.filter(p => getStatus(p) === 'expired').length,
+    blocked: profiles.filter(p => getStatus(p) === 'blocked').length,
   };
 
   const referralStats = {
@@ -155,7 +156,6 @@ export default function AdminPanel({ user, onLogout }) {
     ? supportMessages.filter(m => m.user_id === selectedUser.user_id).sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
     : [];
 
-  // FEEDBACK STATS - count per reason
   const feedbackReasonCounts = feedbackList.reduce((acc, f) => {
     const reason = f.reason || 'Unknown';
     acc[reason] = (acc[reason] || 0) + 1;
@@ -182,7 +182,7 @@ export default function AdminPanel({ user, onLogout }) {
     setSaving(true);
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + editMonths);
-    await supabase.from('profiles').update({ is_subscribed: true, subscription_end_date: endDate.toISOString() }).eq('id', editUser.id);
+    await supabase.from('profiles').update({ is_subscribed: true, subscription_end_date: endDate.toISOString(), is_blocked: false }).eq('id', editUser.id);
     setSuccessMsg(`✅ ${editUser.email} ko ${editMonths} month subscription diya!`);
     setEditUser(null);
     fetchProfiles();
@@ -191,7 +191,7 @@ export default function AdminPanel({ user, onLogout }) {
   };
 
   const handleExtendTrial = async (profile) => {
-    await supabase.from('profiles').update({ trial_start_date: new Date().toISOString() }).eq('id', profile.id);
+    await supabase.from('profiles').update({ trial_start_date: new Date().toISOString(), is_blocked: false }).eq('id', profile.id);
     setSuccessMsg(`✅ ${profile.email} ka trial 5 din extend kiya!`);
     fetchProfiles();
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -200,13 +200,20 @@ export default function AdminPanel({ user, onLogout }) {
   const handleBlock = async (profile) => {
     if (!window.confirm(`${profile.email} ko block karna chahte ho?`)) return;
     const pastDate = new Date('2020-01-01').toISOString();
-    await supabase.from('profiles').update({ is_subscribed: false, trial_start_date: pastDate, subscription_end_date: pastDate }).eq('id', profile.id);
+    await supabase.from('profiles').update({ is_subscribed: false, trial_start_date: pastDate, subscription_end_date: pastDate, is_blocked: true }).eq('id', profile.id);
     setSuccessMsg(`🚫 ${profile.email} blocked!`);
     fetchProfiles();
     setTimeout(() => setSuccessMsg(''), 3000);
   };
 
-  // BLOG HANDLERS
+  const handleUnblock = async (profile) => {
+    if (!window.confirm(`${profile.email} ko unblock karna chahte ho? Isko fresh 5-din trial mil jayega.`)) return;
+    await supabase.from('profiles').update({ is_blocked: false, trial_start_date: new Date().toISOString() }).eq('id', profile.id);
+    setSuccessMsg(`✅ ${profile.email} unblock ho gaya — fresh trial mil gaya!`);
+    fetchProfiles();
+    setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
   const openNewPost = () => {
     setPostForm({ title: '', slug: '', excerpt: '', content: '', category: 'Numerology', meta_description: '', published: false });
     setEditingPost({});
@@ -272,7 +279,6 @@ export default function AdminPanel({ user, onLogout }) {
   const inputStyle = { width: '100%', padding: '10px 14px', fontSize: 13, borderRadius: 10, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 14, fontFamily: 'Inter, sans-serif' };
   const labelStyle = { fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 6 };
 
-  // Aaj ke signups
   const todaySignups = profiles.filter(p => {
     const created = new Date(p.created_at);
     const today = new Date();
@@ -283,7 +289,6 @@ export default function AdminPanel({ user, onLogout }) {
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 0 48px' }}>
 
-        {/* HEADER */}
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button onClick={() => window.location.href = '/'} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>← Dashboard</button>
@@ -295,7 +300,6 @@ export default function AdminPanel({ user, onLogout }) {
           <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
         </div>
 
-        {/* TABS */}
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
           {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
@@ -311,20 +315,17 @@ export default function AdminPanel({ user, onLogout }) {
         <div style={{ padding: '20px 20px 0' }}>
           {successMsg && <div style={{ backgroundColor: COLORS.greenLight, border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>{successMsg}</div>}
 
-          {/* USERS TAB */}
           {activeTab === 'users' && (
             <>
-              {/* STATS */}
-              <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight]].map(([label, value, color, bg]) => (
-                  <div key={label} style={{ flex: 1, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 12, overflowX: 'auto' }}>
+                {[['Total', stats.total, COLORS.text, COLORS.bg], ['Paid', stats.paid, COLORS.green, COLORS.greenLight], ['Trial', stats.trial, COLORS.gold, COLORS.goldLight], ['Expired', stats.expired, COLORS.red, COLORS.redLight], ['Blocked', stats.blocked, '#7F1D1D', '#FEE2E2']].map(([label, value, color, bg]) => (
+                  <div key={label} style={{ flex: 1, minWidth: 70, backgroundColor: bg, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
                     <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
                     <div style={{ fontSize: 11, color, fontWeight: 700 }}>{label}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Aaj ke signups */}
               <div style={{ backgroundColor: COLORS.blueLight, border: `1px solid #BFDBFE`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 11, color: COLORS.blue, fontWeight: 700 }}>📅 AAJ KE NAYE SIGNUPS</div>
@@ -335,9 +336,9 @@ export default function AdminPanel({ user, onLogout }) {
 
               <div style={cardStyle}>
                 <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Naam ya Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired']].map(([key, label]) => (
-                    <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer' }}>{label}</button>
+                <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+                  {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired'],['blocked','🚫 Blocked']].map(([key, label]) => (
+                    <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, minWidth: 70, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
                   ))}
                 </div>
               </div>
@@ -373,7 +374,6 @@ export default function AdminPanel({ user, onLogout }) {
                         </div>
                       </div>
 
-                      {/* EXPANDED DETAILS */}
                       {isExpanded && (
                         <div style={{ backgroundColor: COLORS.bg, borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${COLORS.surfaceBorder}` }}>
                           <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>📊 USER DETAILS</div>
@@ -396,7 +396,7 @@ export default function AdminPanel({ user, onLogout }) {
                           </div>
 
                           <div style={{ padding: '5px 0' }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌍 Location</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌐 Location</span>
                             <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.text, marginTop: 3, wordBreak: 'break-all' }}>{p.last_location || 'Unknown'}</div>
                           </div>
                         </div>
@@ -405,7 +405,11 @@ export default function AdminPanel({ user, onLogout }) {
                       <div style={{ display: 'flex', gap: 6 }}>
                         <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
                         <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
-                        <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
+                        {status === 'blocked' ? (
+                          <button onClick={() => handleUnblock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: 'none', backgroundColor: COLORS.green, color: '#FFF', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>✅ Unblock</button>
+                        ) : (
+                          <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
+                        )}
                       </div>
                     </div>
                   );
@@ -414,7 +418,6 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
-          {/* REFERRALS TAB */}
           {activeTab === 'referrals' && (
             <>
               <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
@@ -463,7 +466,6 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
-          {/* SUPPORT TAB */}
           {activeTab === 'support' && (
             <>
               {!selectedUser ? (
@@ -507,7 +509,6 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
-          {/* FEEDBACK TAB */}
           {activeTab === 'feedback' && (
             <>
               <div style={cardStyle}>
@@ -554,7 +555,6 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
-          {/* BLOG TAB */}
           {activeTab === 'blog' && (
             <>
               <button onClick={openNewPost} style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 16 }}>
@@ -592,7 +592,6 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
       </div>
 
-      {/* SUBSCRIBE MODAL */}
       {editUser && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
@@ -613,7 +612,6 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
       )}
 
-      {/* BLOG POST MODAL */}
       {editingPost !== null && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 200, padding: 20, overflowY: 'auto' }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, marginTop: 20, marginBottom: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
