@@ -12,6 +12,7 @@ import Academy from './Academy';
 import BlogList from './BlogList';
 import BlogPost from './BlogPost';
 import SubscribeButton from './SubscribeButton';
+import TrialPackButton from './TrialPackButton';
 import TrialFeedbackModal from './components/TrialFeedbackModal';
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -112,7 +113,7 @@ function TermsPage() {
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>3. Disclaimer</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is NOT a SEBI registered investment advisor. Users must consult a SEBI registered advisor before making any investment decisions.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>4. Subscription</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months via Cashfree Payments.</p>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscriptions are billed in advance. Plans available for 1, 2, and 3 months, plus short Trial Packs (5/10/15 days), via Cashfree Payments.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>5. Limitation of Liability</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade shall not be liable for any financial losses. Trading involves substantial risk of loss.</p>
       <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
@@ -125,13 +126,13 @@ function RefundPage() {
       <h1 style={{ color: DARK.gold, marginBottom: 24 }}>Refunds & Cancellations</h1>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Last updated: June 2026</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>General Policy</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription is activated.</p>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>PulseTrade is a digital subscription service. <strong>No refunds</strong> once subscription or trial pack is activated.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Exception — Technical Failure</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but subscription not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Refund only if payment deducted but access not activated. Contact within <strong>48 hours</strong> with Order ID.</p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>How to Contact</h2>
       <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Email: <span style={{ color: DARK.gold }}>support@pulsetrade.in</span></p>
       <h2 style={{ color: DARK.gold, marginBottom: 12 }}>Cancellations</h2>
-      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Subscription remains active till end of paid period. No partial refunds.</p>
+      <p style={{ marginBottom: 16, lineHeight: 1.7 }}>Access remains active till end of paid period. No partial refunds.</p>
       <a href="/" style={{ color: DARK.gold }}>← Back to Home</a>
     </div>
   );
@@ -201,15 +202,24 @@ function TrialExpiredPage({ user, onLogout }) {
         </div>
         <div style={{ padding: '32px 20px' }}>
           <div style={{ backgroundColor: LIGHT.surface, border: `2px solid ${LIGHT.gold}`, borderRadius: 20, padding: '32px 24px', textAlign: 'center', marginBottom: 20, boxShadow: '0 4px 24px rgba(200,146,10,0.15)' }}>
-            <div style={{ fontSize: 52, marginBottom: 12 }}>⏰</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>Trial Expire Ho Gaya!</h2>
-            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>Tera 5-din free trial khatam ho gaya.<br />Dashboard access ke liye subscribe karo.</p>
+            <div style={{ fontSize: 52, marginBottom: 12 }}>🔱</div>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: LIGHT.text, marginBottom: 8 }}>PulseTrade Mein Aapka Swagat Hai!</h2>
+            <p style={{ fontSize: 13, color: LIGHT.muted, lineHeight: 1.7, marginBottom: 20 }}>Chhote se Trial Pack se shuru karo, ya seedha full subscription lo.</p>
             <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
           </div>
+
           <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 SUBSCRIBE KARO</div>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>🎯 TRIAL PACK SE SHURU KARO</div>
+            <TrialPackButton userEmail={user?.email} userId={user?.id} />
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted, marginBottom: 16 }}>— ya —</div>
+
+          <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>💰 FULL SUBSCRIPTION LO</div>
             <SubscribeButton userEmail={user?.email} userId={user?.id} />
           </div>
+
           <p style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted }}>Support: support@pulsetrade.in</p>
         </div>
       </div>
@@ -218,9 +228,6 @@ function TrialExpiredPage({ user, onLogout }) {
   );
 }
 function ProfileTab({ profile, session, isDark }) {
-  const trialStart = profile?.trial_start_date ? new Date(profile.trial_start_date) : null;
-  const trialEnd = trialStart ? new Date(trialStart.getTime() + 5 * 24 * 60 * 60 * 1000) : null;
-  const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd - new Date()) / (1000 * 60 * 60 * 24))) : 0;
   return (
     <div style={{ minHeight: '100vh', backgroundColor: isDark ? DARK.bg : LIGHT.bg, padding: '24px 20px 100px', fontFamily: 'Inter, system-ui, sans-serif' }}>
       <div style={{ maxWidth: 420, margin: '0 auto' }}>
@@ -234,23 +241,17 @@ function ProfileTab({ profile, session, isDark }) {
           <div style={{ fontSize: 10, letterSpacing: 2, color: isDark ? DARK.muted : LIGHT.muted, fontWeight: 700, marginBottom: 14 }}>📋 ACCOUNT STATUS</div>
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
             <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Status</span>
-            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? '✅ Subscribed' : '🎯 Trial'}</span>
+            <span style={{ fontWeight: 700, fontSize: 13, color: profile?.is_subscribed ? '#059669' : '#C8920A' }}>{profile?.is_subscribed ? '✅ Subscribed' : '🎯 No Active Plan'}</span>
           </div>
-          {!profile?.is_subscribed && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Trial Bacha</span>
-              <span style={{ fontWeight: 700, fontSize: 13, color: daysLeft <= 1 ? '#DC2626' : '#C8920A' }}>{daysLeft} din</span>
-            </div>
-          )}
           {profile?.is_subscribed && profile?.subscription_end_date && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${isDark ? DARK.border : LIGHT.border}` }}>
-              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Subscription End</span>
+              <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Access Ends</span>
               <span style={{ fontWeight: 700, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{new Date(profile.subscription_end_date).toLocaleDateString('en-IN')}</span>
             </div>
           )}
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0' }}>
             <span style={{ color: isDark ? DARK.muted : LIGHT.muted, fontSize: 13 }}>Member Since</span>
-            <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{trialStart ? trialStart.toLocaleDateString('en-IN') : '-'}</span>
+            <span style={{ fontWeight: 600, fontSize: 13, color: isDark ? DARK.text : LIGHT.text }}>{profile?.trial_start_date ? new Date(profile.trial_start_date).toLocaleDateString('en-IN') : '-'}</span>
           </div>
         </div>
         <div style={{ borderRadius: 16, padding: 20, marginBottom: 16, border: '1.5px solid #C8920A', background: isDark ? 'linear-gradient(135deg, #1a1400, #161B22)' : 'linear-gradient(135deg, #FEF3C7, #FFFFFF)' }}>
@@ -336,15 +337,14 @@ function App() {
       await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
     }
   };
+  // Free trial removed — naya user seedha Trial Pack / Subscribe screen dekhega.
+  // Sirf paid subscription (Trial Pack ya full plan) se access milega.
   const checkAccess = () => {
     if (!profile) return 'loading';
     if (profile.is_subscribed) {
       if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
       return 'active';
     }
-    const trialStart = new Date(profile.trial_start_date);
-    const diffDays = (new Date() - trialStart) / (1000 * 60 * 60 * 24);
-    if (diffDays <= 5) return 'trial';
     return 'expired';
   };
   const path = window.location.pathname;
