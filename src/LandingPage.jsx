@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+timport { useEffect, useState } from 'react';
 
 const COLORS = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5",
@@ -137,10 +137,11 @@ export default function LandingPage({ onLogin }) {
           <br />
           <div style={{
             display: 'inline-block', fontSize: 11, fontWeight: 700,
-            color: 'rgba(255,255,255,0.6)', backgroundColor: 'rgba(255,255,255,0.08)',
+            color: '#FBBF24', backgroundColor: 'rgba(251,191,36,0.14)',
             padding: '4px 12px', borderRadius: 20, marginBottom: 16, position: 'relative', zIndex: 1,
+            border: '1px solid rgba(251,191,36,0.35)',
           }}>
-            📅 PulseTrade June 2026 se live hai
+            🔱 Official Launch: 14 July 2026
           </div>
 
           <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, lineHeight: 1.25, margin: '0 0 10px', letterSpacing: '-0.3px', color: '#FFFFFF', position: 'relative', zIndex: 1 }}>
@@ -333,4 +334,4 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-}
+                }
