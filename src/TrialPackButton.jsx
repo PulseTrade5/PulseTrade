@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { load } from '@cashfreepayments/cashfree-js';
 
 const TRIAL_PACKS = [
-  { id: 'trial_5d', label: '5 Din', days: 5, amount: 99, popular: false },
-  { id: 'trial_10d', label: '10 Din', days: 10, amount: 179, popular: false },
-  { id: 'trial_15d', label: '15 Din', days: 15, amount: 249, popular: true },
+  { id: 'trial_5d', label: '5 Din', days: 5, amount: 95, popular: false },
+  { id: 'trial_10d', label: '10 Din', days: 10, amount: 176, popular: false },
+  { id: 'trial_15d', label: '15 Din', days: 15, amount: 248, popular: true },
 ];
 
 export default function TrialPackButton({ userEmail, userId }) {
