@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { analyzeStock } from './technicalAnalysis';
+import { analyzeStock } from '../technicalAnalysis';
 
 const NIFTY20 = [
   'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK',
