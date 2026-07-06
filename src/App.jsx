@@ -367,11 +367,11 @@ function App() {
   const renderTab = () => {
     switch (activeTab) {
       case 'check':
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} profile={profile} />;
       case 'muhurat':
         return <MuhuratCalendar isDark={isDark} userDob={profile?.dob} />;
       case 'watchlist':
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" />;
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} defaultTab="watchlist" profile={profile} />;
       case 'screener':
         return <PulseScreener isDark={isDark} />;
       case 'numerology':
@@ -399,7 +399,7 @@ function App() {
       case 'profile':
         return <ProfileTab profile={profile} session={session} isDark={isDark} />;
       default:
-        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} />;
+        return <StockDashboard user={session.user} isDark={isDark} onTabChange={setActiveTab} profile={profile} />;
     }
   };
   return (
