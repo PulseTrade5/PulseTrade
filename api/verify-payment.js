@@ -27,9 +27,23 @@ export default async function handler(req, res) {
     }
 
     if (data.order_status === 'PAID') {
-      const months = data.order_amount <= 599 ? 1 : data.order_amount <= 1049 ? 2 : 3;
+      const planName = data.order_note || '';
       const expires_at = new Date();
-      expires_at.setMonth(expires_at.getMonth() + months);
+
+      // NEW: check if this is a Trial Pack ("Trial Pack 5 Din" / "10 Din" / "15 Din")
+      // — these are charged in DAYS, not months, and must NOT fall through to the
+      // months-based logic below (which would wrongly grant a full month for ₹99-249).
+      const trialMatch = planName.match(/Trial Pack\s+(\d+)\s*Din/i);
+
+      if (trialMatch) {
+        const days = parseInt(trialMatch[1], 10);
+        expires_at.setDate(expires_at.getDate() + days);
+      } else {
+        // Existing subscription logic — unchanged, still amount-based for
+        // the regular 1/2/3 month plans.
+        const months = data.order_amount <= 599 ? 1 : data.order_amount <= 1049 ? 2 : 3;
+        expires_at.setMonth(expires_at.getMonth() + months);
+      }
 
       await supabase.from('subscriptions').upsert({
         order_id: data.order_id,
