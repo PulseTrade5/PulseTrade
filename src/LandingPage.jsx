@@ -167,7 +167,7 @@ export default function LandingPage({ onLogin }) {
             boxShadow: '0 6px 0 #3730A3, 0 16px 32px rgba(79,70,229,0.5)',
             marginBottom: 18, position: 'relative', zIndex: 1,
           }}>
-            🚀 5 Din FREE Trial Shuru Karo
+            🎯 Trial Pack Se Shuru Karo — ₹95 Se
           </button>
           <div style={{
             display: 'inline-block', fontSize: 12, fontWeight: 800,
@@ -175,7 +175,7 @@ export default function LandingPage({ onLogin }) {
             padding: '6px 16px', borderRadius: 20,
             border: '1px solid rgba(34,197,94,0.3)', marginBottom: 12, position: 'relative', zIndex: 1,
           }}>
-            💳 Bina Card, Bina Paisa — Sirf Naam/Email
+            🔒 Secure Payment via Cashfree — Instant Access
           </div><br />
           <p style={{ fontSize: 12, color: '#A78BFA', margin: 0, fontWeight: 700, position: 'relative', zIndex: 1 }}>
             🔢 Technical + Numerology — Double Confirmation Har Trade Pe
@@ -333,4 +333,4 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-                }
+}
