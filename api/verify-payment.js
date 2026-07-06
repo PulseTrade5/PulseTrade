@@ -30,29 +30,44 @@ export default async function handler(req, res) {
       const planName = data.order_note || '';
       const expires_at = new Date();
 
-      // NEW: check if this is a Trial Pack ("Trial Pack 5 Din" / "10 Din" / "15 Din")
-      // — these are charged in DAYS, not months, and must NOT fall through to the
-      // months-based logic below (which would wrongly grant a full month for ₹99-249).
+      // Check if this is a Trial Pack ("Trial Pack 5 Din" / "10 Din" / "15 Din")
+      // — these are charged in DAYS, not months.
       const trialMatch = planName.match(/Trial Pack\s+(\d+)\s*Din/i);
 
       if (trialMatch) {
         const days = parseInt(trialMatch[1], 10);
         expires_at.setDate(expires_at.getDate() + days);
       } else {
-        // Existing subscription logic — unchanged, still amount-based for
-        // the regular 1/2/3 month plans.
+        // Regular subscription — amount-based, 1/2/3 month plans.
         const months = data.order_amount <= 599 ? 1 : data.order_amount <= 1049 ? 2 : 3;
         expires_at.setMonth(expires_at.getMonth() + months);
       }
 
+      const customerEmail = data.customer_details?.customer_email;
+
+      // Log the payment record (kept as-is)
       await supabase.from('subscriptions').upsert({
         order_id: data.order_id,
-        user_email: data.customer_details?.customer_email,
+        user_email: customerEmail,
         plan_name: data.order_note,
         amount: data.order_amount,
         status: 'active',
         expires_at: expires_at.toISOString(),
       }, { onConflict: 'order_id' });
+
+      // CRITICAL FIX: App.jsx's checkAccess() reads from the `profiles` table
+      // (is_subscribed, subscription_end_date) — NOT from `subscriptions`.
+      // Without this update, a paid user's access was never actually being
+      // granted, no matter how many times they paid successfully.
+      if (customerEmail) {
+        await supabase
+          .from('profiles')
+          .update({
+            is_subscribed: true,
+            subscription_end_date: expires_at.toISOString(),
+          })
+          .eq('email', customerEmail);
+      }
     }
 
     return res.status(200).json({
