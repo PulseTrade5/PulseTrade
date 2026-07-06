@@ -47,11 +47,14 @@ export async function trackLogin(userId) {
 
     if (fetchErr) console.log('[trackLogin] profile fetch error:', fetchErr.message);
 
+    // FIXED: was writing to `location`/`device` columns, but AdminPanel.jsx reads
+    // `last_location`/`last_device` — mismatch meant location always showed "Unknown"
+    // even though data was being saved successfully (just to the wrong columns).
     const { error: updateErr } = await supabase.from('profiles').update({
       last_login: new Date().toISOString(),
       login_count: (profile?.login_count || 0) + 1,
-      location: `${location} • ${browser}`,
-      device: device,
+      last_location: `${location} • ${browser}`,
+      last_device: device,
     }).eq('id', userId);
 
     if (updateErr) {
