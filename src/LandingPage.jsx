@@ -1,4 +1,4 @@
-timport { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const COLORS = {
   bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5",
@@ -334,4 +334,5 @@ export default function LandingPage({ onLogin }) {
       </div>
     </div>
   );
-                }
+}
+
