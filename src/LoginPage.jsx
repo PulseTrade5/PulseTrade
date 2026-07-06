@@ -1,403 +1,335 @@
-import { useState, useEffect } from 'react';
-import { supabase, trackLogin } from './supabaseClient';
+import { useEffect, useState } from 'react';
 
 const COLORS = {
-  bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
-  gold: "#C8920A", goldLight: "#FEF3C7", goldDim: "#D97706",
-  green: "#059669", greenLight: "#ECFDF5", red: "#DC2626",
-  text: "#0F172A", muted: "#64748B", mutedLight: "#94A3B8",
-  sebi: "#1E3A5F", sebiBg: "#EFF6FF", sebiBorder: "#BFDBFE",
-  purple: "#7C3AED", purpleLight: "#EDE9FE",
+  bg: "#F5F7FC", surface: "#FFFFFF", surfaceBorder: "#E5E9F5",
+  gold: "#4F46E5", goldLight: "#EEF2FF", goldDim: "#4338CA",
+  green: "#16A34A", greenLight: "#F0FDF4",
+  red: "#EF4444",
+  text: "#1E1B4B", muted: "#6B7280", mutedLight: "#9CA3AF",
+  navy: "#1E1B4B", navyLight: "#EEF2FF",
 };
 
-const MONTHS = [
-  ['01', 'Jan'], ['02', 'Feb'], ['03', 'Mar'], ['04', 'Apr'],
-  ['05', 'May'], ['06', 'Jun'], ['07', 'Jul'], ['08', 'Aug'],
-  ['09', 'Sep'], ['10', 'Oct'], ['11', 'Nov'], ['12', 'Dec'],
+const LOGO_URL = "/file_00000000b7687208b27c366287ff7e00.png";
+
+const FEATURES = [
+  { icon: '📈', title: 'Swing Trade Signals', desc: '10 din se 2 mahine — sahi entry, sahi exit.' },
+  { icon: '📊', title: 'RSI • MACD • ADX', desc: 'Top indicators ek jagah, Hinglish mein.' },
+  { icon: '🔊', title: 'Pulse Bolta Hai', desc: 'AI summary sunao — padhne ki zarurat nahi!' },
+  { icon: '⭐', title: 'Watchlist', desc: 'Apne favorite stocks save karo, nazar rakho.' },
+  { icon: '📧', title: 'Email Alerts', desc: 'Important signals seedha inbox mein.' },
+  { icon: '🎓', title: 'Trading Academy', desc: 'Hindi PDF courses — Candlestick se RSI tak.' },
 ];
-const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
-const CURRENT_YEAR = new Date().getFullYear();
-const YEARS = Array.from({ length: CURRENT_YEAR - 1939 }, (_, i) => String(CURRENT_YEAR - i));
 
-function getMsUntilMidnight() {
-  const now = new Date();
-  const midnight = new Date(now);
-  midnight.setHours(24, 0, 0, 0);
-  return midnight.getTime() - now.getTime();
-}
+const PLANS = [
+  { label: '1 Month', price: '₹599', per: '₹599/mo', popular: false, tag: null },
+  { label: '2 Months', price: '₹1,049', per: '₹525/mo', popular: true, tag: '🔥 Most Popular' },
+  { label: '3 Months', price: '₹1,499', per: '₹500/mo', popular: false, tag: '💰 Best Value' },
+];
 
-function fmtCountdown(ms) {
-  if (ms <= 0) return "00:00:00";
-  const totalSec = Math.floor(ms / 1000);
-  const h = Math.floor(totalSec / 3600);
-  const m = Math.floor((totalSec % 3600) / 60);
-  const s = totalSec % 60;
-  return [h, m, s].map(n => String(n).padStart(2, "0")).join(":");
-}
-
-function getRashi(dob) {
-  if (!dob) return null;
-  const date = new Date(dob);
-  const day = date.getDate();
-  const month = date.getMonth() + 1;
-  if ((month === 3 && day >= 21) || (month === 4 && day <= 19)) return { name: 'Mesh', sign: '♈', en: 'Aries' };
-  if ((month === 4 && day >= 20) || (month === 5 && day <= 20)) return { name: 'Vrishabh', sign: '♉', en: 'Taurus' };
-  if ((month === 5 && day >= 21) || (month === 6 && day <= 20)) return { name: 'Mithun', sign: '♊', en: 'Gemini' };
-  if ((month === 6 && day >= 21) || (month === 7 && day <= 22)) return { name: 'Kark', sign: '♋', en: 'Cancer' };
-  if ((month === 7 && day >= 23) || (month === 8 && day <= 22)) return { name: 'Simha', sign: '♌', en: 'Leo' };
-  if ((month === 8 && day >= 23) || (month === 9 && day <= 22)) return { name: 'Kanya', sign: '♍', en: 'Virgo' };
-  if ((month === 9 && day >= 23) || (month === 10 && day <= 22)) return { name: 'Tula', sign: '♎', en: 'Libra' };
-  if ((month === 10 && day >= 23) || (month === 11 && day <= 21)) return { name: 'Vrishchik', sign: '♏', en: 'Scorpio' };
-  if ((month === 11 && day >= 22) || (month === 12 && day <= 21)) return { name: 'Dhanu', sign: '♐', en: 'Sagittarius' };
-  if ((month === 12 && day >= 22) || (month === 1 && day <= 19)) return { name: 'Makar', sign: '♑', en: 'Capricorn' };
-  if ((month === 1 && day >= 20) || (month === 2 && day <= 18)) return { name: 'Kumbh', sign: '♒', en: 'Aquarius' };
-  return { name: 'Meen', sign: '♓', en: 'Pisces' };
-}
-
-export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [dobDay, setDobDay] = useState('');
-  const [dobMonth, setDobMonth] = useState('');
-  const [dobYear, setDobYear] = useState('');
-  const [otp, setOtp] = useState('');
-  const [step, setStep] = useState('email');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [msLeft, setMsLeft] = useState(getMsUntilMidnight());
-  const [verifySuccess, setVerifySuccess] = useState(false);
-  const [refCode, setRefCode] = useState('');
+export default function LandingPage({ onLogin }) {
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const t = setInterval(() => setMsLeft(getMsUntilMidnight()), 1000);
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get('ref');
-    if (ref) setRefCode(ref);
-    return () => clearInterval(t);
+    const handleScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const dob = (dobDay && dobMonth && dobYear) ? `${dobYear}-${dobMonth}-${dobDay}` : '';
-  const rashi = getRashi(dob);
-
-  const handleSendOtp = async () => {
-    const trimmed = email.trim().toLowerCase();
-    const nameTrimmed = name.trim();
-    if (!nameTrimmed) { setError('Apna naam daalo.'); return; }
-    if (!trimmed || !trimmed.includes('@')) { setError('Sahi email daalo.'); return; }
-    setLoading(true); setError('');
-    try {
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: { shouldCreateUser: true },
-      });
-      if (otpError) throw otpError;
-      setStep('otp');
-    } catch (err) {
-      setError('Kuch gadbad hui, dobara try karo.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    const trimmed = otp.trim();
-    if (!trimmed || trimmed.length < 6) { setError('6 digit OTP daalo.'); return; }
-    setLoading(true); setError('');
-    try {
-      const { data, error: verifyError } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: trimmed,
-        type: 'email',
-      });
-      if (verifyError) throw verifyError;
-      if (data?.session) {
-        setVerifySuccess(true);
-
-        await supabase.auth.setSession({
-          access_token: data.session.access_token,
-          refresh_token: data.session.refresh_token,
-        });
-
-        const userRefCode = name.trim().replace(/\s+/g, '').toLowerCase() + Math.floor(Math.random() * 100);
-
-        const { error: upsertError } = await supabase.from('profiles').upsert({
-          id: data.session.user.id,
-          email: email.trim().toLowerCase(),
-          name: name.trim(),
-          dob: dob || null,
-          trial_start_date: new Date().toISOString(),
-          referral_code: userRefCode,
-          referred_by: refCode || null,
-        }, { onConflict: 'id', ignoreDuplicates: false });
-
-        if (upsertError) {
-          await supabase.from('profiles')
-            .update({ name: name.trim(), dob: dob || null })
-            .eq('id', data.session.user.id);
-        }
-
-        if (refCode) {
-          const { data: referrer } = await supabase
-            .from('profiles')
-            .select('id')
-            .eq('referral_code', refCode.toLowerCase())
-            .single();
-
-          if (referrer) {
-            const { data: pts } = await supabase
-              .from('pulse_points')
-              .select('total_points, referral_count')
-              .eq('user_id', referrer.id)
-              .single();
-
-            if (pts) {
-              await supabase.from('pulse_points')
-                .update({ total_points: (pts.total_points || 0) + 100 })
-                .eq('user_id', referrer.id);
-            }
-
-            await supabase.from('profiles')
-              .update({ referral_count: supabase.rpc('increment', { row_id: referrer.id }) })
-              .eq('id', referrer.id);
-
-            await supabase.from('pulse_points').upsert({
-              user_id: data.session.user.id,
-              total_points: 50,
-              streak_days: 0,
-              badges: [],
-            }, { onConflict: 'user_id' });
-          }
-        }
-
-        // ✅ LOCATION + DEVICE TRACK KARO
-        await trackLogin(data.session.user.id);
-
-        await new Promise(r => setTimeout(r, 800));
-        window.location.href = '/';
-      } else {
-        setError('Session nahi mila. Dobara try karo.');
-      }
-    } catch (err) {
-      setError('OTP galat hai ya expire ho gaya.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const inputStyle = {
-    width: '100%', padding: '13px 16px', fontSize: 15,
-    backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`,
-    borderRadius: 12, color: COLORS.text, outline: 'none',
-    boxSizing: 'border-box', fontFamily: 'Inter, sans-serif',
-  };
-
-  const dobSelectStyle = {
-    ...inputStyle, padding: '13px 8px', fontSize: 14, textAlign: 'center',
-  };
-
-  const cardStyle = {
-    backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`,
-    borderRadius: 16, padding: 18, marginBottom: 14,
-    boxShadow: '0 1px 6px rgba(0,0,0,0.05)',
-  };
 
   return (
     <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', fontFamily: 'Inter, system-ui, sans-serif', color: COLORS.text }}>
-      <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 0 48px' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap');
+        @keyframes lp-gradient-shift { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+      `}</style>
+      <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-        {/* HEADER */}
-        <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', boxShadow: '0 1px 8px rgba(0,0,0,0.06)', position: 'sticky', top: 0, zIndex: 100 }}>
-          <div>
-            <h1 style={{ fontSize: 24, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-              Pulse<span style={{ color: COLORS.gold }}>Trade</span>
-            </h1>
-            <div style={{ fontSize: 10, color: COLORS.muted, marginTop: 1 }}>🔱 हर हर महादेव 🔱</div>
+        {/* NAVBAR */}
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 100,
+          backgroundColor: scrolled ? COLORS.surface : 'transparent',
+          borderBottom: scrolled ? `1px solid ${COLORS.surfaceBorder}` : 'none',
+          boxShadow: scrolled ? '0 4px 16px rgba(30,27,75,0.06)' : 'none',
+          padding: '10px 20px',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          transition: 'all 0.3s ease',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <img
+              src={LOGO_URL}
+              alt="PulseTrade Logo"
+              style={{ height: 42, width: 42, borderRadius: '50%', objectFit: 'cover', boxShadow: '0 4px 12px rgba(79,70,229,0.25)' }}
+            />
+            <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800, letterSpacing: '-0.3px' }}>
+              <span style={{ color: COLORS.text }}>Pulse</span>
+              <span style={{
+                background: 'linear-gradient(120deg, #4F46E5, #0EA5A4)',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>Trade</span>
+            </div>
           </div>
-          <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.green, backgroundColor: COLORS.greenLight, padding: '5px 12px', borderRadius: 20, border: `1px solid #bbf7d0` }}>
-            ✅ NSE • BSE Live
+          <button onClick={onLogin} style={{
+            padding: '8px 20px', fontSize: 13, fontWeight: 700,
+            borderRadius: 20, border: 'none',
+            background: COLORS.goldLight, color: COLORS.gold, cursor: 'pointer',
+            boxShadow: '0 3px 8px rgba(79,70,229,0.12), 0 1px 0 rgba(255,255,255,0.6) inset',
+          }}>
+            Login →
+          </button>
+        </div>
+
+        {/* USP BANNER */}
+        <div style={{
+          background: 'linear-gradient(135deg, #4F46E5, #8B5CF6, #0EA5A4)',
+          backgroundSize: '200% 200%',
+          animation: 'lp-gradient-shift 8s ease-in-out infinite',
+          padding: '12px 20px',
+          textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>
+            🔢 India Ka Pehla Technical + Numerology Trading Tool
           </div>
         </div>
 
-        {/* SEBI */}
-        <div style={{ backgroundColor: COLORS.sebiBg, borderBottom: `2px solid ${COLORS.sebiBorder}`, padding: '10px 20px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>🛡️</span>
-          <div style={{ fontSize: 11, color: COLORS.sebi, lineHeight: 1.6 }}>
-            <strong>SEBI Disclaimer:</strong> Yeh platform sirf technical trend analysis provide karta hai — investment advice nahi hai.
+        {/* HERO */}
+        <div style={{
+          padding: '40px 24px 36px',
+          background: 'linear-gradient(160deg, #1E1B4B 0%, #312E81 100%)',
+          textAlign: 'center',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          <div style={{
+            position: 'absolute', top: '-20%', right: '-15%',
+            width: 260, height: 260, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(139,92,246,0.25), transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: '-10%', left: '-15%',
+            width: 220, height: 220, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(14,165,164,0.2), transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          {/* Logo */}
+          <div style={{ marginBottom: 20, display: 'flex', justifyContent: 'center', position: 'relative', zIndex: 1 }}>
+            <img
+              src={LOGO_URL}
+              alt="PulseTrade Logo"
+              style={{
+                width: 130,
+                height: 130,
+                borderRadius: '50%',
+                objectFit: 'cover',
+                border: '3px solid rgba(139,92,246,0.5)',
+                boxShadow: '0 0 36px rgba(139,92,246,0.4), 0 10px 30px rgba(0,0,0,0.3)',
+              }}
+            />
+          </div>
+
+          <div style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 800,
+            color: '#4ADE80', backgroundColor: 'rgba(34,197,94,0.15)',
+            padding: '5px 14px', borderRadius: 20,
+            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 10, position: 'relative', zIndex: 1,
+          }}>
+            ✅ NSE • BSE Live Data
+          </div>
+          <br />
+          <div style={{
+            display: 'inline-block', fontSize: 11, fontWeight: 700,
+            color: 'rgba(255,255,255,0.6)', backgroundColor: 'rgba(255,255,255,0.08)',
+            padding: '4px 12px', borderRadius: 20, marginBottom: 16, position: 'relative', zIndex: 1,
+          }}>
+            📅 PulseTrade June 2026 se live hai
+          </div>
+
+          <h1 style={{ fontFamily: "'Sora', sans-serif", fontSize: 26, fontWeight: 800, lineHeight: 1.25, margin: '0 0 10px', letterSpacing: '-0.3px', color: '#FFFFFF', position: 'relative', zIndex: 1 }}>
+            India's #1 NSE/BSE<br />
+            <span style={{
+              background: 'linear-gradient(120deg, #A78BFA, #5EEAD4)',
+              WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+            }}>Swing Trading Analysis Tool</span>
+          </h1>
+
+          <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 8px', fontWeight: 600, position: 'relative', zIndex: 1 }}>
+            10 Din se 2 Mahine —
+          </p>
+          <p style={{ fontSize: 14, color: '#A78BFA', lineHeight: 1.6, margin: '0 0 28px', fontWeight: 700, position: 'relative', zIndex: 1 }}>
+            Sahi Trend, Sahi Time, Faisla Khud Karo! 🎯
+          </p>
+
+          <button onClick={onLogin} style={{
+            display: 'block', width: '100%',
+            padding: '16px', fontSize: 17, fontWeight: 800,
+            borderRadius: 16, border: 'none',
+            background: 'linear-gradient(160deg, #6366F1, #4F46E5 55%, #0EA5A4)',
+            color: '#FFF', cursor: 'pointer',
+            boxShadow: '0 6px 0 #3730A3, 0 16px 32px rgba(79,70,229,0.5)',
+            marginBottom: 18, position: 'relative', zIndex: 1,
+          }}>
+            🎯 Trial Pack Se Shuru Karo — ₹95 Se
+          </button>
+          <div style={{
+            display: 'inline-block', fontSize: 12, fontWeight: 800,
+            color: '#4ADE80', backgroundColor: 'rgba(34,197,94,0.15)',
+            padding: '6px 16px', borderRadius: 20,
+            border: '1px solid rgba(34,197,94,0.3)', marginBottom: 12, position: 'relative', zIndex: 1,
+          }}>
+            🔒 Secure Payment via Cashfree — Instant Access
+          </div><br />
+          <p style={{ fontSize: 12, color: '#A78BFA', margin: 0, fontWeight: 700, position: 'relative', zIndex: 1 }}>
+            🔢 Technical + Numerology — Double Confirmation Har Trade Pe
+          </p>
+        </div>
+
+        {/* SWING TRADING BADGE */}
+        <div style={{
+          background: 'linear-gradient(160deg, #FFFFFF, #EEF2FF)',
+          border: `1px solid ${COLORS.gold}33`,
+          margin: '16px',
+          borderRadius: 18,
+          padding: '16px 20px',
+          textAlign: 'center',
+          boxShadow: '0 8px 20px rgba(79,70,229,0.1), 0 1px 0 rgba(255,255,255,0.8) inset',
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.navy, marginBottom: 6 }}>
+            📈 Swing Traders ke liye Banaya Gaya
+          </div>
+          <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.6 }}>
+            Entry • Stop Loss • Target — sab ek jagah<br />
+            <span style={{ color: COLORS.gold, fontWeight: 700 }}>Holding: 10 Din se 2 Mahine</span>
           </div>
         </div>
 
-        {/* REFERRAL BANNER */}
-        {refCode && (
-          <div style={{ background: 'linear-gradient(135deg, #7C3AED, #4F46E5)', padding: '12px 20px', textAlign: 'center' }}>
-            <div style={{ fontSize: 13, fontWeight: 800, color: '#FFF' }}>🎁 {refCode} ne tumhe invite kiya!</div>
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Join karo → Tumhe +50 Pulse Points milenge! 🎉</div>
+        {/* FEATURES */}
+        <div style={{ padding: '8px 16px 16px' }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14, textAlign: 'center' }}>
+            🛠️ FEATURES
           </div>
-        )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {FEATURES.map((f) => (
+              <div key={f.title} style={{
+                background: 'linear-gradient(160deg, #FFFFFF, #FAFBFF)',
+                border: `1px solid ${COLORS.surfaceBorder}`,
+                borderRadius: 16, padding: '14px 12px',
+                boxShadow: '0 6px 16px rgba(30,27,75,0.06), 0 1px 0 rgba(255,255,255,0.9) inset',
+              }}>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>{f.icon}</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: COLORS.text, marginBottom: 4 }}>{f.title}</div>
+                <div style={{ fontSize: 11, color: COLORS.muted, lineHeight: 1.5 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* SOCIAL PROOF */}
-        <div style={{ backgroundColor: COLORS.text, padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <div style={{ display: 'flex' }}>
-            {['👨', '👩', '🧑', '👨', '👩'].map((e, i) => (
-              <div key={i} style={{ width: 28, height: 28, borderRadius: '50%', backgroundColor: COLORS.goldLight, border: `2px solid ${COLORS.text}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, marginLeft: i === 0 ? 0 : -8 }}>{e}</div>
-            ))}
+        <div style={{
+          margin: '0 16px 16px',
+          background: 'linear-gradient(160deg, #FFFFFF, #FAFBFF)',
+          border: `1px solid ${COLORS.surfaceBorder}`,
+          borderRadius: 18, padding: '20px',
+          textAlign: 'center',
+          boxShadow: '0 6px 18px rgba(30,27,75,0.06), 0 1px 0 rgba(255,255,255,0.9) inset',
+        }}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 16 }}>
+            📊 STATS
           </div>
-          <div style={{ fontSize: 12, color: '#FFF', fontWeight: 600 }}>
-            🇮🇳 <span style={{ color: COLORS.gold, fontWeight: 800 }}>India Ka Pehla</span> Technical + Numerology Trading Tool 🚀
-          </div>
-        </div>
-
-        <div style={{ padding: '20px 20px 0' }}>
-
-          {/* HERO */}
-          <div style={{ ...cardStyle, textAlign: 'center', padding: '28px 20px', background: `linear-gradient(135deg, #ffffff 0%, ${COLORS.goldLight} 100%)`, border: `1.5px solid #f0c040` }}>
-            <div style={{ fontSize: 36, marginBottom: 8 }}>📈</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: COLORS.text, margin: '0 0 8px' }}>
-              Bazaar ka pulse dekho,<br />
-              <span style={{ color: COLORS.gold }}>faisla khud karo.</span>
-            </h2>
-            <p style={{ fontSize: 13, color: COLORS.muted, margin: '0 0 16px', lineHeight: 1.6 }}>
-              NSE/BSE stocks ka AI-powered technical analysis — Hinglish mein.
-            </p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-              {['🎯 Trend Analysis', '📊 RSI • MACD • ADX', '🔊 Pulse Bolta Hai', '⭐ Watchlist', '📧 Email Alerts', '🪐 Pulse Astro'].map(f => (
-                <span key={f} style={{ fontSize: 11, fontWeight: 700, color: COLORS.goldDim, backgroundColor: COLORS.goldLight, padding: '5px 12px', borderRadius: 20, border: `1px solid #f0c040` }}>{f}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* TRIAL OFFER */}
-          <div style={{ ...cardStyle, border: `2px solid ${COLORS.gold}`, textAlign: 'center' }}>
-            <div style={{ display: 'inline-block', fontSize: 11, fontWeight: 800, color: '#FFF', backgroundColor: COLORS.red, padding: '4px 14px', borderRadius: 20, marginBottom: 10 }}>🔥 LIMITED TIME OFFER</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>5-Din FREE Trial 🎉</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.goldDim, backgroundColor: COLORS.goldLight, display: 'inline-block', padding: '7px 18px', borderRadius: 10, marginBottom: 6, fontFamily: 'monospace' }}>
-              ⏳ Offer ends in {fmtCountdown(msLeft)}
-            </div>
-            <div style={{ fontSize: 11, color: COLORS.muted }}>Phir plans: ₹599 / ₹1,049 / ₹1,499</div>
-          </div>
-
-          {/* LOGIN CARD */}
-          <div style={cardStyle}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔑 LOGIN / SIGNUP</div>
-
-            {step === 'email' ? (
-              <div>
-                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Naam Daalo 👤</label>
-                <input type="text" value={name} onChange={e => { setName(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="e.g. Rahul, Priya" style={{ ...inputStyle, marginBottom: 12 }} />
-
-                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>Apna Email Daalo 📧</label>
-                <input type="email" value={email} onChange={e => { setEmail(e.target.value); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleSendOtp()} placeholder="tumhara@email.com" style={{ ...inputStyle, marginBottom: 12 }} />
-
-                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>
-                  Janam Tithi 🪐 <span style={{ fontSize: 10, color: COLORS.mutedLight, fontWeight: 400 }}>(optional — Pulse Astro ke liye)</span>
-                </label>
-                <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                  <select value={dobDay} onChange={e => setDobDay(e.target.value)} style={dobSelectStyle}>
-                    <option value="">Din</option>
-                    {DAYS.map(d => <option key={d} value={d}>{parseInt(d)}</option>)}
-                  </select>
-                  <select value={dobMonth} onChange={e => setDobMonth(e.target.value)} style={dobSelectStyle}>
-                    <option value="">Mahina</option>
-                    {MONTHS.map(([val, label]) => <option key={val} value={val}>{label}</option>)}
-                  </select>
-                  <select value={dobYear} onChange={e => setDobYear(e.target.value)} style={dobSelectStyle}>
-                    <option value="">Saal</option>
-                    {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-
-                {rashi && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
-                    backgroundColor: '#fdf4ff', border: '1.5px solid #e9d5ff',
-                    borderRadius: 10, padding: '10px 14px', marginBottom: 12,
-                  }}>
-                    <span style={{ fontSize: 22 }}>{rashi.sign}</span>
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: '#7C3AED' }}>
-                        Teri Rashi: {rashi.name} ({rashi.en})
-                      </div>
-                      <div style={{ fontSize: 11, color: '#9333ea' }}>
-                        🪐 Personalized Pulse Astro milega!
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
-                <button onClick={handleSendOtp} disabled={loading} style={{ width: '100%', marginTop: 4, padding: '14px', fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: loading ? '#CBD5E1' : COLORS.gold, color: '#FFF', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : '0 2px 14px rgba(200,146,10,0.35)' }}>
-                  {loading ? '⏳ Bhej rahe hain...' : '📨 OTP Bhejo'}
-                </button>
-                <p style={{ fontSize: 11, color: COLORS.muted, marginTop: 10, textAlign: 'center', lineHeight: 1.6 }}>
-                  New user? Naam + Email daalo — account + 5-din trial automatically shuru hoga ✨
-                </p>
-                <p style={{ fontSize: 11, color: COLORS.green, marginTop: 8, textAlign: 'center', fontWeight: 600 }}>
-                  🔒 Tumhara data 100% private hai, kisi ko share nahi hota
-                </p>
-              </div>
-            ) : (
-              <div>
-                <div style={{ backgroundColor: COLORS.greenLight, borderRadius: 10, padding: '10px 14px', marginBottom: 14, fontSize: 13, color: COLORS.green, fontWeight: 600 }}>
-                  ✅ OTP bheja — <strong>{email}</strong> check karo!
-                </div>
-                <label style={{ fontSize: 12, color: COLORS.muted, fontWeight: 600, display: 'block', marginBottom: 6 }}>6-Digit OTP Daalo</label>
-                <input type="number" value={otp} onChange={e => { setOtp(e.target.value.slice(0, 6)); setError(''); }} onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()} placeholder="123456" style={{ ...inputStyle, fontSize: 28, fontWeight: 800, letterSpacing: 8, textAlign: 'center' }} />
-                {error && <p style={{ fontSize: 12, color: COLORS.red, marginTop: 6, fontWeight: 600 }}>{error}</p>}
-                <button onClick={handleVerifyOtp} disabled={loading || verifySuccess} style={{
-                  width: '100%', marginTop: 12, padding: '14px',
-                  fontSize: 15, fontWeight: 700, borderRadius: 12, border: 'none',
-                  backgroundColor: verifySuccess ? COLORS.green : loading ? '#CBD5E1' : COLORS.green,
-                  color: '#FFF', cursor: (loading || verifySuccess) ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease',
-                }}>
-                  {verifySuccess ? '🎉 Welcome! Dashboard khul raha hai...' : loading ? (
-                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-                      <span style={{ width: 16, height: 16, border: '2px solid #FFF', borderTop: '2px solid transparent', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.8s linear infinite' }} />
-                      Verify ho raha hai...
-                      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-                    </span>
-                  ) : '✅ OTP Verify Karo — Andar Jao!'}
-                </button>
-                <button onClick={() => { setStep('email'); setOtp(''); setError(''); }} style={{ width: '100%', marginTop: 10, padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 10, border: `1px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>
-                  ← Wapas Email Change Karo
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* PLANS */}
-          <div style={cardStyle}>
-            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>💰 PLANS — TRIAL KE BAAD</div>
+          <div style={{ display: 'flex', justifyContent: 'space-around' }}>
             {[
-              { label: '1 Month', price: '₹599', popular: false },
-              { label: '2 Months', price: '₹1,049', tag: '🔥 Popular', popular: true },
-              { label: '3 Months', price: '₹1,499', tag: '💰 Best Value', popular: false },
-            ].map(plan => (
-              <div key={plan.label} style={{ border: `1.5px solid ${plan.popular ? COLORS.gold : COLORS.surfaceBorder}`, borderRadius: 12, padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: plan.popular ? COLORS.goldLight : COLORS.bg, marginBottom: 8 }}>
-                <div>
-                  <span style={{ fontWeight: 700, color: COLORS.text }}>{plan.label}</span>
-                  {plan.tag && <span style={{ marginLeft: 8, fontSize: 10, fontWeight: 700, color: COLORS.goldDim }}>{plan.tag}</span>}
-                </div>
-                <span style={{ color: COLORS.gold, fontWeight: 800, fontSize: 16 }}>{plan.price}</span>
+              { num: '🇮🇳', label: 'Made in India' },
+              { num: '50+', label: 'Stocks Daily' },
+              { num: '5★', label: 'Rating' },
+            ].map((s) => (
+              <div key={s.label}>
+                <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, color: COLORS.gold }}>{s.num}</div>
+                <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{s.label}</div>
               </div>
             ))}
           </div>
+        </div>
 
-          {/* TRUST BADGES */}
-          <div style={{ ...cardStyle, textAlign: 'center' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 20, flexWrap: 'wrap' }}>
-              {['🔒 Secure Login', '⚡ Instant Access', '🇮🇳 Made in India', '📊 Real Data', '🪐 Pulse Astro'].map(b => (
-                <div key={b} style={{ fontSize: 11, fontWeight: 600, color: COLORS.muted }}>{b}</div>
-              ))}
+        {/* PLANS */}
+        <div style={{ padding: '0 16px 16px' }} id="subscribe">
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14, textAlign: 'center' }}>
+            💰 PLANS
+          </div>
+          {PLANS.map((plan) => (
+            <div key={plan.label} style={{
+              background: plan.popular
+                ? 'linear-gradient(135deg, #4F46E5, #8B5CF6, #0EA5A4)'
+                : 'linear-gradient(160deg, #FFFFFF, #FAFBFF)',
+              border: plan.popular ? 'none' : `1px solid ${COLORS.surfaceBorder}`,
+              borderRadius: 16, padding: '16px',
+              marginBottom: 14,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              boxShadow: plan.popular
+                ? '0 6px 0 #3730A3, 0 16px 30px rgba(79,70,229,0.32)'
+                : `0 4px 0 ${COLORS.surfaceBorder}, 0 10px 20px rgba(30,27,75,0.06)`,
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: 14, color: plan.popular ? '#FFF' : COLORS.text }}>{plan.label}</div>
+                {plan.tag && <div style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.85)' : COLORS.goldDim, fontWeight: 700, marginTop: 2 }}>{plan.tag}</div>}
+                <div style={{ fontSize: 11, color: plan.popular ? 'rgba(255,255,255,0.7)' : COLORS.muted, marginTop: 2 }}>{plan.per}</div>
+              </div>
+              <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 22, fontWeight: 800, color: plan.popular ? '#FFF' : COLORS.gold }}>{plan.price}</div>
+            </div>
+          ))}
+          <button onClick={onLogin} style={{
+            display: 'block', width: '100%', marginTop: 8,
+            padding: '15px', fontSize: 16, fontWeight: 800,
+            borderRadius: 16, border: 'none',
+            background: 'linear-gradient(160deg, #1E1B4B, #312E81)',
+            color: '#FFF', cursor: 'pointer',
+            boxShadow: '0 6px 0 #0F0D2E, 0 14px 28px rgba(30,27,75,0.4)',
+          }}>
+            🎯 Abhi Subscribe Karo
+          </button>
+          <p style={{ fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 10 }}>
+            🛡️ Payment fail hua? 48 ghante mein full refund
+          </p>
+        </div>
+
+        {/* DISCLAIMER */}
+        <div style={{
+          margin: '0 16px 16px',
+          background: COLORS.navyLight,
+          border: `1px solid #C7D2FE`,
+          borderRadius: 14, padding: '12px 16px',
+          display: 'flex', gap: 8, alignItems: 'flex-start',
+        }}>
+          <span style={{ fontSize: 16, flexShrink: 0 }}>🛡️</span>
+          <p style={{ fontSize: 11, color: COLORS.navy, margin: 0, lineHeight: 1.6 }}>
+            <strong>PulseTrade</strong> provides technical market analysis and educational tools only. This is not investment advice. Consult a SEBI registered advisor before investing.
+          </p>
+        </div>
+
+        {/* FOOTER */}
+        <div style={{
+          padding: '16px 20px 32px', textAlign: 'center',
+          borderTop: `1px solid ${COLORS.surfaceBorder}`,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 }}>
+            <img src={LOGO_URL} alt="PulseTrade" style={{ height: 28, width: 28, borderRadius: '50%', objectFit: 'cover' }} />
+            <div style={{ fontFamily: "'Sora', sans-serif", fontSize: 20, fontWeight: 800 }}>
+              <span style={{ color: COLORS.text }}>Pulse</span>
+              <span style={{
+                background: 'linear-gradient(120deg, #4F46E5, #0EA5A4)',
+                WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent',
+              }}>Trade</span>
             </div>
           </div>
-
-          <div style={{ textAlign: 'center', paddingTop: 16, borderTop: `1px solid ${COLORS.surfaceBorder}`, display: 'flex', justifyContent: 'center', gap: 24, fontSize: 12 }}>
-            <a href="/terms" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Terms</a>
-            <a href="/privacy" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Privacy</a>
-            <a href="/contact" style={{ color: COLORS.muted, textDecoration: 'none', fontWeight: 600 }}>Contact</a>
+          <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 12 }}>🔱 हर हर महादेव 🔱</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>
+            {[['Blog', '/blog'], ['Terms', '/terms'], ['Privacy', '/privacy'], ['Refund', '/refund'], ['Contact', '/contact']].map(([l, h], i, arr) => (
+              <span key={l} style={{ display: 'flex', alignItems: 'center' }}>
+                <a href={h} style={{ fontSize: 12, color: COLORS.muted, textDecoration: 'none', padding: '0 8px' }}>{l}</a>
+                {i < arr.length - 1 && <span style={{ color: COLORS.surfaceBorder }}>•</span>}
+              </span>
+            ))}
           </div>
-
+          <div style={{ fontSize: 11, color: COLORS.mutedLight }}>© 2026 PulseTrade</div>
         </div>
+
       </div>
     </div>
   );
