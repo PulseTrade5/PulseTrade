@@ -80,7 +80,8 @@ export default function MuhuratSwingSetup({ isDark, userDob, userId, isSubscribe
   }, []);
 
   const hour = now.getHours();
-  const isSundayWindow = now.getDay() === 0 && hour >= 18 && hour < 21;
+  const testOverride = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('testMuhurat') === '1';
+  const isSundayWindow = testOverride || (now.getDay() === 0 && hour >= 18 && hour < 21);
 
   const lifePath = getLifePath(userDob);
 
