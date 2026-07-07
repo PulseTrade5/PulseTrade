@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { analyzeStock } from '../technicalAnalysis';
+import { supabase } from '../supabaseClient';
 
 const NIFTY20 = [
   'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK',
@@ -57,7 +58,17 @@ function getRankScore(r) {
   return score;
 }
 
-export default function MuhuratSwingSetup({ isDark, userDob, isSubscribed, C }) {
+// Fetch just the latest price for a symbol (used when resolving last week's picks)
+async function fetchLatestPrice(symbol) {
+  try {
+    const res = await fetch(`/api/get-stock-data?symbol=${symbol}.NS&range=5d`);
+    const data = await res.json();
+    if (!res.ok || !data.candles || data.candles.length === 0) return null;
+    return data.stockInfo?.regularMarketPrice || data.candles[data.candles.length - 1].close;
+  } catch { return null; }
+}
+
+export default function MuhuratSwingSetup({ isDark, userDob, userId, isSubscribed, C }) {
   const [now, setNow] = useState(new Date());
   const [scanning, setScanning] = useState(false);
   const [weekPlan, setWeekPlan] = useState(null);
@@ -95,8 +106,79 @@ export default function MuhuratSwingSetup({ isDark, userDob, isSubscribed, C }) 
     } catch { return null; }
   };
 
+  // Silently resolve last week's unresolved plan (if any) — no UI, just background save
+  const resolveLastWeek = async () => {
+    if (!userId) return;
+    try {
+      const { data: rows } = await supabase
+        .from('muhurat_history')
+        .select('*')
+        .eq('user_id', userId)
+        .is('result_json', null)
+        .order('week_start_date', { ascending: false })
+        .limit(1);
+
+      const lastRow = rows?.[0];
+      if (!lastRow) return;
+
+      const todayStr = now.toISOString().slice(0, 10);
+      if (lastRow.week_start_date === todayStr) return; // don't resolve the same week we're about to create
+
+      const stocks = lastRow.stocks_json || [];
+      const resolved = [];
+      for (const s of stocks) {
+        if (!s.stock) continue;
+        const currentPrice = await fetchLatestPrice(s.stock.symbol);
+        if (currentPrice == null) continue;
+        const change = ((currentPrice - s.stock.price) / s.stock.price) * 100;
+        const win = s.stock.trend === 'Bullish' ? change > 0 : change < 0;
+        resolved.push({
+          symbol: s.stock.symbol,
+          entryPrice: s.stock.price,
+          currentPrice,
+          changePercent: Number(change.toFixed(2)),
+          trend: s.stock.trend,
+          win,
+        });
+      }
+      const winCount = resolved.filter(r => r.win).length;
+      const summary = { resolvedAt: now.toISOString(), winCount, totalCount: resolved.length, stocks: resolved };
+
+      await supabase.from('muhurat_history').update({ result_json: summary }).eq('id', lastRow.id);
+      // Silent — no UI shown to user. Admin can check via Supabase Table Editor (result_json column).
+    } catch (err) {
+      // Silent fail — tracking is a background nice-to-have, must never break the feature for the user.
+    }
+  };
+
+  // Save this week's freshly generated plan to Supabase (silent)
+  const saveThisWeek = async (plan) => {
+    if (!userId) return;
+    try {
+      const todayStr = now.toISOString().slice(0, 10);
+      const { data: existing } = await supabase
+        .from('muhurat_history')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('week_start_date', todayStr)
+        .limit(1);
+      if (existing && existing.length > 0) return; // already saved this week
+
+      await supabase.from('muhurat_history').insert({
+        user_id: userId,
+        week_start_date: todayStr,
+        stocks_json: plan,
+      });
+    } catch (err) {
+      // Silent fail
+    }
+  };
+
   const runWeeklyScan = async () => {
     setScanning(true);
+
+    await resolveLastWeek(); // background — resolve previous week first
+
     const batchSize = 5;
     const all = [];
     for (let i = 0; i < NIFTY20.length; i += batchSize) {
@@ -110,6 +192,7 @@ export default function MuhuratSwingSetup({ isDark, userDob, isSubscribed, C }) 
       stock: top5[i] || null,
     }));
     setWeekPlan(plan);
+    saveThisWeek(plan); // background — no await needed for UI
     setScanning(false);
   };
 
