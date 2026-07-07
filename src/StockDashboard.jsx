@@ -1042,7 +1042,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab, 
             <>
               <MarketMoment isDark={dark} userDob={userDob} userName={user?.email?.split('@')[0]} watchlist={watchlist} history={history} C={C} />
               <TomorrowPreview isDark={dark} userDob={userDob} C={C} />
-              <MuhuratSwingSetup isDark={dark} userDob={userDob} isSubscribed={profile?.is_subscribed} C={C} />
+              <MuhuratSwingSetup isDark={dark} userDob={userDob} userId={user?.id} isSubscribed={profile?.is_subscribed} C={C} />
               <PulseSyncScore userDob={userDob} isDark={dark} C={C} />
               <NumerologyInsightCard isDark={dark} C={C} />
               <MarketNewsBrief isDark={dark} C={C} />
