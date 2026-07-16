@@ -35,6 +35,16 @@ export default async function handler(req, res) {
       return res.status(200).json({ valid: false, message: 'Ye coupon is plan par valid nahi hai' });
     }
 
+    // Check usage cap
+    const { count: usedCount } = await supabase
+      .from('coupon_redemptions')
+      .select('id', { count: 'exact', head: true })
+      .eq('code', code);
+
+    if (coupon.max_uses && usedCount >= coupon.max_uses) {
+      return res.status(200).json({ valid: false, message: 'Coupon limit khatam ho gayi hai' });
+    }
+
     if (userId) {
       const { data: existing } = await supabase
         .from('coupon_redemptions')
@@ -63,4 +73,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ valid: false, message: 'Coupon check nahi ho saka' });
   }
 }
-
