@@ -2,7 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 export default async function handler(req, res) {
@@ -37,7 +37,14 @@ export default async function handler(req, res) {
           alreadyUsed = !!existing;
         }
 
-        if (!alreadyUsed) {
+        const { count: usedCount } = await supabase
+          .from('coupon_redemptions')
+          .select('id', { count: 'exact', head: true })
+          .eq('code', couponCode);
+
+        const capReached = coupon.max_uses && usedCount >= coupon.max_uses;
+
+        if (!alreadyUsed && !capReached) {
           const discountAmount = Math.round(amount * (coupon.discount_percent / 100));
           finalAmount = amount - discountAmount;
           appliedCoupon = couponCode;
@@ -106,4 +113,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: err.message });
   }
 }
-
