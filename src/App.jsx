@@ -307,12 +307,13 @@ function App() {
     supabase.from('profiles').select('*').eq('id', session.user.id).single()
       .then(({ data, error }) => {
         if (error || !data) {
+          // Naya user — koi trial_start_date set NAHI karte. Trial sirf tab shuru hota hai
+          // jab user Trial Pack (₹95/₹176/₹248) ya subscription khud kharide (Cashfree se).
           supabase.from('profiles').insert({
             id: session.user.id,
             email: session.user.email,
-            trial_start_date: new Date().toISOString(),
           }).then(() => {
-            setProfile({ trial_start_date: new Date().toISOString(), is_subscribed: false, subscription_end_date: null });
+            setProfile({ is_subscribed: false, subscription_end_date: null });
             setShowWelcome(true);
           });
         } else {
