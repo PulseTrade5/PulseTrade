@@ -155,9 +155,35 @@ export default function LandingPage({ onLogin }) {
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, margin: '0 0 8px', fontWeight: 600, position: 'relative', zIndex: 1 }}>
             10 Din se 2 Mahine —
           </p>
-          <p style={{ fontSize: 14, color: '#A78BFA', lineHeight: 1.6, margin: '0 0 28px', fontWeight: 700, position: 'relative', zIndex: 1 }}>
+          <p style={{ fontSize: 14, color: '#A78BFA', lineHeight: 1.6, margin: '0 0 20px', fontWeight: 700, position: 'relative', zIndex: 1 }}>
             Sahi Trend, Sahi Time, Faisla Khud Karo! 🎯
           </p>
+
+          {/* FREE TRIAL BUTTON */}
+          <div style={{
+            border: '1.5px solid rgba(74,222,128,0.4)',
+            background: 'rgba(34,197,94,0.08)',
+            borderRadius: 16,
+            padding: '14px',
+            marginBottom: 16,
+            position: 'relative', zIndex: 1,
+          }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: '#4ADE80', fontWeight: 800, marginBottom: 10 }}>
+              🎁 LIMITED — FIRST 100 USERS
+            </div>
+            <button onClick={onLogin} style={{
+              display: 'block', width: '100%',
+              padding: '14px', fontSize: 15, fontWeight: 800,
+              borderRadius: 12, border: 'none',
+              background: 'linear-gradient(160deg, #22C55E, #16A34A)',
+              color: '#FFF', cursor: 'pointer',
+              boxShadow: '0 5px 0 #15803D, 0 12px 24px rgba(22,163,74,0.4)',
+            }}>
+              🎁 5 Din Free Trial Lo
+            </button>
+          </div>
+
+          <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginBottom: 16, position: 'relative', zIndex: 1 }}>— ya —</div>
 
           <button onClick={onLogin} style={{
             display: 'block', width: '100%',
@@ -335,4 +361,3 @@ export default function LandingPage({ onLogin }) {
     </div>
   );
 }
-
