@@ -13,6 +13,7 @@ import BlogList from './BlogList';
 import BlogPost from './BlogPost';
 import SubscribeButton from './SubscribeButton';
 import TrialPackButton from './TrialPackButton';
+import FreeTrialButton from './FreeTrialButton';
 import TrialFeedbackModal from './components/TrialFeedbackModal';
 function GreetingToast({ name, show }) {
   const hour = new Date().getHours();
@@ -208,6 +209,13 @@ function TrialExpiredPage({ user, onLogout }) {
             <div style={{ fontSize: 12, color: LIGHT.muted, backgroundColor: LIGHT.bg, borderRadius: 10, padding: '8px 14px', marginBottom: 20 }}>📧 {user?.email}</div>
           </div>
 
+          <div style={{ backgroundColor: LIGHT.surface, border: `2px solid #3FAE7C`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: '#3FAE7C', fontWeight: 700, marginBottom: 16 }}>🎁 LIMITED — FIRST 100 USERS</div>
+            <FreeTrialButton userId={user?.id} onActivated={() => window.location.reload()} />
+          </div>
+
+          <div style={{ textAlign: 'center', fontSize: 12, color: LIGHT.muted, marginBottom: 16 }}>— ya —</div>
+
           <div style={{ backgroundColor: LIGHT.surface, border: `1px solid ${LIGHT.border}`, borderRadius: 16, padding: 20, marginBottom: 16 }}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: LIGHT.muted, fontWeight: 700, marginBottom: 16 }}>🎯 TRIAL PACK SE SHURU KARO</div>
             <TrialPackButton userEmail={user?.email} userId={user?.id} />
@@ -308,7 +316,7 @@ function App() {
       .then(({ data, error }) => {
         if (error || !data) {
           // Naya user — koi trial_start_date set NAHI karte. Trial sirf tab shuru hota hai
-          // jab user Trial Pack (₹95/₹176/₹248) ya subscription khud kharide (Cashfree se).
+          // jab user Free Trial claim kare, Trial Pack (₹95/₹176/₹248) ya subscription khud kharide.
           supabase.from('profiles').insert({
             id: session.user.id,
             email: session.user.email,
@@ -338,8 +346,6 @@ function App() {
       await supabase.from('profiles').update({ onboarding_done: true }).eq('id', session.user.id);
     }
   };
-  // Free trial removed — naya user seedha Trial Pack / Subscribe screen dekhega.
-  // Sirf paid subscription (Trial Pack ya full plan) se access milega.
   const checkAccess = () => {
     if (!profile) return 'loading';
     if (profile.is_subscribed) {
