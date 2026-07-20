@@ -866,7 +866,24 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab, 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
     if (!sym) return;
-    setLoading(true); setError(''); setResult(null); setStockInfo(null);
+    setLoading(true); setError(''); setResult(null); setStockInfo(null);// Signal tracking — Admin panel ke liye
+      if (analysis.signal && user?.id) {
+        try {
+          await supabase.from('signal_tracking').insert({
+            stock_symbol: sym,
+            signal: analysis.signal,
+            entry_price: analysis.entry,
+            stop_loss: analysis.stopLoss,
+            target1: analysis.targets?.[0],
+            target2: analysis.targets?.[1],
+            target3: analysis.targets?.[2],
+            signal_date: new Date().toISOString().split('T')[0],
+            status: 'open',
+          });
+        } catch (e) {
+          console.error('Signal tracking error:', e);
+        }
+      }
     setPulseData(null); setSymbolInput(sym); setAlertSent(false);
     let symbol = sym;
     if (!symbol.includes('.')) symbol = symbol + '.NS';
