@@ -46,7 +46,12 @@ export default async function handler(req, res) {
     const qResult = quoteData.chart?.result?.[0];
     const qMeta = qResult?.meta || {};
 
+    // Fallback: agar meta mein live price na mile, toh last candle ka close price use karo
+    const lastCandleClose = candles.length ? candles[candles.length - 1].close : null;
+
     const stockInfo = {
+      regularMarketPrice: qMeta.regularMarketPrice ?? meta.regularMarketPrice ?? lastCandleClose ?? null,
+      previousClose: qMeta.chartPreviousClose ?? qMeta.previousClose ?? null,
       marketCap: qMeta.marketCap || null,
       regularMarketVolume: qMeta.regularMarketVolume || null,
       averageDailyVolume3Month: qMeta.averageDailyVolume3Month || null,
