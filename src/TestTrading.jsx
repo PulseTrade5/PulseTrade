@@ -43,6 +43,11 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
 
   useEffect(() => { fetchHoldings(); }, [email]);
 
+  useEffect(() => {
+    if (holdings.length > 0) refreshHoldingPrices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holdings.length]);
+
   const fetchQuote = async (sym) => {
     let symbol = sym.trim().toUpperCase();
     if (!symbol) return null;
@@ -151,6 +156,15 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
     setTimeout(() => setMsg(''), 3000);
   };
 
+  const investment = holdings.reduce((sum, h) => sum + Number(h.qty) * Number(h.avg_price), 0);
+  const currentValue = holdings.reduce((sum, h) => {
+    const live = livePrices[h.symbol];
+    return sum + Number(h.qty) * (live !== undefined ? live : Number(h.avg_price));
+  }, 0);
+  const totalPnl = currentValue - investment;
+  const totalPnlPct = investment > 0 ? (totalPnl / investment) * 100 : 0;
+  const allPricesLoaded = holdings.length > 0 && holdings.every(h => livePrices[h.symbol] !== undefined);
+
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16 };
   const inputStyle = { width: '100%', padding: '11px 14px', fontSize: 14, borderRadius: 10, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none', boxSizing: 'border-box' };
 
@@ -158,6 +172,44 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
       {msg && (
         <div style={{ backgroundColor: COLORS.greenLight, border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '10px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>{msg}</div>
+      )}
+
+      {/* Portfolio Summary */}
+      {holdings.length > 0 && (
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>📊 PORTFOLIO SUMMARY</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: allPricesLoaded ? COLORS.green : COLORS.gold }} />
+              <span style={{ fontSize: 10, fontWeight: 700, color: allPricesLoaded ? COLORS.green : COLORS.gold }}>
+                {refreshingPrices ? 'UPDATING...' : allPricesLoaded ? 'LIVE' : 'PARTIAL'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Profit</div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontSize: 26, fontWeight: 900, color: totalPnl >= 0 ? COLORS.green : COLORS.red }}>
+                {totalPnl >= 0 ? '+' : ''}{fmtINR(totalPnl)}
+              </span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: totalPnl >= 0 ? COLORS.green : COLORS.red }}>
+                ({totalPnl >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
+              </span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 16 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Investment</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.text }}>{fmtINR(investment)}</div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Current Value</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.text }}>{fmtINR(currentValue)}</div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Search & Buy */}
@@ -244,4 +296,4 @@ function SellRow({ holding, onSell, acting, inputStyle, colors }) {
       <button onClick={() => onSell(holding, sellQty)} disabled={acting} style={{ padding: '0 16px', borderRadius: 8, border: 'none', backgroundColor: colors.red, color: '#FFF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Sell</button>
     </div>
   );
-}
+          }
