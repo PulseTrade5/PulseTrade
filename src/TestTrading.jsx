@@ -297,4 +297,4 @@ function SellRow({ holding, onSell, acting, inputStyle, colors }) {
       <button onClick={() => onSell(holding, sellQty)} disabled={acting} style={{ padding: '0 16px', borderRadius: 8, border: 'none', backgroundColor: colors.red, color: '#FFF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Sell</button>
     </div>
   );
-            }
+}
