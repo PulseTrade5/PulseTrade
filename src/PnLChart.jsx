@@ -13,7 +13,7 @@ function fmtINR(n) {
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
 
-export default function PnLChart({ userEmail }) {
+export default function PnLChart({ userEmail, refreshKey }) {
   const email = userEmail || "prabhat3300@gmail.com";
   const [view, setView] = useState('daily'); // 'daily' | 'monthly'
   const [sells, setSells] = useState([]);
@@ -32,7 +32,7 @@ export default function PnLChart({ userEmail }) {
         setSells(data || []);
         setLoading(false);
       });
-  }, [email]);
+  }, [email, refreshKey]);
 
   // Build last 30 days buckets
   const dailyData = (() => {
@@ -75,13 +75,30 @@ export default function PnLChart({ userEmail }) {
 
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16 };
 
+  const refetch = () => {
+    setLoading(true);
+    supabase
+      .from('test_fund_transactions')
+      .select('created_at, pnl')
+      .eq('user_email', email)
+      .eq('type', 'sell')
+      .not('pnl', 'is', null)
+      .then(({ data }) => {
+        setSells(data || []);
+        setLoading(false);
+      });
+  };
+
   return (
     <div style={cardStyle}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>📈 REALIZED P&L</div>
-        <div style={{ display: 'flex', gap: 4, backgroundColor: COLORS.bg, borderRadius: 10, padding: 3 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <button onClick={refetch} style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold, background: 'none', border: 'none', cursor: 'pointer' }}>🔄</button>
+          <div style={{ display: 'flex', gap: 4, backgroundColor: COLORS.bg, borderRadius: 10, padding: 3 }}>
           <button onClick={() => { setView('daily'); setSelected(null); }} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 700, borderRadius: 8, border: 'none', cursor: 'pointer', backgroundColor: view === 'daily' ? COLORS.gold : 'transparent', color: view === 'daily' ? '#FFF' : COLORS.muted }}>Daily</button>
           <button onClick={() => { setView('monthly'); setSelected(null); }} style={{ padding: '5px 12px', fontSize: 11, fontWeight: 700, borderRadius: 8, border: 'none', cursor: 'pointer', backgroundColor: view === 'monthly' ? COLORS.gold : 'transparent', color: view === 'monthly' ? '#FFF' : COLORS.muted }}>Monthly</button>
+          </div>
         </div>
       </div>
 
