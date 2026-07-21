@@ -22,7 +22,15 @@ function getStatus(profile) {
   if (profile.is_blocked) return 'blocked';
   if (profile.is_subscribed) {
     if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
-    return 'paid';
+
+    // Agar free trial claim kiya hai aur subscription duration ~5-6 din ki hai, to ye trial hai, paid nahi
+    const isFreeTrialSub =
+      profile.free_trial_claimed &&
+      profile.trial_start_date &&
+      profile.subscription_end_date &&
+      (new Date(profile.subscription_end_date) - new Date(profile.trial_start_date)) <= 6 * 24 * 60 * 60 * 1000;
+
+    return isFreeTrialSub ? 'trial' : 'paid';
   }
   return getDaysLeft(profile.trial_start_date) > 0 ? 'trial' : 'expired';
 }
