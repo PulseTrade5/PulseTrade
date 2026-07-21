@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
-import AdminFund from './TestFund/AdminFund';
+import AdminFund from './AdminFund';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -599,7 +599,7 @@ export default function AdminPanel({ user, onLogout }) {
             </>
           )}
 
-          {activeTab === 'fund' && <AdminFund />}
+          {activeTab === 'fund' && <AdminFund userEmail={user?.email} />}
         </div>
       </div>
 
