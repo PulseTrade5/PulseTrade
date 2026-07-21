@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import TestTrading from './TestTrading';
 
 const COLORS = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
@@ -113,7 +114,7 @@ export default function AdminFund({ userEmail }) {
         boxShadow: '0 8px 30px rgba(15,23,42,0.25)',
       }}>
         <div style={{ fontSize: 11, letterSpacing: 2, color: '#C8920A', fontWeight: 700, marginBottom: 8 }}>
-          💵 TEST TRADING WALLET
+          💵 TRADING WALLET
         </div>
         <div style={{ fontSize: 38, fontWeight: 900, color: '#FFF' }}>
           ₹{balance.toLocaleString('en-IN')}
@@ -139,6 +140,9 @@ export default function AdminFund({ userEmail }) {
         </div>
         <button onClick={handleReset} disabled={saving} style={{ width: '100%', marginTop: 8, padding: '9px', fontSize: 12, fontWeight: 600, borderRadius: 10, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Reset to ₹0</button>
       </div>
+
+      {/* Trading */}
+      <TestTrading userEmail={email} balance={balance} onBalanceChange={setBalance} />
 
       {/* Transaction History */}
       <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18 }}>
