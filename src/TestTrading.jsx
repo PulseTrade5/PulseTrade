@@ -145,7 +145,7 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
       const newBalance = balance + proceeds;
       await supabase.from('test_fund').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('user_email', email);
       const pnl = (q.price - Number(holding.avg_price)) * sQty;
-      await logTransaction('sell', proceeds, newBalance, { symbol: holding.symbol });
+      await logTransaction('sell', proceeds, newBalance, { symbol: holding.symbol, pnl });
       onBalanceChange(newBalance);
       fetchHoldings();
       setMsg(`✅ ${sQty} ${holding.symbol} @ ${fmtINR(q.price)} sell ho gaya (${pnl >= 0 ? '+' : ''}${fmtINR(pnl)})`);
