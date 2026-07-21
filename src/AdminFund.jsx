@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
 import TestTrading from './TestTrading';
+import PnLChart from './PnLChart';
 
 const COLORS = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
@@ -144,6 +145,9 @@ export default function AdminFund({ userEmail }) {
       {/* Trading */}
       <TestTrading userEmail={email} balance={balance} onBalanceChange={setBalance} />
 
+      {/* Realized P&L Chart */}
+      <PnLChart userEmail={email} />
+
       {/* Transaction History */}
       <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18 }}>
         <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>RECENT ACTIVITY</div>
@@ -165,4 +169,4 @@ export default function AdminFund({ userEmail }) {
       </div>
     </div>
   );
-}
+                         }
