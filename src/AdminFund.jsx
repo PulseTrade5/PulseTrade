@@ -146,7 +146,7 @@ export default function AdminFund({ userEmail }) {
       <TestTrading userEmail={email} balance={balance} onBalanceChange={setBalance} />
 
       {/* Realized P&L Chart */}
-      <PnLChart userEmail={email} />
+      <PnLChart userEmail={email} refreshKey={balance} />
 
       {/* Transaction History */}
       <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18 }}>
@@ -169,4 +169,4 @@ export default function AdminFund({ userEmail }) {
       </div>
     </div>
   );
-                         }
+}
