@@ -86,9 +86,10 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
   };
 
   const logTransaction = async (type, amount, balanceAfter, extra = {}) => {
-    await supabase.from('test_fund_transactions').insert([{
+    const { error } = await supabase.from('test_fund_transactions').insert([{
       user_email: email, type, amount, balance_after: balanceAfter, ...extra,
     }]);
+    return error;
   };
 
   const handleBuy = async () => {
@@ -115,16 +116,16 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
     if (!error) {
       const newBalance = balance - cost;
       await supabase.from('test_fund').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('user_email', email);
-      await logTransaction('buy', cost, newBalance, { symbol: quote.symbol });
+      const txError = await logTransaction('buy', cost, newBalance, { symbol: quote.symbol });
       onBalanceChange(newBalance);
       fetchHoldings();
-      setMsg(`✅ ${q} ${quote.symbol} @ ${fmtINR(quote.price)} buy ho gaya`);
+      setMsg(txError ? `⚠️ Buy ho gaya, par log save nahi hua: ${txError.message}` : `✅ ${q} ${quote.symbol} @ ${fmtINR(quote.price)} buy ho gaya`);
       setQty(''); setQuote(null); setSymbolInput('');
     } else {
       setMsg('❌ Kuch gadbad ho gayi');
     }
     setActing(false);
-    setTimeout(() => setMsg(''), 3000);
+    setTimeout(() => setMsg(''), 6000);
   };
 
   const handleSell = async (holding, sellQty) => {
@@ -145,15 +146,15 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
       const newBalance = balance + proceeds;
       await supabase.from('test_fund').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('user_email', email);
       const pnl = (q.price - Number(holding.avg_price)) * sQty;
-      await logTransaction('sell', proceeds, newBalance, { symbol: holding.symbol, pnl });
+      const txError = await logTransaction('sell', proceeds, newBalance, { symbol: holding.symbol, pnl });
       onBalanceChange(newBalance);
       fetchHoldings();
-      setMsg(`✅ ${sQty} ${holding.symbol} @ ${fmtINR(q.price)} sell ho gaya (${pnl >= 0 ? '+' : ''}${fmtINR(pnl)})`);
+      setMsg(txError ? `⚠️ Sell ho gaya, par log save nahi hua: ${txError.message}` : `✅ ${sQty} ${holding.symbol} @ ${fmtINR(q.price)} sell ho gaya (${pnl >= 0 ? '+' : ''}${fmtINR(pnl)})`);
     } catch (e) {
       setMsg('❌ Live price nahi mil paya, dobara try karo');
     }
     setActing(false);
-    setTimeout(() => setMsg(''), 3000);
+    setTimeout(() => setMsg(''), 6000);
   };
 
   const investment = holdings.reduce((sum, h) => sum + Number(h.qty) * Number(h.avg_price), 0);
@@ -296,4 +297,4 @@ function SellRow({ holding, onSell, acting, inputStyle, colors }) {
       <button onClick={() => onSell(holding, sellQty)} disabled={acting} style={{ padding: '0 16px', borderRadius: 8, border: 'none', backgroundColor: colors.red, color: '#FFF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Sell</button>
     </div>
   );
-          }
+            }
