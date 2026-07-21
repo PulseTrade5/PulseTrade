@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import AdminFund from './TestFund/AdminFund';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -309,7 +310,7 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
 
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog']].map(([key, label]) => (
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog'], ['fund', '💵 Fund']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
               borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
@@ -404,7 +405,7 @@ export default function AdminPanel({ user, onLogout }) {
                           </div>
 
                           <div style={{ padding: '5px 0' }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌐 Location</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌍 Location</span>
                             <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.text, marginTop: 3, wordBreak: 'break-all' }}>{p.last_location || 'Unknown'}</div>
                           </div>
                         </div>
@@ -597,6 +598,8 @@ export default function AdminPanel({ user, onLogout }) {
               </div>
             </>
           )}
+
+          {activeTab === 'fund' && <AdminFund />}
         </div>
       </div>
 
