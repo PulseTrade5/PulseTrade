@@ -87,6 +87,31 @@ export default function AdminSignals() {
 
   const filtered = signals.filter(s => filter === 'all' || s.status === filter);
 
+  // Ek stock ka ek din mein ek hi signal ginna hai — baar baar search se duplicate na ho
+  const dedupedByDay = Object.values(
+    signals.reduce((acc, s) => {
+      const key = `${s.stock_symbol}_${s.signal_date}`;
+      // Agar same din same stock ka signal already hai, to closed wale ko priority do (open se zyada meaningful)
+      if (!acc[key] || (acc[key].status === 'open' && s.status !== 'open')) {
+        acc[key] = s;
+      }
+      return acc;
+    }, {})
+  );
+
+  // Khud analyse karke top 10 sabse zyada trade wale stocks nikalo — closed trades ke hisaab se rank
+  const bySymbol = dedupedByDay.reduce((acc, s) => {
+    if (!acc[s.stock_symbol]) acc[s.stock_symbol] = { symbol: s.stock_symbol, total: 0, win: 0, loss: 0, open: 0 };
+    acc[s.stock_symbol].total++;
+    if (s.status === 'win') acc[s.stock_symbol].win++;
+    else if (s.status === 'loss') acc[s.stock_symbol].loss++;
+    else acc[s.stock_symbol].open++;
+    return acc;
+  }, {});
+  const topStocks = Object.values(bySymbol)
+    .sort((a, b) => (b.win + b.loss) - (a.win + a.loss) || b.total - a.total)
+    .slice(0, 10);
+
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16, boxShadow: '0 1px 6px rgba(0,0,0,0.05)' };
 
   return (
@@ -125,6 +150,48 @@ export default function AdminSignals() {
           </div>
         ))}
       </div>
+
+      {/* Top 10 Most-Active Stocks — khud analyse karke nikala */}
+      {topStocks.length > 0 && (
+        <div style={cardStyle}>
+          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 4 }}>
+            🏆 TOP {topStocks.length} STOCKS (sabse zyada trade wale)
+          </div>
+          <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 14 }}>
+            Din mein 1 stock ka 1 hi trade gina gaya hai — sabse zyada closed trades wale upar
+          </div>
+          {topStocks.map((s, i) => {
+            const closedCount = s.win + s.loss;
+            const rate = closedCount > 0 ? ((s.win / closedCount) * 100).toFixed(0) : null;
+            return (
+              <div key={s.symbol} style={{ padding: '10px 0', borderBottom: i < topStocks.length - 1 ? `1px solid ${COLORS.surfaceBorder}` : 'none' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.muted, width: 20 }}>#{i + 1}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.text }}>{s.symbol}</div>
+                      <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>
+                        {s.total} trade{s.total !== 1 ? 's' : ''} • ✅ {s.win} • ❌ {s.loss}{s.open > 0 ? ` • ⏳ ${s.open}` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: 15, fontWeight: 800,
+                    color: rate === null ? COLORS.muted : rate >= 50 ? COLORS.green : COLORS.red,
+                  }}>
+                    {rate !== null ? `${rate}%` : '—'}
+                  </div>
+                </div>
+                {closedCount > 0 && closedCount < 3 && (
+                  <div style={{ fontSize: 10, color: COLORS.gold, marginTop: 4, marginLeft: 30 }}>
+                    ⚠️ Sirf {closedCount} trade — % abhi reliable nahi hai
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <button onClick={handleCheckResults} disabled={checking || stats.open === 0} style={{
         width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
