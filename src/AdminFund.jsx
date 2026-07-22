@@ -120,9 +120,6 @@ export default function AdminFund({ userEmail }) {
         <div style={{ fontSize: 38, fontWeight: 900, color: '#FFF' }}>
           ₹{balance.toLocaleString('en-IN')}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 6 }}>
-          {email}
-        </div>
       </div>
 
       {/* Add/Withdraw */}
