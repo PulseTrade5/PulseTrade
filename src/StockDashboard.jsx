@@ -866,7 +866,19 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab, 
   const handleSearch = async (symOverride) => {
     const sym = (symOverride || symbolInput).trim().toUpperCase();
     if (!sym) return;
-    setLoading(true); setError(''); setResult(null); setStockInfo(null);// Signal tracking — Admin panel ke liye
+    setLoading(true); setError(''); setResult(null); setStockInfo(null);
+    setPulseData(null); setSymbolInput(sym); setAlertSent(false);
+    let symbol = sym;
+    if (!symbol.includes('.')) symbol = symbol + '.NS';
+    try {
+      const res = await fetch(`/api/get-stock-data?symbol=${encodeURIComponent(symbol)}&range=1y`);
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Data fetch failed.'); setLoading(false); return; }
+      if (!data.candles || data.candles.length < 50) { setError('Itna data nahi mila.'); setLoading(false); return; }
+      const analysis = analyzeStock(data.candles);
+      if (analysis.error) { setError(analysis.error); setLoading(false); return; }
+
+      // Signal tracking — Admin panel ke liye
       if (analysis.signal && user?.id) {
         try {
           await supabase.from('signal_tracking').insert({
@@ -884,16 +896,7 @@ export default function StockDashboard({ user, isDark, onTabChange, defaultTab, 
           console.error('Signal tracking error:', e);
         }
       }
-    setPulseData(null); setSymbolInput(sym); setAlertSent(false);
-    let symbol = sym;
-    if (!symbol.includes('.')) symbol = symbol + '.NS';
-    try {
-      const res = await fetch(`/api/get-stock-data?symbol=${encodeURIComponent(symbol)}&range=1y`);
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Data fetch failed.'); setLoading(false); return; }
-      if (!data.candles || data.candles.length < 50) { setError('Itna data nahi mila.'); setLoading(false); return; }
-      const analysis = analyzeStock(data.candles);
-      if (analysis.error) { setError(analysis.error); setLoading(false); return; }
+
       setResult(analysis);
       setStockInfo(data.stockInfo || null);
       setStockName(sym);
