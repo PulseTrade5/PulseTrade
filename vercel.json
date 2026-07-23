@@ -24,6 +24,10 @@
     {
       "path": "/api/trial-reminder",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/auto-scan-signals",
+      "schedule": "30 10 * * 1-5"
     }
   ]
 }
