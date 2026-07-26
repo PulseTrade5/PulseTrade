@@ -85,6 +85,9 @@ export default function PnLChart({ userEmail, refreshKey }) {
   const totalClosed = sells.length;
   const winRate = (wins + losses) > 0 ? ((wins / (wins + losses)) * 100).toFixed(1) : null;
 
+  // All-time total — sabhi trades ka, sirf 30 din wale nahi
+  const allTimePnl = sells.reduce((sum, s) => sum + Number(s.pnl), 0);
+
   const cardStyle = { backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 18, marginBottom: 16 };
 
   const visibleTrades = showAllTrades ? sells : sells.slice(0, 5);
@@ -95,7 +98,7 @@ export default function PnLChart({ userEmail, refreshKey }) {
       {totalClosed > 0 && (
         <div style={cardStyle}>
           <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🎯 WIN RATE</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
             <span style={{ fontSize: 32, fontWeight: 900, color: winRate === null ? COLORS.muted : winRate >= 50 ? COLORS.green : COLORS.red }}>
               {winRate !== null ? `${winRate}%` : '—'}
             </span>
@@ -134,7 +137,7 @@ export default function PnLChart({ userEmail, refreshKey }) {
         </div>
 
         <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 14 }}>
-          {view === 'daily' ? 'Pichle 30 din' : 'Pichle 12 mahine'} • Total: <span style={{ fontWeight: 700, color: totalPnl >= 0 ? COLORS.green : COLORS.red }}>{totalPnl >= 0 ? '+' : ''}{fmtINR(totalPnl)}</span>
+          {view === 'daily' ? 'Pichle 30 din' : 'Pichle 12 mahine'} • Total: <span style={{ fontWeight: 700, color: allTimePnl >= 0 ? COLORS.green : COLORS.red }}>{allTimePnl >= 0 ? '+' : ''}{fmtINR(allTimePnl)}</span>
         </div>
 
         {loading ? (
@@ -253,4 +256,4 @@ export default function PnLChart({ userEmail, refreshKey }) {
       )}
     </>
   );
-}
+            }
