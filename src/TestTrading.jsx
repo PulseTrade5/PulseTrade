@@ -14,6 +14,12 @@ function fmtINR(n) {
   return "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 }
 
+// Floating-point rounding errors accumulate over many buy/sell operations —
+// always round money values to 2 decimals before saving/using
+function round2(n) {
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
 export default function TestTrading({ userEmail, balance, onBalanceChange }) {
   const email = userEmail || "prabhat3300@gmail.com";
 
@@ -87,7 +93,7 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
 
   const logTransaction = async (type, amount, balanceAfter, extra = {}) => {
     const { error } = await supabase.from('test_fund_transactions').insert([{
-      user_email: email, type, amount, balance_after: balanceAfter, ...extra,
+      user_email: email, type, amount: round2(amount), balance_after: round2(balanceAfter), ...extra,
     }]);
     return error;
   };
@@ -95,7 +101,7 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
   const handleBuy = async () => {
     const q = Number(qty);
     if (!quote || !q || q <= 0) return;
-    const cost = q * quote.price;
+    const cost = round2(q * quote.price);
     if (cost > balance) { setMsg('❌ Wallet mein itna balance nahi hai'); setTimeout(() => setMsg(''), 2500); return; }
     setActing(true);
 
@@ -103,18 +109,18 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
     let error;
     if (existing) {
       const newQty = Number(existing.qty) + q;
-      const newAvg = ((Number(existing.qty) * Number(existing.avg_price)) + cost) / newQty;
+      const newAvg = round2(((Number(existing.qty) * Number(existing.avg_price)) + cost) / newQty);
       ({ error } = await supabase.from('test_fund_holdings')
         .update({ qty: newQty, avg_price: newAvg, updated_at: new Date().toISOString() })
         .eq('id', existing.id));
     } else {
       ({ error } = await supabase.from('test_fund_holdings').insert([{
-        user_email: email, symbol: quote.symbol, company_name: quote.name, qty: q, avg_price: quote.price,
+        user_email: email, symbol: quote.symbol, company_name: quote.name, qty: q, avg_price: round2(quote.price),
       }]));
     }
 
     if (!error) {
-      const newBalance = balance - cost;
+      const newBalance = round2(balance - cost);
       await supabase.from('test_fund').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('user_email', email);
       const txError = await logTransaction('buy', cost, newBalance, { symbol: quote.symbol });
       onBalanceChange(newBalance);
@@ -134,7 +140,7 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
     setActing(true);
     try {
       const q = await fetchQuote(holding.symbol);
-      const proceeds = sQty * q.price;
+      const proceeds = round2(sQty * q.price);
       const remainingQty = Number(holding.qty) - sQty;
 
       if (remainingQty <= 0) {
@@ -143,9 +149,9 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
         await supabase.from('test_fund_holdings').update({ qty: remainingQty, updated_at: new Date().toISOString() }).eq('id', holding.id);
       }
 
-      const newBalance = balance + proceeds;
+      const newBalance = round2(balance + proceeds);
       await supabase.from('test_fund').update({ balance: newBalance, updated_at: new Date().toISOString() }).eq('user_email', email);
-      const pnl = (q.price - Number(holding.avg_price)) * sQty;
+      const pnl = round2((q.price - Number(holding.avg_price)) * sQty);
       const txError = await logTransaction('sell', proceeds, newBalance, { symbol: holding.symbol, pnl });
       onBalanceChange(newBalance);
       fetchHoldings();
