@@ -11,6 +11,12 @@ const COLORS = {
   text: "#0F172A", muted: "#64748B",
 };
 
+// Floating-point rounding errors accumulate over many add/withdraw operations —
+// always round money values to 2 decimals before saving/displaying
+function round2(n) {
+  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
+}
+
 export default function AdminFund({ userEmail }) {
   const [balance, setBalance] = useState(null);
   const [inputAmount, setInputAmount] = useState("");
@@ -37,7 +43,7 @@ export default function AdminFund({ userEmail }) {
         .single();
       data = created;
     }
-    setBalance(data ? Number(data.balance) : 0);
+    setBalance(data ? round2(data.balance) : 0);
     setLoading(false);
   };
 
@@ -58,20 +64,21 @@ export default function AdminFund({ userEmail }) {
 
   const logTransaction = async (type, amount, balanceAfter) => {
     await supabase.from('test_fund_transactions').insert([{
-      user_email: email, type, amount, balance_after: balanceAfter,
+      user_email: email, type, amount: round2(amount), balance_after: round2(balanceAfter),
     }]);
   };
 
   const updateBalance = async (newBalance, type, amount) => {
+    const rounded = round2(newBalance);
     setSaving(true);
     const { error } = await supabase
       .from('test_fund')
-      .update({ balance: newBalance, updated_at: new Date().toISOString() })
+      .update({ balance: rounded, updated_at: new Date().toISOString() })
       .eq('user_email', email);
 
     if (!error) {
-      await logTransaction(type, amount, newBalance);
-      setBalance(newBalance);
+      await logTransaction(type, amount, rounded);
+      setBalance(rounded);
       fetchTransactions();
       setMsg(type === 'add' ? `✅ ₹${amount.toLocaleString()} add ho gaya!` : type === 'withdraw' ? `➖ ₹${amount.toLocaleString()} nikal liya` : '🔄 Fund reset ho gaya');
       setTimeout(() => setMsg(''), 2500);
@@ -80,14 +87,14 @@ export default function AdminFund({ userEmail }) {
   };
 
   const handleAdd = () => {
-    const amount = Number(inputAmount);
+    const amount = round2(Number(inputAmount));
     if (!amount || amount <= 0) return;
     updateBalance(balance + amount, 'add', amount);
     setInputAmount("");
   };
 
   const handleWithdraw = () => {
-    const amount = Number(inputAmount);
+    const amount = round2(Number(inputAmount));
     if (!amount || amount <= 0 || amount > balance) return;
     updateBalance(balance - amount, 'withdraw', amount);
     setInputAmount("");
@@ -118,7 +125,7 @@ export default function AdminFund({ userEmail }) {
           💵 TRADING WALLET
         </div>
         <div style={{ fontSize: 38, fontWeight: 900, color: '#FFF' }}>
-          ₹{balance.toLocaleString('en-IN')}
+          ₹{balance.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
         </div>
       </div>
 
@@ -160,7 +167,7 @@ export default function AdminFund({ userEmail }) {
                 {new Date(t.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>₹{Number(t.amount).toLocaleString('en-IN')}</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>₹{Number(t.amount).toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
           </div>
         ))}
       </div>
