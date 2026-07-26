@@ -117,14 +117,16 @@ async function scanNewSignals(today) {
       const analysis = analyzeStock(candles);
       if (analysis.error || !analysis.signal) continue;
 
-      const { data: existing } = await supabase
+      // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
+      // jab tak wo close (win/loss) na ho jaye, dobara "same trade" nahi lena
+      const { data: existingOpen } = await supabase
         .from('signal_tracking')
         .select('id')
         .eq('stock_symbol', symbol)
-        .eq('signal_date', today)
+        .eq('status', 'open')
         .maybeSingle();
 
-      if (existing) {
+      if (existingOpen) {
         stats.skippedDuplicate++;
         continue;
       }
