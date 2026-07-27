@@ -268,6 +268,8 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
           <p style={{ color: COLORS.muted, textAlign: 'center', padding: '16px 0', fontSize: 13 }}>Koi holding nahi hai. Upar se buy karo.</p>
         ) : holdings.map(h => {
           const live = livePrices[h.symbol];
+          const invested = Number(h.qty) * Number(h.avg_price);
+          const currentVal = live ? Number(h.qty) * live : null;
           const pnl = live ? (live - Number(h.avg_price)) * Number(h.qty) : null;
           const pnlPct = live ? ((live - Number(h.avg_price)) / Number(h.avg_price) * 100) : null;
           return (
@@ -284,6 +286,16 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
                       {pnl >= 0 ? '+' : ''}{fmtINR(pnl)} ({pnlPct.toFixed(1)}%)
                     </div>
                   )}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 16, marginBottom: 10, backgroundColor: COLORS.bg, borderRadius: 8, padding: '8px 12px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, color: COLORS.muted }}>Invested</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{fmtINR(invested)}</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 10, color: COLORS.muted }}>Current Value</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.text }}>{currentVal !== null ? fmtINR(currentVal) : '—'}</div>
                 </div>
               </div>
               <SellRow holding={h} onSell={handleSell} acting={acting} inputStyle={inputStyle} colors={COLORS} />
@@ -303,4 +315,4 @@ function SellRow({ holding, onSell, acting, inputStyle, colors }) {
       <button onClick={() => onSell(holding, sellQty)} disabled={acting} style={{ padding: '0 16px', borderRadius: 8, border: 'none', backgroundColor: colors.red, color: '#FFF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Sell</button>
     </div>
   );
-}
+                       }
