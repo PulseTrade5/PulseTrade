@@ -184,7 +184,7 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
       {/* Portfolio Summary */}
       {holdings.length > 0 && (
         <div style={cardStyle}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>📊 PORTFOLIO SUMMARY</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: allPricesLoaded ? COLORS.green : COLORS.gold }} />
@@ -194,26 +194,19 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
             </div>
           </div>
 
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Profit</div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ fontSize: 26, fontWeight: 900, color: totalPnl >= 0 ? COLORS.green : COLORS.red }}>
-                {totalPnl >= 0 ? '+' : ''}{fmtINR(totalPnl)}
-              </span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: totalPnl >= 0 ? COLORS.green : COLORS.red }}>
-                ({totalPnl >= 0 ? '+' : ''}{totalPnlPct.toFixed(2)}%)
-              </span>
-            </div>
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 6 }}>Profit</div>
+            <PnlBig value={totalPnl} pct={totalPnlPct} colors={COLORS} />
           </div>
 
-          <div style={{ display: 'flex', gap: 16 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Investment</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.text }}>{fmtINR(investment)}</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+            <div>
+              <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 4 }}>Investment</div>
+              <BigAmount value={investment} colors={COLORS} />
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 4 }}>Current Value</div>
-              <div style={{ fontSize: 16, fontWeight: 800, color: COLORS.text }}>{fmtINR(currentValue)}</div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 4 }}>Current Value</div>
+              <BigAmount value={currentValue} colors={COLORS} />
             </div>
           </div>
         </div>
@@ -307,6 +300,40 @@ export default function TestTrading({ userEmail, balance, onBalanceChange }) {
   );
 }
 
+function splitAmount(n) {
+  const num = Number(n) || 0;
+  const abs = Math.abs(num);
+  const whole = Math.floor(abs);
+  const decimals = Math.round((abs - whole) * 100).toString().padStart(2, '0');
+  const wholeStr = whole.toLocaleString('en-IN');
+  return { sign: num < 0 ? '-' : '', wholeStr, decimals };
+}
+
+function BigAmount({ value, colors }) {
+  const { sign, wholeStr, decimals } = splitAmount(value);
+  return (
+    <div style={{ fontSize: 18, fontWeight: 800, color: colors.text }}>
+      {sign}₹{wholeStr}<span style={{ fontSize: 13, fontWeight: 700, color: colors.muted }}>.{decimals}</span>
+    </div>
+  );
+}
+
+function PnlBig({ value, pct, colors }) {
+  const isPositive = value >= 0;
+  const color = isPositive ? colors.green : colors.red;
+  const { wholeStr, decimals } = splitAmount(value);
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+      <span style={{ fontSize: 30, fontWeight: 900, color }}>
+        {isPositive ? '+' : '-'}₹{wholeStr}<span style={{ fontSize: 18, fontWeight: 800 }}>.{decimals}</span>
+      </span>
+      <span style={{ fontSize: 14, fontWeight: 700, color }}>
+        ({isPositive ? '+' : ''}{pct.toFixed(2)}%)
+      </span>
+    </div>
+  );
+}
+
 function SellRow({ holding, onSell, acting, inputStyle, colors }) {
   const [sellQty, setSellQty] = useState(holding.qty);
   return (
@@ -315,4 +342,4 @@ function SellRow({ holding, onSell, acting, inputStyle, colors }) {
       <button onClick={() => onSell(holding, sellQty)} disabled={acting} style={{ padding: '0 16px', borderRadius: 8, border: 'none', backgroundColor: colors.red, color: '#FFF', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>Sell</button>
     </div>
   );
-                       }
+      }
