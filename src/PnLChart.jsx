@@ -237,7 +237,7 @@ export default function PnLChart({ userEmail, refreshKey }) {
                     color: isWin ? COLORS.green : isLoss ? COLORS.red : COLORS.muted,
                     backgroundColor: isWin ? COLORS.greenLight : isLoss ? COLORS.redLight : COLORS.bg,
                   }}>
-                    {isWin ? '✅ Win' : isLoss ? '❌ Loss' : '— Flat'}
+                    {isWin ? '✅ Profit' : isLoss ? '❌ Loss' : '— Flat'}
                   </span>
                 </div>
               </div>
@@ -256,4 +256,4 @@ export default function PnLChart({ userEmail, refreshKey }) {
       )}
     </>
   );
-            }
+}
