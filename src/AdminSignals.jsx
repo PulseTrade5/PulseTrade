@@ -231,6 +231,11 @@ export default function AdminSignals() {
                 <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>
                   Entry: ₹{s.entry_price} • SL: ₹{s.stop_loss}
                 </div>
+                {(s.target1 || s.target2 || s.target3) && (
+                  <div style={{ fontSize: 11, color: COLORS.green, marginTop: 2 }}>
+                    🎯 Target: ₹{s.target1}{s.target2 ? ` • ₹${s.target2}` : ''}{s.target3 ? ` • ₹${s.target3}` : ''}
+                  </div>
+                )}
                 <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>
                   {new Date(s.signal_date).toLocaleDateString('en-IN')}
                   {s.closed_price && ` → Closed @ ₹${s.closed_price}`}
@@ -249,4 +254,4 @@ export default function AdminSignals() {
       </div>
     </div>
   );
-}
+              }
