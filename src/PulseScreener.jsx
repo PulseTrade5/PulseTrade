@@ -68,9 +68,13 @@ function getAstroData() {
 }
 
 // ✅ RANKING SCORE — combines technical score + ADX strength + RSI sweet-spot + numerology match
-// Ye function decide karta hai ki 20 mein se konse 10 stocks "Top Recommended" honge
+// Ye function decide karta hai ki 20 mein se konse 10 stocks "Top Recommended" honge.
+// Ab sabse bada weight diya jaata hai r.signal (LONG/SHORT) ko — wahi strict filter jo
+// technicalAnalysis.js mein ADX + Trend/Momentum/Supertrend agreement + Volume + DI gap
+// check karke deta hai. Signal wale stocks hamesha upar aayenge.
 function getRankScore(r) {
   let score = r.trend === 'Bullish' ? r.longScore : r.shortScore;
+  if (r.signal) score += 50; // genuine qualified signal — sabse bada bonus
   if (r.adx >= 25) score += 10; // strong trend bonus
   if (r.rsi >= 40 && r.rsi <= 65) score += 5; // healthy RSI zone, na overbought na oversold
   if (r.isLucky) score += 15; // numerology match bonus
@@ -195,6 +199,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
         rsi: analysis.rsi,
         adx: analysis.adx,
         trendStrength: analysis.trendStrength,
+        signal: analysis.signal, // 'LONG' | 'SHORT' | null — strict qualified signal
         price: data.stockInfo?.regularMarketPrice || analysis.lastClose,
         change: data.stockInfo?.regularMarketChangePercent || 0,
         isLucky: luckyStocks.includes(symbol),
@@ -234,21 +239,25 @@ export default function PulseScreener({ isDark, userDob, userName }) {
     setCustomLoading(false);
   };
 
-  // ✅ TOP 10 RECOMMENDED — 20 stocks mein se best rank score wale 10
-  const topPickSymbols = new Set(
-    [...results].sort((a, b) => getRankScore(b) - getRankScore(a)).slice(0, 10).map(r => r.symbol)
-  );
+  // ✅ TOP 10 RECOMMENDED — pehle "signal" wale (qualified) stocks, phir baaki rank score se
+  // Sirf wahi stocks jinke paas genuine qualified signal (analysis.signal) hai unhe priority milegi.
+  const sortedBySignal = [...results].sort((a, b) => {
+    if (!!b.signal !== !!a.signal) return (b.signal ? 1 : 0) - (a.signal ? 1 : 0);
+    return getRankScore(b) - getRankScore(a);
+  });
+  const topPickSymbols = new Set(sortedBySignal.slice(0, 10).map(r => r.symbol));
+  const qualifiedCount = results.filter(r => r.signal).length;
 
   const filteredResults = results.filter(r => {
     if (filter === 'top10') return topPickSymbols.has(r.symbol);
     if (filter === 'bullish') return r.trend === 'Bullish';
     if (filter === 'bearish') return r.trend === 'Bearish';
-    if (filter === 'strong') return r.adx >= 25;
+    if (filter === 'strong') return !!r.signal; // ab "Strong" ka matlab hai qualified signal, sirf ADX nahi
     if (filter === 'lucky') return r.isLucky;
     return true;
   }).sort((a, b) => getRankScore(b) - getRankScore(a));
 
-  const luckyResult = scanDone ? filteredResults.find(r => r.isLucky && r.trend === 'Bullish') : null;
+  const luckyResult = scanDone ? filteredResults.find(r => r.isLucky && r.signal === 'LONG') : null;
 
   const cardStyle = {
     backgroundColor: C.surface, border: `1px solid ${C.border}`,
@@ -326,8 +335,17 @@ export default function PulseScreener({ isDark, userDob, userName }) {
                   </div>
                 ))}
               </div>
+              {customResult.signal ? (
+                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: C.green, textAlign: 'center', padding: '6px', backgroundColor: C.greenBg, borderRadius: 8 }}>
+                  ✅ Qualified Signal — {customResult.signal}
+                </div>
+              ) : (
+                <div style={{ marginTop: 10, fontSize: 11, fontWeight: 600, color: C.muted, textAlign: 'center', padding: '6px', backgroundColor: C.bg, borderRadius: 8 }}>
+                  ⏳ Abhi koi qualified signal nahi — trend mixed/weak hai
+                </div>
+              )}
               {customResult.isLucky && (
-                <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700, color: '#D8A33D', textAlign: 'center', padding: '6px', backgroundColor: '#D8A33D22', borderRadius: 8 }}>
+                <div style={{ marginTop: 8, fontSize: 12, fontWeight: 700, color: '#D8A33D', textAlign: 'center', padding: '6px', backgroundColor: '#D8A33D22', borderRadius: 8 }}>
                   🍀 Yeh tera Lucky Stock hai!
                 </div>
               )}
@@ -344,12 +362,12 @@ export default function PulseScreener({ isDark, userDob, userName }) {
               backgroundColor: `${C.gold}14`, border: `1px solid ${C.gold}44`,
               fontSize: 12, color: C.text, lineHeight: 1.6,
             }}>
-              🏆 <strong style={{ color: C.gold }}>20 stocks scan ho gaye</strong> — inme se best <strong style={{ color: C.gold }}>Top 10</strong> automatically rank kiye gaye hain (Technical Score + Trend Strength + Numerology combine karke). "🏆 Top 10" filter se dekho.
+              🏆 <strong style={{ color: C.gold }}>20 stocks scan ho gaye</strong> — inme se <strong style={{ color: C.gold }}>{qualifiedCount} stocks</strong> ne strict quality filter pass kiya hai (Trend+Momentum+Supertrend agreement, Volume confirmation, DI gap). "🏆 Top 10" filter se dekho.
             </div>
           )}
 
           <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-            {[['top10', '🏆 Top 10'], ['all', '📊 Sab 20'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '💪 Strong'], ['lucky', '🍀 Lucky']].map(([key, label]) => (
+            {[['top10', '🏆 Top 10'], ['all', '📊 Sab 20'], ['bullish', '🟢 Bullish'], ['bearish', '🔴 Bearish'], ['strong', '✅ Qualified'], ['lucky', '🍀 Lucky']].map(([key, label]) => (
               <button key={key} onClick={() => setFilter(key)} style={{
                 padding: '6px 12px', borderRadius: 20,
                 backgroundColor: filter === key ? C.gold : C.bg,
@@ -397,7 +415,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 18, fontWeight: 900, color: C.text }}>{luckyResult.symbol}</div>
-                  <div style={{ fontSize: 12, color: C.muted }}>Numerology match + Bullish trend!</div>
+                  <div style={{ fontSize: 12, color: C.muted }}>Numerology match + Qualified LONG signal!</div>
                 </div>
                 <div style={{
                   fontSize: 14, fontWeight: 800, color: '#D8A33D',
@@ -441,7 +459,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
                       <div>
                         <div style={{ fontWeight: 800, color: C.text, fontSize: 14, display: 'flex', alignItems: 'center', gap: 4 }}>
                           {stock.symbol}
-                          {isTopPick && <span style={{ fontSize: 10, color: C.gold, fontWeight: 700 }}>🏆</span>}
+                          {stock.signal && <span style={{ fontSize: 10, color: C.gold, fontWeight: 700 }}>🏆</span>}
                           {stock.isLucky && <span style={{ fontSize: 10, color: '#D8A33D', fontWeight: 700 }}>Lucky ⭐</span>}
                         </div>
                         <div style={{ fontSize: 11, color: C.muted, marginTop: 1 }}>
@@ -462,7 +480,7 @@ export default function PulseScreener({ isDark, userDob, userName }) {
                         {stock.trend === 'Bullish' ? '🟢' : '🔴'} {stock.trend === 'Bullish' ? stock.longScore : stock.shortScore}
                       </div>
                       <div style={{ fontSize: 10, color: C.muted, marginTop: 3 }}>
-                        ADX {stock.adx} • {stock.trendStrength}
+                        {stock.signal ? `✅ ${stock.signal}` : `ADX ${stock.adx} • ${stock.trendStrength}`}
                       </div>
                     </div>
                   </div>
