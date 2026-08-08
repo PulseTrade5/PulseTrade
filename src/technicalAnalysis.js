@@ -4,6 +4,7 @@ export function analyzeStock(candles) {
   const closes = candles.map(c => c.close);
   const highs = candles.map(c => c.high);
   const lows = candles.map(c => c.low);
+  const volumes = candles.map(c => c.volume || 0);
   const n = closes.length;
   const last = closes[n - 1];
 
@@ -158,12 +159,30 @@ export function analyzeStock(candles) {
   const longCoreAgree = trend === 'Bullish' && momentum === 'Bullish' && supertrend === 'Bullish';
   const shortCoreAgree = trend === 'Bearish' && momentum === 'Bearish' && supertrend === 'Bearish';
 
+  // FIX 6 (quality filter #1): Volume confirmation — agar aaj ka volume
+  // pichle 20 din ke average volume se kam hai, to price move "weak" maana
+  // jaata hai (genuine institutional interest nahi, sirf noise ho sakta hai).
+  // Sirf average se zyada volume wale din hi signal ke liye qualify karte hain.
+  const volPeriod = Math.min(20, n - 1);
+  const avgVolume = volumes.slice(n - volPeriod, n - 1).reduce((a, b) => a + b, 0) / volPeriod;
+  const lastVolume = volumes[n - 1];
+  const volumeConfirmed = avgVolume > 0 && lastVolume >= avgVolume;
+
+  // FIX 7 (quality filter #2): DI+/DI- ka minimum gap zaroori — abhi tak sirf
+  // diPlus > diMinus (LONG ke liye) dekha jaata tha, chahe gap 1-2 point ka ho.
+  // Bahut chhota gap matlab trend borderline/unclear hai. Ab kam se kam 5 point
+  // ka clear gap zaroori — sirf clearly ek-tarfa (strongly directional) trends
+  // hi qualify karte hain.
+  const diGap = Math.abs(diPlus - diMinus);
+  const diGapConfirmed = diGap >= 5;
+
   // FIX 4 (backtested): Strict signal filter — only signal in confirmed
-  // trending markets (ADX > 25) with high confidence (score >= 85) AND
-  // full core-indicator agreement (FIX 5).
-  const signal = adx > 25
+  // trending markets (ADX > 25) with high confidence (score >= 85), full
+  // core-indicator agreement (FIX 5), volume confirmation (FIX 6), and a
+  // clear DI+/DI- gap (FIX 7).
+  const signal = (adx > 25 && volumeConfirmed && diGapConfirmed)
     ? (longCoreAgree && longScore >= 85 ? 'LONG' : shortCoreAgree && shortScore >= 85 ? 'SHORT' : null)
-    : null; // choppy/sideways market — no trade
+    : null; // choppy/sideways market, weak volume, or unclear trend — no trade
 
   // FIX 3: ATR-based stop loss & targets instead of fixed 3%/6%/10%.
   // Stop = 1.5x ATR away from entry (volatility-adjusted).
@@ -186,3 +205,4 @@ export function analyzeStock(candles) {
     atr,
   };
 }
+
