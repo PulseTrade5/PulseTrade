@@ -150,39 +150,34 @@ export function analyzeStock(candles) {
   if (adx > 20) { longScore += 10; shortScore += 10; }
   if (diPlus > diMinus) longScore += 10; else shortScore += 10;
 
-  // FIX 5 (win-rate tightening): pehle sirf score + ADX dekha jaata tha, jisse
-  // koi trade sirf RSI+ADX+DI ke dum pe bhi "high score" pa sakta tha bina
-  // trend/momentum/supertrend teeno ka ek hi direction mein hone ke. Ab in
-  // teeno core indicators ka full agreement zaroori hai — isse mixed-signal
-  // (confused market) trades hat jaate hain, aur sirf genuinely confirmed
-  // trending setups mein hi signal banta hai. Trades kam honge, quality zyada.
+  // FIX 5 (admin-only strong filter): Trend + Momentum + Supertrend teeno ka
+  // full agreement — mixed/confused market wale trades hatane ke liye.
   const longCoreAgree = trend === 'Bullish' && momentum === 'Bullish' && supertrend === 'Bullish';
   const shortCoreAgree = trend === 'Bearish' && momentum === 'Bearish' && supertrend === 'Bearish';
 
-  // FIX 6 (quality filter #1): Volume confirmation — agar aaj ka volume
-  // pichle 20 din ke average volume se kam hai, to price move "weak" maana
-  // jaata hai (genuine institutional interest nahi, sirf noise ho sakta hai).
-  // Sirf average se zyada volume wale din hi signal ke liye qualify karte hain.
+  // FIX 6 (admin-only strong filter): Volume confirmation — aaj ka volume
+  // 20-din average se kam nahi hona chahiye.
   const volPeriod = Math.min(20, n - 1);
   const avgVolume = volumes.slice(n - volPeriod, n - 1).reduce((a, b) => a + b, 0) / volPeriod;
   const lastVolume = volumes[n - 1];
   const volumeConfirmed = avgVolume > 0 && lastVolume >= avgVolume;
 
-  // FIX 7 (quality filter #2): DI+/DI- ka minimum gap zaroori — abhi tak sirf
-  // diPlus > diMinus (LONG ke liye) dekha jaata tha, chahe gap 1-2 point ka ho.
-  // Bahut chhota gap matlab trend borderline/unclear hai. Ab kam se kam 5 point
-  // ka clear gap zaroori — sirf clearly ek-tarfa (strongly directional) trends
-  // hi qualify karte hain.
+  // FIX 7 (admin-only strong filter): DI+/DI- ka minimum gap zaroori.
   const diGap = Math.abs(diPlus - diMinus);
   const diGapConfirmed = diGap >= 5;
 
-  // FIX 4 (backtested): Strict signal filter — only signal in confirmed
-  // trending markets (ADX > 25) with high confidence (score >= 85), full
-  // core-indicator agreement (FIX 5), volume confirmation (FIX 6), and a
-  // clear DI+/DI- gap (FIX 7).
-  const signal = (adx > 25 && volumeConfirmed && diGapConfirmed)
+  // FIX 4 (backtested): normal signal — customer-facing dashboard aur screener
+  // ke liye. Yehi original threshold hai (ADX > 25, score >= 85).
+  const signal = adx > 25
+    ? (longScore >= 85 ? 'LONG' : shortScore >= 85 ? 'SHORT' : null)
+    : null; // choppy/sideways market — no trade
+
+  // strongSignal — sirf Admin ke signal-tracking/auto-scan ke liye. Normal
+  // signal ke saare conditions + core-indicator agreement + volume + DI gap.
+  // Customer-facing dashboard/screener isko kabhi use nahi karte.
+  const strongSignal = (adx > 25 && volumeConfirmed && diGapConfirmed)
     ? (longCoreAgree && longScore >= 85 ? 'LONG' : shortCoreAgree && shortScore >= 85 ? 'SHORT' : null)
-    : null; // choppy/sideways market, weak volume, or unclear trend — no trade
+    : null;
 
   // FIX 3: ATR-based stop loss & targets instead of fixed 3%/6%/10%.
   // Stop = 1.5x ATR away from entry (volatility-adjusted).
@@ -196,7 +191,7 @@ export function analyzeStock(candles) {
   return {
     lastClose: last,
     trend, momentum, rsi, adx, trendStrength, supertrend,
-    longScore, shortScore, signal,
+    longScore, shortScore, signal, strongSignal,
     week52High, week52Low, distFromHighPct,
     entry: last,
     stopLoss,
@@ -205,4 +200,3 @@ export function analyzeStock(candles) {
     atr,
   };
 }
-
