@@ -115,7 +115,9 @@ async function scanNewSignals(today) {
       if (!candles || candles.length < 50) continue;
 
       const analysis = analyzeStock(candles);
-      if (analysis.error || !analysis.signal) continue;
+      // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict) —
+      // customer-facing dashboard/screener normal analysis.signal use karte hain.
+      if (analysis.error || !analysis.strongSignal) continue;
 
       // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
       // jab tak wo close (win/loss) na ho jaye, dobara "same trade" nahi lena
@@ -133,7 +135,7 @@ async function scanNewSignals(today) {
 
       await supabase.from('signal_tracking').insert({
         stock_symbol: symbol,
-        signal: analysis.signal,
+        signal: analysis.strongSignal,
         entry_price: analysis.entry,
         stop_loss: analysis.stopLoss,
         target1: analysis.targets?.[0],
