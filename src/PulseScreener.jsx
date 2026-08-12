@@ -69,9 +69,8 @@ function getAstroData() {
 
 // ✅ RANKING SCORE — combines technical score + ADX strength + RSI sweet-spot + numerology match
 // Ye function decide karta hai ki 20 mein se konse 10 stocks "Top Recommended" honge.
-// Ab sabse bada weight diya jaata hai r.signal (LONG/SHORT) ko — wahi strict filter jo
-// technicalAnalysis.js mein ADX + Trend/Momentum/Supertrend agreement + Volume + DI gap
-// check karke deta hai. Signal wale stocks hamesha upar aayenge.
+// Ye customer-facing screener hai, isliye normal signal (r.signal) use hota hai —
+// admin ka extra-strict strongSignal sirf Admin Panel ke signal tracking mein hota hai.
 function getRankScore(r) {
   let score = r.trend === 'Bullish' ? r.longScore : r.shortScore;
   if (r.signal) score += 50; // genuine qualified signal — sabse bada bonus
