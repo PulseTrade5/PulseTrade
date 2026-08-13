@@ -136,7 +136,7 @@ export default function AdminPanel({ user, onLogout }) {
     setSignalLoading(true);
     setSignalError(null);
     try {
-      const { data: result, error: fnError } = await supabase.functions.invoke('nifty-signal');
+      const { data: result, error: fnError } = await supabase.functions.invoke('rapid-function');
       if (fnError) throw fnError;
       setSignalData(result);
       setSignalLastFetched(new Date());
