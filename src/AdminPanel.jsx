@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import AdminFund from './AdminFund';
-import AdminSignals from './AdminSignals';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -46,13 +45,23 @@ function slugify(text) {
 
 function StatusBadge({ status }) {
   const config = {
-    paid: { label: '💰 Paid', color: COLORS.green, bg: COLORS.greenLight },
-    trial: { label: '🎯 Trial', color: COLORS.gold, bg: COLORS.goldLight },
-    expired: { label: '❌ Expired', color: COLORS.red, bg: COLORS.redLight },
-    blocked: { label: '🚫 Blocked', color: '#7F1D1D', bg: '#FEE2E2' },
+    paid: { label: 'ðŸ’° Paid', color: COLORS.green, bg: COLORS.greenLight },
+    trial: { label: 'ðŸŽ¯ Trial', color: COLORS.gold, bg: COLORS.goldLight },
+    expired: { label: 'âŒ Expired', color: COLORS.red, bg: COLORS.redLight },
+    blocked: { label: 'ðŸš« Blocked', color: '#7F1D1D', bg: '#FEE2E2' },
   };
   const c = config[status] || config.expired;
   return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
+}
+
+function SignalBadge({ signal }) {
+  const config = {
+    BUY: { label: 'ðŸ“ˆ BUY (CE)', color: COLORS.green, bg: COLORS.greenLight },
+    SELL: { label: 'ðŸ“‰ SELL (PE)', color: COLORS.red, bg: COLORS.redLight },
+    NEUTRAL: { label: 'âš–ï¸ NEUTRAL', color: COLORS.muted, bg: COLORS.bg },
+  };
+  const c = config[signal] || config.NEUTRAL;
+  return <span style={{ fontSize: 13, fontWeight: 800, color: c.color, backgroundColor: c.bg, padding: '6px 16px', borderRadius: 20 }}>{c.label}</span>;
 }
 
 export default function AdminPanel({ user, onLogout }) {
@@ -79,6 +88,12 @@ export default function AdminPanel({ user, onLogout }) {
 
   const [feedbackList, setFeedbackList] = useState([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
+
+  // ===== Nifty Signal state =====
+  const [signalData, setSignalData] = useState(null);
+  const [signalLoading, setSignalLoading] = useState(true);
+  const [signalError, setSignalError] = useState(null);
+  const [signalLastFetched, setSignalLastFetched] = useState(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -117,6 +132,20 @@ export default function AdminPanel({ user, onLogout }) {
     setLoadingFeedback(false);
   };
 
+  const fetchSignal = useCallback(async () => {
+    setSignalLoading(true);
+    setSignalError(null);
+    try {
+      const { data: result, error: fnError } = await supabase.functions.invoke('nifty-signal');
+      if (fnError) throw fnError;
+      setSignalData(result);
+      setSignalLastFetched(new Date());
+    } catch (e) {
+      setSignalError(e.message || 'Signal fetch nahi ho paya');
+    }
+    setSignalLoading(false);
+  }, []);
+
   useEffect(() => {
     if (isAdmin) {
       fetchProfiles();
@@ -127,10 +156,18 @@ export default function AdminPanel({ user, onLogout }) {
     }
   }, [isAdmin]);
 
+  useEffect(() => {
+    if (isAdmin && activeTab === 'signals') {
+      fetchSignal();
+      const interval = setInterval(fetchSignal, 5 * 60 * 1000); // har 5 min auto-refresh
+      return () => clearInterval(interval);
+    }
+  }, [isAdmin, activeTab, fetchSignal]);
+
   if (!isAdmin) {
     return (
       <div style={{ backgroundColor: COLORS.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Inter, sans-serif', flexDirection: 'column', gap: 12, padding: 20 }}>
-        <div style={{ textAlign: 'center', color: COLORS.red, fontSize: 16, fontWeight: 700 }}>🚫 Access Denied</div>
+        <div style={{ textAlign: 'center', color: COLORS.red, fontSize: 16, fontWeight: 700 }}>ðŸš« Access Denied</div>
         <div style={{ textAlign: 'center', color: COLORS.muted, fontSize: 13 }}>
           Detected login email: <strong>{user?.email || 'NONE (not logged in)'}</strong>
         </div>
@@ -193,7 +230,7 @@ export default function AdminPanel({ user, onLogout }) {
     const endDate = new Date();
     endDate.setMonth(endDate.getMonth() + editMonths);
     await supabase.from('profiles').update({ is_subscribed: true, subscription_end_date: endDate.toISOString(), is_blocked: false }).eq('id', editUser.id);
-    setSuccessMsg(`✅ ${editUser.email} ko ${editMonths} month subscription diya!`);
+    setSuccessMsg(`âœ… ${editUser.email} ko ${editMonths} month subscription diya!`);
     setEditUser(null);
     fetchProfiles();
     setSaving(false);
@@ -202,7 +239,7 @@ export default function AdminPanel({ user, onLogout }) {
 
   const handleExtendTrial = async (profile) => {
     await supabase.from('profiles').update({ trial_start_date: new Date().toISOString(), is_blocked: false }).eq('id', profile.id);
-    setSuccessMsg(`✅ ${profile.email} ka trial 5 din extend kiya!`);
+    setSuccessMsg(`âœ… ${profile.email} ka trial 5 din extend kiya!`);
     fetchProfiles();
     setTimeout(() => setSuccessMsg(''), 3000);
   };
@@ -211,7 +248,7 @@ export default function AdminPanel({ user, onLogout }) {
     if (!window.confirm(`${profile.email} ko block karna chahte ho?`)) return;
     const pastDate = new Date('2020-01-01').toISOString();
     await supabase.from('profiles').update({ is_subscribed: false, trial_start_date: pastDate, subscription_end_date: pastDate, is_blocked: true }).eq('id', profile.id);
-    setSuccessMsg(`🚫 ${profile.email} blocked!`);
+    setSuccessMsg(`ðŸš« ${profile.email} blocked!`);
     fetchProfiles();
     setTimeout(() => setSuccessMsg(''), 3000);
   };
@@ -219,7 +256,7 @@ export default function AdminPanel({ user, onLogout }) {
   const handleUnblock = async (profile) => {
     if (!window.confirm(`${profile.email} ko unblock karna chahte ho? Isko fresh 5-din trial mil jayega.`)) return;
     await supabase.from('profiles').update({ is_blocked: false, trial_start_date: new Date().toISOString() }).eq('id', profile.id);
-    setSuccessMsg(`✅ ${profile.email} unblock ho gaya — fresh trial mil gaya!`);
+    setSuccessMsg(`âœ… ${profile.email} unblock ho gaya â€” fresh trial mil gaya!`);
     fetchProfiles();
     setTimeout(() => setSuccessMsg(''), 3000);
   };
@@ -255,9 +292,9 @@ export default function AdminPanel({ user, onLogout }) {
     }
 
     if (error) {
-      setSuccessMsg(`❌ Save fail hua: ${error.message}`);
+      setSuccessMsg(`âŒ Save fail hua: ${error.message}`);
     } else {
-      setSuccessMsg(`✅ Post ${editingPost?.id ? 'update' : 'create'} ho gaya!`);
+      setSuccessMsg(`âœ… Post ${editingPost?.id ? 'update' : 'create'} ho gaya!`);
       setEditingPost(null);
       fetchBlogPosts();
     }
@@ -268,7 +305,7 @@ export default function AdminPanel({ user, onLogout }) {
   const handleTogglePublish = async (post) => {
     const { error } = await supabase.from('blog_posts').update({ published: !post.published }).eq('id', post.id);
     if (!error) {
-      setSuccessMsg(post.published ? `📝 Draft mein daal diya` : `🚀 Post publish ho gaya!`);
+      setSuccessMsg(post.published ? `ðŸ“ Draft mein daal diya` : `ðŸš€ Post publish ho gaya!`);
       fetchBlogPosts();
     }
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -278,7 +315,7 @@ export default function AdminPanel({ user, onLogout }) {
     if (!window.confirm(`"${post.title}" delete karna chahte ho?`)) return;
     const { error } = await supabase.from('blog_posts').delete().eq('id', post.id);
     if (!error) {
-      setSuccessMsg(`🗑️ Post delete ho gaya`);
+      setSuccessMsg(`ðŸ—‘ï¸ Post delete ho gaya`);
       fetchBlogPosts();
     }
     setTimeout(() => setSuccessMsg(''), 3000);
@@ -301,17 +338,17 @@ export default function AdminPanel({ user, onLogout }) {
 
         <div style={{ backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, padding: '14px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button onClick={() => window.location.href = '/'} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>← Dashboard</button>
+            <button onClick={() => window.location.href = '/'} style={{ fontSize: 12, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>â† Dashboard</button>
             <div>
               <div style={{ fontSize: 18, fontWeight: 800 }}>Pulse<span style={{ color: COLORS.gold }}>Trade</span> <span style={{ fontSize: 12, color: COLORS.muted }}>Admin</span></div>
-              <div style={{ fontSize: 10, color: COLORS.muted }}>🔱 हर हर महादेव 🔱</div>
+              <div style={{ fontSize: 10, color: COLORS.muted }}>ðŸ”± à¤¹à¤° à¤¹à¤° à¤®à¤¹à¤¾à¤¦à¥‡à¤µ ðŸ”±</div>
             </div>
           </div>
-          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>🚪 Logout</button>
+          <button onClick={onLogout} style={{ fontSize: 12, padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer', fontWeight: 600 }}>ðŸšª Logout</button>
         </div>
 
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog'], ['fund', '💵 Fund'], ['signals', '🎯 Signals']].map(([key, label]) => (
+          {[['users', 'ðŸ‘¥ Users'], ['referrals', 'ðŸ”— Referrals'], ['support', 'ðŸ’¬ Support'], ['feedback', 'ðŸ“‹ Feedback'], ['blog', 'ðŸ“ Blog'], ['fund', 'ðŸ’µ Fund'], ['signals', 'ðŸŽ¯ Signals']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
               borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
@@ -338,16 +375,16 @@ export default function AdminPanel({ user, onLogout }) {
 
               <div style={{ backgroundColor: COLORS.blueLight, border: `1px solid #BFDBFE`, borderRadius: 14, padding: '12px 16px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 11, color: COLORS.blue, fontWeight: 700 }}>📅 AAJ KE NAYE SIGNUPS</div>
+                  <div style={{ fontSize: 11, color: COLORS.blue, fontWeight: 700 }}>ðŸ“… AAJ KE NAYE SIGNUPS</div>
                   <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
                 </div>
                 <div style={{ fontSize: 32, fontWeight: 900, color: COLORS.blue }}>{todaySignups}</div>
               </div>
 
               <div style={cardStyle}>
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍 Naam ya Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="ðŸ” Naam ya Email se search karo..." style={{ width: '100%', padding: '10px 14px', fontSize: 13, backgroundColor: COLORS.bg, border: `1.5px solid ${COLORS.surfaceBorder}`, borderRadius: 10, color: COLORS.text, outline: 'none', boxSizing: 'border-box', marginBottom: 12, fontFamily: 'Inter, sans-serif' }} />
                 <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
-                  {[['all','All'],['paid','💰 Paid'],['trial','🎯 Trial'],['expired','❌ Expired'],['blocked','🚫 Blocked']].map(([key, label]) => (
+                  {[['all','All'],['paid','ðŸ’° Paid'],['trial','ðŸŽ¯ Trial'],['expired','âŒ Expired'],['blocked','ðŸš« Blocked']].map(([key, label]) => (
                     <button key={key} onClick={() => setFilter(key)} style={{ flex: 1, minWidth: 70, padding: '7px 4px', fontSize: 11, fontWeight: 700, borderRadius: 10, border: 'none', backgroundColor: filter===key ? COLORS.gold : COLORS.bg, color: filter===key ? '#FFF' : COLORS.muted, cursor: 'pointer', whiteSpace: 'nowrap' }}>{label}</button>
                   ))}
                 </div>
@@ -356,7 +393,7 @@ export default function AdminPanel({ user, onLogout }) {
               <div style={cardStyle}>
                 <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>USERS ({filtered.length})</div>
                 {loading ? (
-                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>â³ Loading...</div>
                 ) : filtered.length === 0 ? (
                   <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>Koi user nahi mila.</div>
                 ) : filtered.map(p => {
@@ -371,54 +408,54 @@ export default function AdminPanel({ user, onLogout }) {
                           <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 2, wordBreak: 'break-all' }}>{p.email}</div>
                           <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
                             Signup: {new Date(p.created_at).toLocaleDateString('en-IN')}
-                            {status === 'trial' && ` • ${daysLeft} din baaki`}
-                            {status === 'paid' && p.subscription_end_date && ` • Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
-                            {p.referred_by && <span style={{ color: COLORS.purple }}> • Ref: {p.referred_by}</span>}
+                            {status === 'trial' && ` â€¢ ${daysLeft} din baaki`}
+                            {status === 'paid' && p.subscription_end_date && ` â€¢ Expires: ${new Date(p.subscription_end_date).toLocaleDateString('en-IN')}`}
+                            {p.referred_by && <span style={{ color: COLORS.purple }}> â€¢ Ref: {p.referred_by}</span>}
                           </div>
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
                           <StatusBadge status={status} />
                           <button onClick={() => setExpandedUser(isExpanded ? null : p.id)} style={{ fontSize: 10, color: COLORS.blue, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 700 }}>
-                            {isExpanded ? '▲ Hide' : '▼ Details'}
+                            {isExpanded ? 'â–² Hide' : 'â–¼ Details'}
                           </button>
                         </div>
                       </div>
 
                       {isExpanded && (
                         <div style={{ backgroundColor: COLORS.bg, borderRadius: 12, padding: 12, marginBottom: 10, border: `1px solid ${COLORS.surfaceBorder}` }}>
-                          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>📊 USER DETAILS</div>
+                          <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>ðŸ“Š USER DETAILS</div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>🕐 Last Login</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>ðŸ• Last Login</span>
                             <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>
                               {p.last_login ? new Date(p.last_login).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Never'}
                             </span>
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>🔢 Login Count</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>ðŸ”¢ Login Count</span>
                             <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.gold }}>{p.login_count || 0} baar</span>
                           </div>
 
                           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>📱 Device</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>ðŸ“± Device</span>
                             <span style={{ fontSize: 11, fontWeight: 700, color: COLORS.text }}>{p.last_device || 'Unknown'}</span>
                           </div>
 
                           <div style={{ padding: '5px 0' }}>
-                            <span style={{ fontSize: 11, color: COLORS.muted }}>🌐 Location</span>
+                            <span style={{ fontSize: 11, color: COLORS.muted }}>ðŸŒ Location</span>
                             <div style={{ fontSize: 11, fontWeight: 700, color: COLORS.text, marginTop: 3, wordBreak: 'break-all' }}>{p.last_location || 'Unknown'}</div>
                           </div>
                         </div>
                       )}
 
                       <div style={{ display: 'flex', gap: 6 }}>
-                        <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>💰 Subscribe</button>
+                        <button onClick={() => { setEditUser(p); setEditMonths(1); }} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', fontWeight: 700 }}>ðŸ’° Subscribe</button>
                         <button onClick={() => handleExtendTrial(p)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>+5 Din Trial</button>
                         {status === 'blocked' ? (
-                          <button onClick={() => handleUnblock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: 'none', backgroundColor: COLORS.green, color: '#FFF', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>✅ Unblock</button>
+                          <button onClick={() => handleUnblock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: 'none', backgroundColor: COLORS.green, color: '#FFF', cursor: 'pointer', fontWeight: 700, whiteSpace: 'nowrap' }}>âœ… Unblock</button>
                         ) : (
-                          <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🚫</button>
+                          <button onClick={() => handleBlock(p)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>ðŸš«</button>
                         )}
                       </div>
                     </div>
@@ -437,13 +474,13 @@ export default function AdminPanel({ user, onLogout }) {
                 </div>
                 <div style={{ flex: 1, backgroundColor: COLORS.goldLight, border: `1px solid #FDE68A`, borderRadius: 14, padding: '12px 8px', textAlign: 'center' }}>
                   <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.gold }}>
-                    {referralStats.topReferrer?.name || referralStats.topReferrer?.email?.split('@')[0] || '—'}
+                    {referralStats.topReferrer?.name || referralStats.topReferrer?.email?.split('@')[0] || 'â€”'}
                   </div>
                   <div style={{ fontSize: 11, color: COLORS.gold, fontWeight: 700 }}>Top Referrer</div>
                 </div>
               </div>
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🔗 KIS KE LINK SE AAYA</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ”— KIS KE LINK SE AAYA</div>
                 {referrals.filter(r => r.referred_by).length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi referral nahi aaya.</p>
                 ) : referrals.filter(r => r.referred_by).map((r, i) => (
@@ -460,7 +497,7 @@ export default function AdminPanel({ user, onLogout }) {
                 ))}
               </div>
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>🏆 TOP REFERRERS</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ† TOP REFERRERS</div>
                 {referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi referral nahi.</p>
                 ) : referrals.filter(r => (r.referral_count || 0) > 0).sort((a, b) => (b.referral_count || 0) - (a.referral_count || 0)).map((r, i) => (
@@ -469,7 +506,7 @@ export default function AdminPanel({ user, onLogout }) {
                       <div style={{ fontWeight: 700, color: COLORS.text }}>{r.name || r.email}</div>
                       <div style={{ fontSize: 11, color: COLORS.muted }}>Code: {r.referral_code}</div>
                     </div>
-                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 18 }}>{r.referral_count} 🔗</div>
+                    <div style={{ fontWeight: 800, color: COLORS.purple, fontSize: 18 }}>{r.referral_count} ðŸ”—</div>
                   </div>
                 ))}
               </div>
@@ -480,7 +517,7 @@ export default function AdminPanel({ user, onLogout }) {
             <>
               {!selectedUser ? (
                 <div style={cardStyle}>
-                  <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>💬 CUSTOMER MESSAGES ({uniqueUsers.length})</div>
+                  <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ’¬ CUSTOMER MESSAGES ({uniqueUsers.length})</div>
                   {uniqueUsers.length === 0 ? (
                     <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi message nahi.</p>
                   ) : uniqueUsers.map((m, i) => (
@@ -491,20 +528,20 @@ export default function AdminPanel({ user, onLogout }) {
                           <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 3 }}>{m.message?.substring(0, 50)}...</div>
                           <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{new Date(m.created_at).toLocaleDateString('en-IN')}</div>
                         </div>
-                        <span style={{ fontSize: 18 }}>→</span>
+                        <span style={{ fontSize: 18 }}>â†’</span>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
                 <div>
-                  <button onClick={() => setSelectedUser(null)} style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>← Wapas</button>
+                  <button onClick={() => setSelectedUser(null)} style={{ fontSize: 13, fontWeight: 700, color: COLORS.gold, background: 'none', border: 'none', cursor: 'pointer', marginBottom: 12 }}>â† Wapas</button>
                   <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.muted, marginBottom: 12 }}>{selectedUser.user_email}</div>
                   <div style={{ backgroundColor: COLORS.surface, border: `1px solid ${COLORS.surfaceBorder}`, borderRadius: 16, padding: 16, marginBottom: 12, maxHeight: 400, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     {userMessages.map((m) => (
                       <div key={m.id} style={{ display: 'flex', justifyContent: m.sender === 'user' ? 'flex-start' : 'flex-end' }}>
                         <div style={{ maxWidth: '78%', padding: '10px 14px', borderRadius: 16, backgroundColor: m.sender === 'user' ? COLORS.bg : COLORS.gold, color: m.sender === 'user' ? COLORS.text : '#FFF', fontSize: 13 }}>
-                          {m.sender === 'admin' && <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, marginBottom: 3 }}>🛡️ Admin</div>}
+                          {m.sender === 'admin' && <div style={{ fontSize: 10, fontWeight: 700, opacity: 0.7, marginBottom: 3 }}>ðŸ›¡ï¸ Admin</div>}
                           {m.message}
                         </div>
                       </div>
@@ -512,7 +549,7 @@ export default function AdminPanel({ user, onLogout }) {
                   </div>
                   <div style={{ display: 'flex', gap: 8 }}>
                     <input value={replyText} onChange={e => setReplyText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleReply()} placeholder="Reply likho..." style={{ flex: 1, padding: '11px 14px', fontSize: 14, borderRadius: 24, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: COLORS.bg, color: COLORS.text, outline: 'none' }} />
-                    <button onClick={handleReply} disabled={replying || !replyText.trim()} style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', backgroundColor: replying || !replyText.trim() ? COLORS.surfaceBorder : COLORS.gold, color: '#FFF', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>➤</button>
+                    <button onClick={handleReply} disabled={replying || !replyText.trim()} style={{ width: 44, height: 44, borderRadius: '50%', border: 'none', backgroundColor: replying || !replyText.trim() ? COLORS.surfaceBorder : COLORS.gold, color: '#FFF', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>âž¤</button>
                   </div>
                 </div>
               )}
@@ -522,7 +559,7 @@ export default function AdminPanel({ user, onLogout }) {
           {activeTab === 'feedback' && (
             <>
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📊 REASON BREAKDOWN ({feedbackList.length} total)</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ“Š REASON BREAKDOWN ({feedbackList.length} total)</div>
                 {sortedReasonCounts.length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
                 ) : sortedReasonCounts.map(([reason, count]) => {
@@ -542,9 +579,9 @@ export default function AdminPanel({ user, onLogout }) {
               </div>
 
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📋 SAB RESPONSES</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ“‹ SAB RESPONSES</div>
                 {loadingFeedback ? (
-                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
+                  <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>â³ Loading...</div>
                 ) : feedbackList.length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi feedback nahi aaya.</p>
                 ) : feedbackList.map((f) => (
@@ -568,10 +605,10 @@ export default function AdminPanel({ user, onLogout }) {
           {activeTab === 'blog' && (
             <>
               <button onClick={openNewPost} style={{ width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 16 }}>
-                ✏️ Naya Post Likho
+                âœï¸ Naya Post Likho
               </button>
               <div style={cardStyle}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>📝 BLOG POSTS ({blogPosts.length})</div>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 14 }}>ðŸ“ BLOG POSTS ({blogPosts.length})</div>
                 {blogPosts.length === 0 ? (
                   <p style={{ color: COLORS.muted, textAlign: 'center', padding: '20px 0', fontSize: 13 }}>Abhi koi post nahi hai.</p>
                 ) : blogPosts.map(post => (
@@ -580,19 +617,19 @@ export default function AdminPanel({ user, onLogout }) {
                       <div style={{ flex: 1, marginRight: 8 }}>
                         <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{post.title}</div>
                         <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3 }}>
-                          {post.category} • {new Date(post.created_at).toLocaleDateString('en-IN')}
+                          {post.category} â€¢ {new Date(post.created_at).toLocaleDateString('en-IN')}
                         </div>
                       </div>
                       <span style={{ fontSize: 11, fontWeight: 700, color: post.published ? COLORS.green : COLORS.gold, backgroundColor: post.published ? COLORS.greenLight : COLORS.goldLight, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap' }}>
-                        {post.published ? '🟢 Live' : '📝 Draft'}
+                        {post.published ? 'ðŸŸ¢ Live' : 'ðŸ“ Draft'}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: 6 }}>
-                      <button onClick={() => openEditPost(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.blue, cursor: 'pointer', fontWeight: 700 }}>✏️ Edit</button>
+                      <button onClick={() => openEditPost(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.blue, cursor: 'pointer', fontWeight: 700 }}>âœï¸ Edit</button>
                       <button onClick={() => handleTogglePublish(post)} style={{ flex: 1, fontSize: 11, padding: '7px 6px', borderRadius: 8, border: 'none', backgroundColor: post.published ? COLORS.goldLight : COLORS.green, color: post.published ? COLORS.goldDim : '#FFF', cursor: 'pointer', fontWeight: 700 }}>
-                        {post.published ? '📝 Unpublish' : '🚀 Publish'}
+                        {post.published ? 'ðŸ“ Unpublish' : 'ðŸš€ Publish'}
                       </button>
-                      <button onClick={() => handleDeletePost(post)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>🗑️</button>
+                      <button onClick={() => handleDeletePost(post)} style={{ fontSize: 11, padding: '7px 10px', borderRadius: 8, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.red, cursor: 'pointer', fontWeight: 700 }}>ðŸ—‘ï¸</button>
                     </div>
                   </div>
                 ))}
@@ -602,14 +639,83 @@ export default function AdminPanel({ user, onLogout }) {
 
           {activeTab === 'fund' && <AdminFund userEmail={user?.email} />}
 
-          {activeTab === 'signals' && <AdminSignals />}
+          {activeTab === 'signals' && (
+            <>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>ðŸŽ¯ NIFTY 5MIN SIGNAL</div>
+                <button onClick={fetchSignal} disabled={signalLoading} style={{ fontSize: 11, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>
+                  {signalLoading ? 'â³' : 'ðŸ”„'} Refresh
+                </button>
+              </div>
+
+              {signalError && (
+                <div style={{ backgroundColor: COLORS.redLight, border: '1.5px solid #fecaca', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 12, color: COLORS.red }}>
+                  âŒ {signalError}
+                </div>
+              )}
+
+              {signalLoading && !signalData ? (
+                <div style={{ ...cardStyle, textAlign: 'center', color: COLORS.muted, padding: '30px 0' }}>â³ Loading signal...</div>
+              ) : signalData ? (
+                <>
+                  <div style={{ ...cardStyle, textAlign: 'center' }}>
+                    <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 6 }}>NIFTY 50 SPOT</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: COLORS.text, marginBottom: 12 }}>{signalData.ltp?.toFixed(2)}</div>
+                    <SignalBadge signal={signalData.signal} />
+                    <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 12 }}>Confidence Score: <strong style={{ color: COLORS.gold }}>{signalData.score}/100</strong></div>
+                  </div>
+
+                  {signalData.signal !== 'NEUTRAL' && (
+                    <div style={cardStyle}>
+                      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>ðŸ“ ENTRY DETAILS</div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                        <span style={{ fontSize: 12, color: COLORS.muted }}>Entry</span>
+                        <span style={{ fontSize: 13, fontWeight: 700 }}>{signalData.ltp?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                        <span style={{ fontSize: 12, color: COLORS.muted }}>Stop Loss</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.red }}>{signalData.sl?.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                        <span style={{ fontSize: 12, color: COLORS.muted }}>Target</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.green }}>{signalData.target?.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <div style={cardStyle}>
+                    <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>ðŸ“Š INDICATORS</div>
+                    {[
+                      ['EMA 9', signalData.emaFast?.toFixed(2)],
+                      ['EMA 21', signalData.emaSlow?.toFixed(2)],
+                      ['RSI (14)', signalData.rsi?.toFixed(2)],
+                      ['MACD', signalData.macd?.toFixed(2)],
+                      ['ADX', signalData.adx?.toFixed(2)],
+                      ['ATR', signalData.atr?.toFixed(2)],
+                    ].map(([label, val]) => (
+                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12 }}>
+                        <span style={{ color: COLORS.muted }}>{label}</span>
+                        <span style={{ fontWeight: 700, color: COLORS.text }}>{val}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {signalLastFetched && (
+                    <div style={{ textAlign: 'center', fontSize: 11, color: COLORS.muted }}>
+                      Last updated: {signalLastFetched.toLocaleTimeString('en-IN')} â€¢ Auto-refresh har 5 min
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </>
+          )}
         </div>
       </div>
 
       {editUser && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: 20 }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 360, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>💰 Subscription Do</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 4 }}>ðŸ’° Subscription Do</div>
             {editUser.name && <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, marginBottom: 2 }}>{editUser.name}</div>}
             <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 16, wordBreak: 'break-all' }}>{editUser.email}</div>
             <div style={{ fontSize: 11, color: COLORS.muted, fontWeight: 700, marginBottom: 8 }}>MONTHS CHOOSE KARO</div>
@@ -619,7 +725,7 @@ export default function AdminPanel({ user, onLogout }) {
               ))}
             </div>
             <button onClick={handleSubscribe} disabled={saving} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10 }}>
-              {saving ? '⏳ Save ho raha hai...' : '✅ Confirm Karo'}
+              {saving ? 'â³ Save ho raha hai...' : 'âœ… Confirm Karo'}
             </button>
             <button onClick={() => setEditUser(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
           </div>
@@ -629,12 +735,12 @@ export default function AdminPanel({ user, onLogout }) {
       {editingPost !== null && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', zIndex: 200, padding: 20, overflowY: 'auto' }}>
           <div style={{ backgroundColor: COLORS.surface, borderRadius: 20, padding: 24, width: '100%', maxWidth: 480, marginTop: 20, marginBottom: 20, boxShadow: '0 8px 40px rgba(0,0,0,0.15)' }}>
-            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? '✏️ Post Edit Karo' : '✏️ Naya Post'}</div>
+            <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 16 }}>{editingPost?.id ? 'âœï¸ Post Edit Karo' : 'âœï¸ Naya Post'}</div>
 
             <div style={labelStyle}>TITLE</div>
             <input value={postForm.title} onChange={e => setPostForm(f => ({ ...f, title: e.target.value }))} placeholder="Post ka title..." style={inputStyle} />
 
-            <div style={labelStyle}>SLUG (URL) — khali chodo, auto ban jayega</div>
+            <div style={labelStyle}>SLUG (URL) â€” khali chodo, auto ban jayega</div>
             <input value={postForm.slug} onChange={e => setPostForm(f => ({ ...f, slug: e.target.value }))} placeholder="lucky-number-kaise-nikale" style={{ ...inputStyle, fontFamily: 'monospace' }} />
 
             <div style={labelStyle}>CATEGORY</div>
@@ -654,7 +760,7 @@ export default function AdminPanel({ user, onLogout }) {
             <textarea value={postForm.meta_description} onChange={e => setPostForm(f => ({ ...f, meta_description: e.target.value }))} placeholder="Google search results mein ye line dikhegi..." rows={2} style={{ ...inputStyle, resize: 'vertical', marginBottom: 20 }} />
 
             <button onClick={handleSavePost} disabled={savingPost} style={{ width: '100%', padding: '13px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none', backgroundColor: COLORS.gold, color: '#FFF', cursor: 'pointer', marginBottom: 10 }}>
-              {savingPost ? '⏳ Save ho raha hai...' : '💾 Save Karo'}
+              {savingPost ? 'â³ Save ho raha hai...' : 'ðŸ’¾ Save Karo'}
             </button>
             <button onClick={() => setEditingPost(null)} style={{ width: '100%', padding: '10px', fontSize: 13, fontWeight: 600, borderRadius: 12, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.muted, cursor: 'pointer' }}>Cancel</button>
           </div>
