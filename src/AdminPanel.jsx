@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import AdminFund from './AdminFund';
+import AdminSignals from './AdminSignals';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -24,7 +25,6 @@ function getStatus(profile) {
   if (profile.is_subscribed) {
     if (profile.subscription_end_date && new Date(profile.subscription_end_date) < new Date()) return 'expired';
 
-    // Agar free trial claim kiya hai aur subscription duration ~5-6 din ki hai, to ye trial hai, paid nahi
     const isFreeTrialSub =
       profile.free_trial_claimed &&
       profile.trial_start_date &&
@@ -54,16 +54,6 @@ function StatusBadge({ status }) {
   return <span style={{ fontSize: 11, fontWeight: 700, color: c.color, backgroundColor: c.bg, padding: '3px 10px', borderRadius: 20 }}>{c.label}</span>;
 }
 
-function SignalBadge({ signal }) {
-  const config = {
-    BUY: { label: '📈 BUY (CE)', color: COLORS.green, bg: COLORS.greenLight },
-    SELL: { label: '📉 SELL (PE)', color: COLORS.red, bg: COLORS.redLight },
-    NEUTRAL: { label: '⚖️ NEUTRAL', color: COLORS.muted, bg: COLORS.bg },
-  };
-  const c = config[signal] || config.NEUTRAL;
-  return <span style={{ fontSize: 13, fontWeight: 800, color: c.color, backgroundColor: c.bg, padding: '6px 16px', borderRadius: 20 }}>{c.label}</span>;
-}
-
 export default function AdminPanel({ user, onLogout }) {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -88,12 +78,6 @@ export default function AdminPanel({ user, onLogout }) {
 
   const [feedbackList, setFeedbackList] = useState([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
-
-  // ===== Nifty Signal state =====
-  const [signalData, setSignalData] = useState(null);
-  const [signalLoading, setSignalLoading] = useState(true);
-  const [signalError, setSignalError] = useState(null);
-  const [signalLastFetched, setSignalLastFetched] = useState(null);
 
   const isAdmin = user?.email === ADMIN_EMAIL;
 
@@ -132,20 +116,6 @@ export default function AdminPanel({ user, onLogout }) {
     setLoadingFeedback(false);
   };
 
-  const fetchSignal = useCallback(async () => {
-    setSignalLoading(true);
-    setSignalError(null);
-    try {
-      const { data: result, error: fnError } = await supabase.functions.invoke('rapid-function');
-      if (fnError) throw fnError;
-      setSignalData(result);
-      setSignalLastFetched(new Date());
-    } catch (e) {
-      setSignalError(e.message || 'Signal fetch nahi ho paya');
-    }
-    setSignalLoading(false);
-  }, []);
-
   useEffect(() => {
     if (isAdmin) {
       fetchProfiles();
@@ -155,14 +125,6 @@ export default function AdminPanel({ user, onLogout }) {
       fetchFeedback();
     }
   }, [isAdmin]);
-
-  useEffect(() => {
-    if (isAdmin && activeTab === 'signals') {
-      fetchSignal();
-      const interval = setInterval(fetchSignal, 5 * 60 * 1000); // har 5 min auto-refresh
-      return () => clearInterval(interval);
-    }
-  }, [isAdmin, activeTab, fetchSignal]);
 
   if (!isAdmin) {
     return (
@@ -639,76 +601,7 @@ export default function AdminPanel({ user, onLogout }) {
 
           {activeTab === 'fund' && <AdminFund userEmail={user?.email} />}
 
-          {activeTab === 'signals' && (
-            <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700 }}>🎯 NIFTY 5MIN SIGNAL</div>
-                <button onClick={fetchSignal} disabled={signalLoading} style={{ fontSize: 11, padding: '6px 12px', borderRadius: 20, border: `1.5px solid ${COLORS.surfaceBorder}`, backgroundColor: 'transparent', color: COLORS.gold, cursor: 'pointer', fontWeight: 700 }}>
-                  {signalLoading ? '⏳' : '🔄'} Refresh
-                </button>
-              </div>
-
-              {signalError && (
-                <div style={{ backgroundColor: COLORS.redLight, border: '1.5px solid #fecaca', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 12, color: COLORS.red }}>
-                  ❌ {signalError}
-                </div>
-              )}
-
-              {signalLoading && !signalData ? (
-                <div style={{ ...cardStyle, textAlign: 'center', color: COLORS.muted, padding: '30px 0' }}>⏳ Loading signal...</div>
-              ) : signalData ? (
-                <>
-                  <div style={{ ...cardStyle, textAlign: 'center' }}>
-                    <div style={{ fontSize: 12, color: COLORS.muted, marginBottom: 6 }}>NIFTY 50 SPOT</div>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: COLORS.text, marginBottom: 12 }}>{signalData.ltp?.toFixed(2)}</div>
-                    <SignalBadge signal={signalData.signal} />
-                    <div style={{ fontSize: 12, color: COLORS.muted, marginTop: 12 }}>Confidence Score: <strong style={{ color: COLORS.gold }}>{signalData.score}/100</strong></div>
-                  </div>
-
-                  {signalData.signal !== 'NEUTRAL' && (
-                    <div style={cardStyle}>
-                      <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>📝 ENTRY DETAILS</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                        <span style={{ fontSize: 12, color: COLORS.muted }}>Entry</span>
-                        <span style={{ fontSize: 13, fontWeight: 700 }}>{signalData.ltp?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
-                        <span style={{ fontSize: 12, color: COLORS.muted }}>Stop Loss</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.red }}>{signalData.sl?.toFixed(2)}</span>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
-                        <span style={{ fontSize: 12, color: COLORS.muted }}>Target</span>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.green }}>{signalData.target?.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={cardStyle}>
-                    <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>📊 INDICATORS</div>
-                    {[
-                      ['EMA 9', signalData.emaFast?.toFixed(2)],
-                      ['EMA 21', signalData.emaSlow?.toFixed(2)],
-                      ['RSI (14)', signalData.rsi?.toFixed(2)],
-                      ['MACD', signalData.macd?.toFixed(2)],
-                      ['ADX', signalData.adx?.toFixed(2)],
-                      ['ATR', signalData.atr?.toFixed(2)],
-                    ].map(([label, val]) => (
-                      <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: 12 }}>
-                        <span style={{ color: COLORS.muted }}>{label}</span>
-                        <span style={{ fontWeight: 700, color: COLORS.text }}>{val}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {signalLastFetched && (
-                    <div style={{ textAlign: 'center', fontSize: 11, color: COLORS.muted }}>
-                      Last updated: {signalLastFetched.toLocaleTimeString('en-IN')} • Auto-refresh har 5 min
-                    </div>
-                  )}
-                </>
-              ) : null}
-            </>
-          )}
+          {activeTab === 'signals' && <AdminSignals />}
         </div>
       </div>
 
