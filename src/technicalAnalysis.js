@@ -1,4 +1,4 @@
-export function analyzeStock(candles) {
+export function analyzeStock(candles, marketTrend = null) {
   if (!candles || candles.length < 50) return { error: 'Insufficient data' };
 
   const closes = candles.map(c => c.close);
@@ -172,10 +172,21 @@ export function analyzeStock(candles) {
     ? (longScore >= 85 ? 'LONG' : shortScore >= 85 ? 'SHORT' : null)
     : null; // choppy/sideways market — no trade
 
+  // FIX 8 (admin-only strong filter, market regime): Agar overall Nifty/market
+  // khud downtrend mein hai, to LONG trades zyada fail hote hain (individual
+  // stock ka signal strong ho tab bhi broad market ke against jaata hai).
+  // Ye check sirf tabhi lagta hai jab caller ne marketTrend pass kiya ho —
+  // customer-facing signal isse touch nahi karta (marketTrend wahan pass hi
+  // nahi hota).
+  const marketAligned = marketTrend === null
+    ? true
+    : (longCoreAgree ? marketTrend === 'Bullish' : shortCoreAgree ? marketTrend === 'Bearish' : true);
+
   // strongSignal — sirf Admin ke signal-tracking/auto-scan ke liye. Normal
-  // signal ke saare conditions + core-indicator agreement + volume + DI gap.
+  // signal ke saare conditions + core-indicator agreement + volume + DI gap
+  // + overall market direction ke saath alignment.
   // Customer-facing dashboard/screener isko kabhi use nahi karte.
-  const strongSignal = (adx > 25 && volumeConfirmed && diGapConfirmed)
+  const strongSignal = (adx > 25 && volumeConfirmed && diGapConfirmed && marketAligned)
     ? (longCoreAgree && longScore >= 85 ? 'LONG' : shortCoreAgree && shortScore >= 85 ? 'SHORT' : null)
     : null;
 
