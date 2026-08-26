@@ -37,6 +37,29 @@ async function fetchCandles(symbol) {
     .filter(c => c.close != null);
 }
 
+// Nifty 50 index ka apna trend check karo — LONG signals sirf market uptrend
+// mein allow honge, SHORT signals sirf market downtrend mein. Isse individual
+// stock ke signals overall market direction ke against nahi jaate.
+async function getMarketTrend() {
+  try {
+    const res = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=3mo&interval=1d`,
+      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }
+    );
+    const data = await res.json();
+    const result = data.chart?.result?.[0];
+    if (!result) return null;
+    const quote = result.indicators?.quote?.[0] || {};
+    const closes = (quote.close || []).filter(c => c != null);
+    if (closes.length < 21) return null;
+    const last = closes[closes.length - 1];
+    const past = closes[closes.length - 21]; // ~20 trading days pehle, same lookback jaisa stock trend mein
+    return last > past ? 'Bullish' : 'Bearish';
+  } catch {
+    return null; // fetch fail ho to filter skip ho jayega (marketAligned = true)
+  }
+}
+
 async function getCurrentPrice(symbol) {
   try {
     const sym = symbol.includes('.') ? symbol : symbol + '.NS';
@@ -108,15 +131,19 @@ async function checkOpenSignals() {
 async function scanNewSignals(today) {
   const stats = { scanned: 0, signalsFound: 0, skippedDuplicate: 0, errors: [] };
 
+  // Poore market ka trend ek hi baar nikal lo — har stock check karne se pehle
+  const marketTrend = await getMarketTrend();
+
   for (const symbol of NIFTY_50) {
     try {
       stats.scanned++;
       const candles = await fetchCandles(symbol);
       if (!candles || candles.length < 50) continue;
 
-      const analysis = analyzeStock(candles);
-      // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict) —
-      // customer-facing dashboard/screener normal analysis.signal use karte hain.
+      const analysis = analyzeStock(candles, marketTrend);
+      // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict,
+      // market direction ke saath aligned) — customer-facing dashboard/screener
+      // normal analysis.signal use karte hain (marketTrend wahan pass nahi hota).
       if (analysis.error || !analysis.strongSignal) continue;
 
       // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
@@ -174,3 +201,4 @@ export default async function handler(req, res) {
     newSignalsScan: scanResults,
   });
 }
+
