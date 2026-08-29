@@ -6,7 +6,7 @@ const supabase = createClient(
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9reGJkemVwZnp5c2JueG1teXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDQxMjQsImV4cCI6MjA5NzYyMDEyNH0.I5uOJhT-7aquna2fLrCLDtpsRHGMXOygWaVQn5AkIaI'
 );
 
-// NIFTY 50 — daily scan list
+// NIFTY 200 (approx) — daily scan list, diversified large + mid cap universe
 const NIFTY_50 = [
   'RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY', 'ITC', 'SBIN', 'BHARTIARTL',
   'LT', 'KOTAKBANK', 'AXISBANK', 'HINDUNILVR', 'BAJFINANCE', 'MARUTI', 'ASIANPAINT',
@@ -16,6 +16,31 @@ const NIFTY_50 = [
   'EICHERMOT', 'HEROMOTOCO', 'BAJAJ-AUTO', 'HINDALCO', 'COALINDIA', 'SBILIFE',
   'HDFCLIFE', 'INDUSINDBK', 'BPCL', 'APOLLOHOSP', 'UPL', 'SHREECEM', 'M&M',
   'TATACONSUM', 'VEDL',
+  // NIFTY Next 50 + additional large/mid caps for a bigger, more diverse universe
+  'ADANIGREEN', 'ADANIPOWER', 'AMBUJACEM', 'DLF', 'GODREJCP', 'HAVELLS', 'ICICIGI',
+  'ICICIPRULI', 'IOC', 'IRCTC', 'JINDALSTEL', 'LTIM', 'NAUKRI', 'PIDILITIND',
+  'PNB', 'SIEMENS', 'TATAPOWER', 'TORNTPHARM', 'TVSMOTOR', 'VBL', 'ZOMATO',
+  'ZYDUSLIFE', 'ABB', 'ADANIENSOL', 'ALKEM', 'ASHOKLEY', 'AUROPHARMA', 'BANDHANBNK',
+  'BANKBARODA', 'BEL', 'BERGEPAINT', 'BIOCON', 'BOSCHLTD', 'CANBK', 'CHOLAFIN',
+  'COLPAL', 'CONCOR', 'CUMMINSIND', 'DABUR', 'DIXON', 'GAIL', 'GLAND', 'GODREJPROP',
+  'HAL', 'HDFCAMC', 'HINDPETRO', 'IDFCFIRSTB', 'INDHOTEL', 'INDIGO', 'IGL',
+  'JSWENERGY', 'JUBLFOOD', 'LICHSGFIN', 'LODHA', 'LUPIN', 'MARICO', 'MOTHERSON',
+  'MRF', 'MUTHOOTFIN', 'NHPC', 'OBEROIRLTY', 'OFSS', 'PAGEIND', 'PATANJALI',
+  'PERSISTENT', 'PETRONET', 'PFC', 'PGHH', 'PIIND', 'POLYCAB', 'RECLTD', 'SAIL',
+  'SBICARD', 'SRF', 'SUNTV', 'SUPREMEIND', 'SYNGENE', 'TATACHEM',
+  'TATACOMM', 'TATAELXSI', 'TIINDIA', 'TORNTPOWER', 'TRENT', 'UBL', 'UNITDSPR',
+  'VOLTAS', 'YESBANK', 'ZEEL', 'AARTIIND', 'ABCAPITAL', 'ABFRL', 'ACC', 'AJANTPHARM',
+  'APLAPOLLO', 'ASTRAL', 'ATUL', 'BALKRISIND', 'BATAINDIA', 'BHARATFORG', 'BHEL',
+  'BSOFT', 'CANFINHOME', 'CROMPTON', 'CUB', 'DALBHARAT', 'DEEPAKNTR', 'DELTACORP',
+  'EMAMILTD', 'ESCORTS', 'EXIDEIND', 'FEDERALBNK', 'FSL', 'GLENMARK', 'GMRINFRA',
+  'GNFC', 'GRANULES', 'GSPL', 'GUJGASLTD', 'HFCL', 'HINDCOPPER', 'HONAUT',
+  'IBULHSGFIN', 'IDEA', 'IEX', 'INDIAMART', 'INDUSTOWER', 'IPCALAB', 'JKCEMENT',
+  'JSL', 'KANSAINER', 'KEI', 'L&TFH', 'LALPATHLAB', 'LAURUSLABS', 'LTTS',
+  'MANAPPURAM', 'MAXHEALTH', 'MFSL', 'MGL', 'MPHASIS', 'NATIONALUM', 'NAVINFLUOR',
+  'NMDC', 'OIL', 'PEL', 'PHOENIXLTD', 'PRESTIGE', 'RADICO', 'RAIN', 'RAJESHEXPO',
+  'RAMCOCEM', 'RATNAMANI', 'RBLBANK', 'SCHAEFFLER', 'SONACOMS', 'SUMICHEM',
+  'SUNDARMFIN', 'SUNDRMFAST', 'SUPRAJIT', 'SUZLON', 'TATAINVEST', 'TRIDENT',
+  'TTKPRESTIG', 'VGUARD', 'VINATIORGA', 'WHIRLPOOL', 'ZFCVINDIA',
 ];
 
 async function fetchCandles(symbol) {
@@ -127,57 +152,68 @@ async function checkOpenSignals() {
   return stats;
 }
 
-// NIFTY 50 scan karke naye signals banao
+// NIFTY 200 scan karke naye signals banao — batch mein chalate hain taaki
+// 200 stocks ka scan function ke time-limit ke andar complete ho jaye
 async function scanNewSignals(today) {
   const stats = { scanned: 0, signalsFound: 0, skippedDuplicate: 0, errors: [] };
 
   // Poore market ka trend ek hi baar nikal lo — har stock check karne se pehle
   const marketTrend = await getMarketTrend();
 
-  for (const symbol of NIFTY_50) {
-    try {
-      stats.scanned++;
-      const candles = await fetchCandles(symbol);
-      if (!candles || candles.length < 50) continue;
+  const batchSize = 10;
+  for (let i = 0; i < NIFTY_50.length; i += batchSize) {
+    const batch = NIFTY_50.slice(i, i + batchSize);
+    await Promise.all(batch.map(async (symbol) => {
+      try {
+        stats.scanned++;
+        const candles = await fetchCandles(symbol);
+        if (!candles || candles.length < 50) return;
 
-      const analysis = analyzeStock(candles, marketTrend);
-      // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict,
-      // market direction ke saath aligned) — customer-facing dashboard/screener
-      // normal analysis.signal use karte hain (marketTrend wahan pass nahi hota).
-      if (analysis.error || !analysis.strongSignal) continue;
+        const analysis = analyzeStock(candles, marketTrend);
+        // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict,
+        // market direction ke saath aligned) — customer-facing dashboard/screener
+        // normal analysis.signal use karte hain (marketTrend wahan pass nahi hota).
+        if (analysis.error || !analysis.strongSignal) return;
 
-      // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
-      // jab tak wo close (win/loss) na ho jaye, dobara "same trade" nahi lena
-      const { data: existingOpen } = await supabase
-        .from('signal_tracking')
-        .select('id')
-        .eq('stock_symbol', symbol)
-        .eq('status', 'open')
-        .maybeSingle();
+        // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
+        // jab tak wo close (win/loss) na ho jaye, dobara "same trade" nahi lena
+        const { data: existingOpen } = await supabase
+          .from('signal_tracking')
+          .select('id')
+          .eq('stock_symbol', symbol)
+          .eq('status', 'open')
+          .maybeSingle();
 
-      if (existingOpen) {
-        stats.skippedDuplicate++;
-        continue;
+        if (existingOpen) {
+          stats.skippedDuplicate++;
+          return;
+        }
+
+        await supabase.from('signal_tracking').insert({
+          stock_symbol: symbol,
+          signal: analysis.strongSignal,
+          entry_price: analysis.entry,
+          stop_loss: analysis.stopLoss,
+          target1: analysis.targets?.[0],
+          target2: analysis.targets?.[1],
+          target3: analysis.targets?.[2],
+          signal_date: today,
+          status: 'open',
+        });
+        stats.signalsFound++;
+      } catch (e) {
+        stats.errors.push(`${symbol}: ${e.message}`);
       }
-
-      await supabase.from('signal_tracking').insert({
-        stock_symbol: symbol,
-        signal: analysis.strongSignal,
-        entry_price: analysis.entry,
-        stop_loss: analysis.stopLoss,
-        target1: analysis.targets?.[0],
-        target2: analysis.targets?.[1],
-        target3: analysis.targets?.[2],
-        signal_date: today,
-        status: 'open',
-      });
-      stats.signalsFound++;
-    } catch (e) {
-      stats.errors.push(`${symbol}: ${e.message}`);
-    }
+    }));
   }
   return stats;
 }
+
+// 200 stocks scan karne mein default 10s se zyada time lagega, isliye function
+// ko zyada time deta hai (Vercel Hobby plan pe max 60s tak allowed hai)
+export const config = {
+  maxDuration: 60,
+};
 
 export default async function handler(req, res) {
   // Simple secret check — Vercel Cron ke alawa koi aur trigger na kar sake
