@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from './supabaseClient';
 import AdminFund from './AdminFund';
 import AdminSignals from './AdminSignals';
+import IntradaySignal from './IntradaySignal';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -310,7 +311,7 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
 
         <div style={{ display: 'flex', gap: 4, padding: 4, backgroundColor: COLORS.surface, borderBottom: `1px solid ${COLORS.surfaceBorder}`, overflowX: 'auto' }}>
-          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog'], ['fund', '💵 Fund'], ['signals', '🎯 Signals']].map(([key, label]) => (
+          {[['users', '👥 Users'], ['referrals', '🔗 Referrals'], ['support', '💬 Support'], ['feedback', '📋 Feedback'], ['blog', '📝 Blog'], ['fund', '💵 Fund'], ['signals', '🎯 Signals'], ['intraday', '⚡ Intraday']].map(([key, label]) => (
             <button key={key} onClick={() => { setActiveTab(key); setSelectedUser(null); }} style={{
               flex: 1, padding: '8px 4px', fontSize: 12, fontWeight: 700,
               borderRadius: 10, border: 'none', whiteSpace: 'nowrap',
@@ -602,6 +603,8 @@ export default function AdminPanel({ user, onLogout }) {
           {activeTab === 'fund' && <AdminFund userEmail={user?.email} />}
 
           {activeTab === 'signals' && <AdminSignals />}
+
+          {activeTab === 'intraday' && <IntradaySignal />}
         </div>
       </div>
 
