@@ -127,19 +127,37 @@ export default function IntradaySignal() {
         {autoResults.map(r => (
           <div key={r.symbol} style={{
             padding: '12px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}`,
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           }}>
-            <div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{r.symbol}</div>
-              <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{fmtINR(r.lastClose)} • RSI {r.rsi} • ADX {r.adx}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text }}>{r.symbol}</div>
+                <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 2 }}>{fmtINR(r.lastClose)} • RSI {r.rsi} • ADX {r.adx}</div>
+              </div>
+              <div style={{
+                fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20,
+                backgroundColor: r.signal === 'LONG' ? COLORS.greenLight : r.signal === 'SHORT' ? COLORS.redLight : COLORS.bg,
+                color: r.signal === 'LONG' ? COLORS.green : r.signal === 'SHORT' ? COLORS.red : COLORS.muted,
+              }}>
+                {r.signal === 'LONG' ? '🟢 LONG' : r.signal === 'SHORT' ? '🔴 SHORT' : '⏳ WAIT'}
+              </div>
             </div>
-            <div style={{
-              fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20,
-              backgroundColor: r.signal === 'LONG' ? COLORS.greenLight : r.signal === 'SHORT' ? COLORS.redLight : COLORS.bg,
-              color: r.signal === 'LONG' ? COLORS.green : r.signal === 'SHORT' ? COLORS.red : COLORS.muted,
-            }}>
-              {r.signal === 'LONG' ? '🟢 LONG' : r.signal === 'SHORT' ? '🔴 SHORT' : '⏳ WAIT'}
-            </div>
+
+            {r.signal && (
+              <div style={{ marginTop: 10, backgroundColor: COLORS.bg, borderRadius: 10, padding: '10px 12px' }}>
+                {[
+                  ['Entry', fmtINR(r.entry)],
+                  ['Stop Loss', fmtINR(r.stopLoss)],
+                  ['Target 1', fmtINR(r.targets?.[0])],
+                  ['Target 2', fmtINR(r.targets?.[1])],
+                  ['Target 3', fmtINR(r.targets?.[2])],
+                ].map(([label, value]) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, padding: '3px 0' }}>
+                    <span style={{ color: COLORS.muted }}>{label}</span>
+                    <span style={{ fontWeight: 700, color: COLORS.text }}>{value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
@@ -236,4 +254,3 @@ export default function IntradaySignal() {
     </div>
   );
 }
-
