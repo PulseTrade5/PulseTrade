@@ -16,6 +16,8 @@ export default function AdminSignals() {
   const [checking, setChecking] = useState(false);
   const [msg, setMsg] = useState('');
   const [filter, setFilter] = useState('all');
+  const [livePrices, setLivePrices] = useState({}); // id -> current price
+  const [checkingGap, setCheckingGap] = useState(false);
 
   const fetchSignals = async () => {
     setLoading(true);
@@ -74,6 +76,24 @@ export default function AdminSignals() {
     await fetchSignals();
     setChecking(false);
     setTimeout(() => setMsg(''), 4000);
+  };
+
+  // Aaj ka live price laake dekho ki overnight kitna gap ho gaya entry se —
+  // taaki pata chale ki gap-up/gap-down ki wajah se trade lena safe hai ya nahi
+  const handleCheckGap = async () => {
+    setCheckingGap(true);
+    const openSignals = signals.filter(s => s.status === 'open');
+    const uniqueSymbols = [...new Set(openSignals.map(s => s.stock_symbol))];
+    const priceMap = {};
+    for (const sym of uniqueSymbols) {
+      priceMap[sym] = await getCurrentPrice(sym);
+    }
+    const updated = {};
+    openSignals.forEach(s => {
+      updated[s.id] = priceMap[s.stock_symbol];
+    });
+    setLivePrices(updated);
+    setCheckingGap(false);
   };
 
   const stats = {
@@ -197,9 +217,18 @@ export default function AdminSignals() {
         width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
         backgroundColor: checking || stats.open === 0 ? COLORS.surfaceBorder : COLORS.gold,
         color: checking || stats.open === 0 ? COLORS.muted : '#FFF',
-        cursor: checking || stats.open === 0 ? 'not-allowed' : 'pointer', marginBottom: 16,
+        cursor: checking || stats.open === 0 ? 'not-allowed' : 'pointer', marginBottom: 10,
       }}>
         {checking ? '⏳ Prices check ho rahi hain...' : `🔄 Results Check Karo (${stats.open} open)`}
+      </button>
+
+      <button onClick={handleCheckGap} disabled={checkingGap || stats.open === 0} style={{
+        width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: `1.5px solid ${COLORS.gold}`,
+        backgroundColor: 'transparent',
+        color: checkingGap || stats.open === 0 ? COLORS.muted : COLORS.gold,
+        cursor: checkingGap || stats.open === 0 ? 'not-allowed' : 'pointer', marginBottom: 16,
+      }}>
+        {checkingGap ? '⏳ Gap check ho raha hai...' : `📊 Aaj ka Gap Dekho (${stats.open} open)`}
       </button>
 
       <div style={cardStyle}>
@@ -221,7 +250,13 @@ export default function AdminSignals() {
           <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0' }}>⏳ Loading...</div>
         ) : filtered.length === 0 ? (
           <div style={{ textAlign: 'center', color: COLORS.muted, padding: '20px 0', fontSize: 13 }}>Koi signal nahi mila.</div>
-        ) : filtered.map(s => (
+        ) : filtered.map(s => {
+          const livePrice = livePrices[s.id];
+          const gapPct = (s.status === 'open' && livePrice != null && s.entry_price)
+            ? ((livePrice - Number(s.entry_price)) / Number(s.entry_price)) * 100
+            : null;
+          const gapSafe = gapPct !== null && Math.abs(gapPct) <= 2;
+          return (
           <div key={s.id} style={{ padding: '12px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
@@ -240,6 +275,15 @@ export default function AdminSignals() {
                   {new Date(s.signal_date).toLocaleDateString('en-IN')}
                   {s.closed_price && ` → Closed @ ₹${s.closed_price}`}
                 </div>
+                {gapPct !== null && (
+                  <div style={{
+                    fontSize: 11, fontWeight: 700, marginTop: 4,
+                    color: gapSafe ? COLORS.green : COLORS.red,
+                  }}>
+                    📊 Aaj ka price: ₹{livePrice.toFixed(2)} • Gap: {gapPct >= 0 ? '+' : ''}{gapPct.toFixed(1)}%
+                    {gapSafe ? ' ✅ Le sakte ho' : ' ⚠️ Bada gap — chhodo isse'}
+                  </div>
+                )}
               </div>
               <span style={{
                 fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, whiteSpace: 'nowrap',
@@ -250,8 +294,9 @@ export default function AdminSignals() {
               </span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
-              }
+}
