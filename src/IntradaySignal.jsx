@@ -47,6 +47,16 @@ export default function IntradaySignal() {
   const [customError, setCustomError] = useState('');
   const [customResult, setCustomResult] = useState(null);
 
+  // Market hours check — IST 9:15 AM se 3:30 PM tak hi intraday signal kaam ka hai.
+  // Isके bahar signal dikhana bhi galat hai kyunki us waqt trade le hi nahi sakte,
+  // aur kal jab market khulega price fresh move karega — aaj ka data stale ho jaata hai.
+  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const day = nowIST.getDay(); // 0 = Sunday, 6 = Saturday
+  const minutesNow = nowIST.getHours() * 60 + nowIST.getMinutes();
+  const marketOpen = 9 * 60 + 15;
+  const marketClose = 15 * 60 + 30;
+  const isMarketHours = day >= 1 && day <= 5 && minutesNow >= marketOpen && minutesNow <= marketClose;
+
   const runAutoScan = async () => {
     setScanning(true);
     setScanDone(false);
@@ -68,9 +78,10 @@ export default function IntradaySignal() {
     setScanDone(true);
   };
 
-  useEffect(() => { runAutoScan(); }, []);
+  useEffect(() => { if (isMarketHours) runAutoScan(); }, []);
 
   const handleCustomSearch = async () => {
+    if (!isMarketHours) return;
     const sym = symbolInput.trim().toUpperCase();
     if (!sym) return;
     setCustomLoading(true);
@@ -91,6 +102,22 @@ export default function IntradaySignal() {
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
 
+      {!isMarketHours && (
+        <div style={{
+          ...cardStyle, textAlign: 'center', border: `1.5px solid ${COLORS.gold}`,
+          backgroundColor: COLORS.goldLight,
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 8 }}>🔒</div>
+          <div style={{ fontSize: 14, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>Market Band Hai</div>
+          <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.6 }}>
+            Intraday signal sirf market hours mein kaam ka hai (Mon-Fri, 9:15 AM – 3:30 PM).
+            Market band hone ke baad dikhaya gaya koi bhi signal stale ho jaata hai — kal subah 9:30 AM ke baad dobara try karo.
+          </div>
+        </div>
+      )}
+
+      {isMarketHours && (
+      <>
       {/* Auto Scan */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -246,6 +273,9 @@ export default function IntradaySignal() {
             ))}
           </div>
         </>
+      )}
+
+      </>
       )}
 
       <div style={{ fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
