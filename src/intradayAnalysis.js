@@ -147,15 +147,14 @@ export function analyzeIntraday(candles) {
     ? (longCoreAgree && longScore >= 85 ? 'LONG' : shortCoreAgree && shortScore >= 85 ? 'SHORT' : null)
     : null;
 
-  // Intraday stop loss/targets — pehle bahut tight the (1x ATR stop, 1x/1.5x/2x
-  // target), jisse target bahut chhota lagta tha. Ab thoda room diya hai:
-  // Stop = 1.3x ATR (thoda zyada breathing room), Targets = 1.5x/2.5x/3.5x
-  // stop distance (bada reward, phir bhi same-din square-off ke liye reasonable)
+  // Intraday stop loss/targets — target bahut chhota lag raha tha, isliye ab
+  // target multiples double kar diye hain (SL same rakha hai): Stop = 1.3x ATR,
+  // Targets = 3x/5x/7x stop distance (pehle 1.5x/2.5x/3.5x tha)
   const stopDistance = atr * 1.3;
   const stopLoss = trend === 'Bullish' ? last - stopDistance : last + stopDistance;
   const targets = trend === 'Bullish'
-    ? [last + stopDistance * 1.5, last + stopDistance * 2.5, last + stopDistance * 3.5]
-    : [last - stopDistance * 1.5, last - stopDistance * 2.5, last - stopDistance * 3.5];
+    ? [last + stopDistance * 3, last + stopDistance * 5, last + stopDistance * 7]
+    : [last - stopDistance * 3, last - stopDistance * 5, last - stopDistance * 7];
 
   return {
     lastClose: last,
