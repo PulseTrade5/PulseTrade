@@ -1,10 +1,15 @@
 import { createClient } from '@supabase/supabase-js';
-import { analyzeStock } from '../src/technicalAnalysis.js';
+import { analyzeStock, getMarketTrend } from '../src/technicalAnalysis.js';
 
 const supabase = createClient(
   'https://okxbdzepfzysbnxmmysx.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9reGJkemVwZnp5c2JueG1teXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDQxMjQsImV4cCI6MjA5NzYyMDEyNH0.I5uOJhT-7aquna2fLrCLDtpsRHGMXOygWaVQn5AkIaI'
 );
+
+// ---- Config ----
+const MAX_HOLD_DAYS = 7;     // itne trading din mein exit na mile to time-exit
+const PARTIAL_AT_T1 = 0.5;   // T1 pe 50% book, baaki 50% T3 tak (SL entry pe trail)
+const COST_PCT = 0.001;      // brokerage+STT+slippage ka andaaza (0.1% round trip) — apne hisaab se badlo
 
 // NIFTY 200 (approx) — daily scan list, diversified large + mid cap universe
 const NIFTY_50 = [
@@ -43,70 +48,133 @@ const NIFTY_50 = [
   'TTKPRESTIG', 'VGUARD', 'VINATIORGA', 'WHIRLPOOL', 'ZFCVINDIA',
 ];
 
-async function fetchCandles(symbol) {
-  const sym = symbol + '.NS';
+const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
+
+// IST ke hisaab se date/time (Vercel server UTC pe chalta hai)
+const IST_MS = 5.5 * 60 * 60 * 1000;
+const istDate = (ms) => new Date(ms + IST_MS).toISOString().split('T')[0];
+
+// range: '1y' scan ke liye, '6mo' open signals check ke liye
+async function fetchCandles(symbol, range = '1y') {
+  const sym = symbol.startsWith('^') ? symbol : symbol + '.NS';
   const res = await fetch(
-    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=1y&interval=1d`,
-    { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }
+    `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=1d`,
+    { headers: UA }
   );
   const data = await res.json();
   const result = data.chart?.result?.[0];
   if (!result) return null;
   const timestamps = result.timestamp || [];
   const quote = result.indicators?.quote?.[0] || {};
-  return timestamps
+  const candles = timestamps
     .map((ts, i) => ({
-      time: ts, open: quote.open?.[i], high: quote.high?.[i],
+      time: ts,
+      date: istDate(ts * 1000),
+      open: quote.open?.[i], high: quote.high?.[i],
       low: quote.low?.[i], close: quote.close?.[i], volume: quote.volume?.[i],
     }))
-    .filter(c => c.close != null);
-}
+    .filter(c => c.close != null && c.high != null && c.low != null);
 
-// Nifty 50 index ka apna trend check karo — LONG signals sirf market uptrend
-// mein allow honge, SHORT signals sirf market downtrend mein. Isse individual
-// stock ke signals overall market direction ke against nahi jaate.
-async function getMarketTrend() {
-  try {
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=3mo&interval=1d`,
-      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }
-    );
-    const data = await res.json();
-    const result = data.chart?.result?.[0];
-    if (!result) return null;
-    const quote = result.indicators?.quote?.[0] || {};
-    const closes = (quote.close || []).filter(c => c != null);
-    if (closes.length < 21) return null;
-    const last = closes[closes.length - 1];
-    const past = closes[closes.length - 21]; // ~20 trading days pehle, same lookback jaisa stock trend mein
-    return last > past ? 'Bullish' : 'Bearish';
-  } catch {
-    return null; // fetch fail ho to filter skip ho jayega (marketAligned = true)
+  // Market chal raha ho (3:45pm IST se pehle) to aaj ki adhuri candle hata do —
+  // adhuri candle se galat entry, volume aur exit nikalte hain.
+  const nowIst = new Date(Date.now() + IST_MS);
+  const mins = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
+  const todayIst = nowIst.toISOString().split('T')[0];
+  if (candles.length && candles[candles.length - 1].date === todayIst && mins < 15 * 60 + 45) {
+    candles.pop();
   }
+  return candles;
 }
 
-async function getCurrentPrice(symbol) {
+// Market regime: Nifty 50-DMA ke upar = Bullish, neeche = Bearish (fail ho to null = filter off)
+async function fetchMarketTrend() {
   try {
-    const sym = symbol.includes('.') ? symbol : symbol + '.NS';
-    const res = await fetch(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d`,
-      { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' } }
-    );
-    const data = await res.json();
-    const result = data.chart?.result?.[0];
-    const meta = result?.meta || {};
-    if (meta.regularMarketPrice) return meta.regularMarketPrice;
-    const quote = result?.indicators?.quote?.[0] || {};
-    const closes = (quote.close || []).filter(c => c != null);
-    return closes.length ? closes[closes.length - 1] : null;
+    const candles = await fetchCandles('^NSEI', '1y');
+    return getMarketTrend(candles);
   } catch {
     return null;
   }
 }
 
-// Purane open signals ka result check karo — target hit hua ya SL laga
+const round2 = (x) => Number(x.toFixed(2));
+
+// ---- Ek open signal ko daily candles pe chalao ----
+// Rules: SL pehle check (same candle mein SL aur target dono ho to SL maana jata hai — conservative).
+// T1 hit -> 50% book, SL entry pe. T3 ya trail-SL ya time-exit pe poora close.
+// Exit price level pe (SL/target), gap ho to open pe.
+// EVAL_START
+function evaluateSignal(s, candles) {
+  const dir = s.signal === 'LONG' ? 1 : -1;
+  const entry = Number(s.entry_price);
+  const sl = Number(s.stop_loss);
+  const t1 = Number(s.target1), t2 = Number(s.target2), t3 = Number(s.target3);
+  const risk = Number(s.risk_per_share) || Math.abs(entry - sl);
+  if (!entry || !sl || !t1 || !risk) return null;
+
+  const hitDown = (bar, lvl) => dir === 1 ? bar.low <= lvl : bar.high >= lvl;   // level ulta side pe touch
+  const hitUp = (bar, lvl) => dir === 1 ? bar.high >= lvl : bar.low <= lvl;     // level seedhi side pe touch
+  const gapFill = (bar, lvl) => {                                                // SL pe gap ho to open pe fill
+    if (bar.open == null) return lvl;
+    return dir === 1 ? Math.min(bar.open, lvl) : Math.max(bar.open, lvl);
+  };
+
+  let t1Hit = !!s.t1_hit, t2Hit = !!s.t2_hit;
+  const startedT1 = t1Hit, startedT2 = t2Hit;
+  let held = 0, exit = null;
+
+  const bars = candles.filter(c => c.date > s.signal_date);
+  for (const bar of bars) {
+    held++;
+    let justHitT1 = false;
+
+    if (!t1Hit) {
+      if (hitDown(bar, sl)) { exit = { price: gapFill(bar, sl), reason: 'sl', date: bar.date }; break; }
+      if (hitUp(bar, t1)) { t1Hit = true; justHitT1 = true; }
+    } else if (hitDown(bar, entry)) {
+      exit = { price: gapFill(bar, entry), reason: 'trail_sl', date: bar.date };
+      break;
+    }
+
+    if (t1Hit) {
+      if (t2 && hitUp(bar, t2)) t2Hit = true;
+      if (t3 && hitUp(bar, t3)) { exit = { price: t3, reason: 't3', date: bar.date }; break; }
+    }
+
+    if (held >= MAX_HOLD_DAYS) { exit = { price: bar.close, reason: 'time_exit', date: bar.date }; break; }
+  }
+
+  if (!exit) {
+    if (t1Hit !== startedT1 || t2Hit !== startedT2) return { type: 'progress', t1_hit: t1Hit, t2_hit: t2Hit };
+    return null;
+  }
+
+  const legR = (p) => dir * (p - entry) / risk;
+  const grossR = t1Hit
+    ? PARTIAL_AT_T1 * legR(t1) + (1 - PARTIAL_AT_T1) * legR(exit.price)
+    : legR(exit.price);
+  const r = round2(grossR - (entry * COST_PCT) / risk);
+
+  return {
+    type: 'closed',
+    status: r > 0 ? 'win' : 'loss',
+    closed_price: round2(exit.price),
+    exit_price: round2(exit.price),
+    closed_date: exit.date,
+    r_multiple: r,
+    risk_per_share: round2(risk),
+    close_reason: exit.reason,
+    t1_hit: t1Hit,
+    t2_hit: t2Hit,
+    t3_hit: exit.reason === 't3',
+    sl_hit: exit.reason === 'sl',
+    pnl_pct: round2((r * risk / entry) * 100),
+  };
+}
+// EVAL_END
+
+// Purane open signals ka result check karo
 async function checkOpenSignals() {
-  const stats = { checked: 0, closed: 0, errors: [] };
+  const stats = { checked: 0, closed: 0, progressed: 0, errors: [] };
   const { data: openSignals } = await supabase
     .from('signal_tracking')
     .select('*')
@@ -114,51 +182,37 @@ async function checkOpenSignals() {
 
   if (!openSignals || openSignals.length === 0) return stats;
 
-  // Ek stock ka price ek hi baar fetch karo, chahe usme kitne bhi open signals ho
   const uniqueSymbols = [...new Set(openSignals.map(s => s.stock_symbol))];
-  const priceMap = {};
-  for (const sym of uniqueSymbols) {
-    priceMap[sym] = await getCurrentPrice(sym);
+  const candleMap = {};
+  const batchSize = 15;
+  for (let i = 0; i < uniqueSymbols.length; i += batchSize) {
+    await Promise.all(uniqueSymbols.slice(i, i + batchSize).map(async (sym) => {
+      try { candleMap[sym] = await fetchCandles(sym, '6mo'); } catch { candleMap[sym] = null; }
+    }));
   }
 
   for (const s of openSignals) {
     stats.checked++;
-    const price = priceMap[s.stock_symbol];
-    if (price === null || price === undefined) continue;
+    const candles = candleMap[s.stock_symbol];
+    if (!candles || candles.length === 0) continue;
 
-    let newStatus = null;
-    if (s.signal === 'LONG') {
-      if (s.target3 && price >= s.target3) newStatus = 'win';
-      else if (s.target1 && price >= s.target1) newStatus = 'win';
-      else if (s.stop_loss && price <= s.stop_loss) newStatus = 'loss';
-    } else if (s.signal === 'SHORT') {
-      if (s.target3 && price <= s.target3) newStatus = 'win';
-      else if (s.target1 && price <= s.target1) newStatus = 'win';
-      else if (s.stop_loss && price >= s.stop_loss) newStatus = 'loss';
-    }
+    const result = evaluateSignal(s, candles);
+    if (!result) continue;
 
-    if (newStatus) {
-      try {
-        await supabase
-          .from('signal_tracking')
-          .update({ status: newStatus, closed_price: price, closed_date: new Date().toISOString().split('T')[0] })
-          .eq('id', s.id);
-        stats.closed++;
-      } catch (e) {
-        stats.errors.push(`${s.stock_symbol} update failed: ${e.message}`);
-      }
-    }
+    const { type, ...payload } = result;
+    const { error } = await supabase.from('signal_tracking').update(payload).eq('id', s.id);
+    if (error) { stats.errors.push(`${s.stock_symbol} update failed: ${error.message}`); continue; }
+    if (type === 'closed') stats.closed++; else stats.progressed++;
   }
   return stats;
 }
 
-// NIFTY 200 scan karke naye signals banao — batch mein chalate hain taaki
-// 200 stocks ka scan function ke time-limit ke andar complete ho jaye
-async function scanNewSignals(today) {
+// NIFTY 200 scan karke naye signals banao — batch mein
+async function scanNewSignals() {
   const stats = { scanned: 0, signalsFound: 0, skippedDuplicate: 0, errors: [] };
 
-  // Poore market ka trend ek hi baar nikal lo — har stock check karne se pehle
-  const marketTrend = await getMarketTrend();
+  const marketTrend = await fetchMarketTrend();
+  stats.marketTrend = marketTrend;
 
   const batchSize = 10;
   for (let i = 0; i < NIFTY_50.length; i += batchSize) {
@@ -166,17 +220,12 @@ async function scanNewSignals(today) {
     await Promise.all(batch.map(async (symbol) => {
       try {
         stats.scanned++;
-        const candles = await fetchCandles(symbol);
+        const candles = await fetchCandles(symbol, '1y');
         if (!candles || candles.length < 50) return;
 
         const analysis = analyzeStock(candles, marketTrend);
-        // Admin tracking ke liye sirf strongSignal use hota hai (extra-strict,
-        // market direction ke saath aligned) — customer-facing dashboard/screener
-        // normal analysis.signal use karte hain (marketTrend wahan pass nahi hota).
         if (analysis.error || !analysis.strongSignal) return;
 
-        // Agar is stock ka pehle se koi OPEN trade chal raha hai, to naya signal mat banao —
-        // jab tak wo close (win/loss) na ho jaye, dobara "same trade" nahi lena
         const { data: existingOpen } = await supabase
           .from('signal_tracking')
           .select('id')
@@ -189,7 +238,7 @@ async function scanNewSignals(today) {
           return;
         }
 
-        await supabase.from('signal_tracking').insert({
+        const { error } = await supabase.from('signal_tracking').insert({
           stock_symbol: symbol,
           signal: analysis.strongSignal,
           entry_price: analysis.entry,
@@ -197,9 +246,12 @@ async function scanNewSignals(today) {
           target1: analysis.targets?.[0],
           target2: analysis.targets?.[1],
           target3: analysis.targets?.[2],
-          signal_date: today,
+          risk_per_share: analysis.riskPerShare,
+          // Signal usi candle ki date ka hai jis pe bana (aaj ki date nahi, weekend/holiday pe galat hota)
+          signal_date: candles[candles.length - 1].date,
           status: 'open',
         });
+        if (error) { stats.errors.push(`${symbol} insert failed: ${error.message}`); return; }
         stats.signalsFound++;
       } catch (e) {
         stats.errors.push(`${symbol}: ${e.message}`);
@@ -209,26 +261,21 @@ async function scanNewSignals(today) {
   return stats;
 }
 
-// 200 stocks scan karne mein default 10s se zyada time lagega, isliye function
-// ko zyada time deta hai (Vercel Hobby plan pe max 60s tak allowed hai)
 export const config = {
   maxDuration: 60,
 };
 
 export default async function handler(req, res) {
-  // Simple secret check — Vercel Cron ke alawa koi aur trigger na kar sake
   const authHeader = req.headers['authorization'];
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = istDate(Date.now());
 
-  // Pehle purane open signals ka result check karo (win/loss update)
+  // Pehle purane open signals (SL/target/time-exit), phir naye signals
   const checkResults = await checkOpenSignals();
-
-  // Phir NIFTY 50 scan karke aaj ke naye signals banao
-  const scanResults = await scanNewSignals(today);
+  const scanResults = await scanNewSignals();
 
   return res.status(200).json({
     success: true,
@@ -237,4 +284,3 @@ export default async function handler(req, res) {
     newSignalsScan: scanResults,
   });
 }
-
