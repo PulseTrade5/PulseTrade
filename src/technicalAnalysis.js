@@ -1,3 +1,20 @@
+// ---- Config (yahan se tweak karo) ----
+const TICK = 0.05;                 // NSE tick size
+const TARGET_R = [1.5, 2.5, 4];    // T1/T2/T3 = SL distance ke multiples (pehle 1/2/3 tha)
+const STOP_ATR_MULT = 1.5;         // SL = 1.5x ATR
+const MAX_HOLD_DAYS = 7;           // time-based exit (trading days)
+
+const roundTick = (x) => Number((Math.round(x / TICK) * TICK).toFixed(2));
+
+// Nifty candles se market regime: Nifty 50-DMA ke upar = Bullish, neeche = Bearish.
+// analyzeStock(candles, getMarketTrend(niftyCandles)) aise call karo.
+export function getMarketTrend(niftyCandles) {
+  if (!niftyCandles || niftyCandles.length < 50) return null;
+  const closes = niftyCandles.map(c => c.close);
+  const sma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / 50;
+  return closes[closes.length - 1] > sma50 ? 'Bullish' : 'Bearish';
+}
+
 export function analyzeStock(candles, marketTrend = null) {
   if (!candles || candles.length < 50) return { error: 'Insufficient data' };
 
@@ -88,7 +105,6 @@ export function analyzeStock(candles, marketTrend = null) {
     let trendUp = true; // assume starting trend; will self-correct as it walks forward
 
     for (let i = start; i < n; i++) {
-      // ATR at this point in time, using the same Wilder method, period-sized window
       let trSum = 0;
       const trStart = Math.max(1, i - period + 1);
       let count = 0;
@@ -150,63 +166,54 @@ export function analyzeStock(candles, marketTrend = null) {
   if (adx > 20) { longScore += 10; shortScore += 10; }
   if (diPlus > diMinus) longScore += 10; else shortScore += 10;
 
-  // FIX 5 (admin-only strong filter): Trend + Momentum + Supertrend teeno ka
-  // full agreement — mixed/confused market wale trades hatane ke liye.
   const longCoreAgree = trend === 'Bullish' && momentum === 'Bullish' && supertrend === 'Bullish';
   const shortCoreAgree = trend === 'Bearish' && momentum === 'Bearish' && supertrend === 'Bearish';
 
-  // FIX 6 (admin-only strong filter): Volume confirmation — aaj ka volume
-  // 20-din average se kam nahi hona chahiye.
   const volPeriod = Math.min(20, n - 1);
   const avgVolume = volumes.slice(n - volPeriod, n - 1).reduce((a, b) => a + b, 0) / volPeriod;
   const lastVolume = volumes[n - 1];
   const volumeConfirmed = avgVolume > 0 && lastVolume >= avgVolume;
 
-  // FIX 7 (admin-only strong filter): DI+/DI- ka minimum gap zaroori.
   const diGap = Math.abs(diPlus - diMinus);
   const diGapConfirmed = diGap >= 5;
 
-  // FIX 4 (backtested): normal signal — customer-facing dashboard aur screener
-  // ke liye. Yehi original threshold hai (ADX > 25, score >= 85).
+  // Normal signal — customer-facing dashboard aur screener (ADX > 25, score >= 85).
   const signal = adx > 25
     ? (longScore >= 85 ? 'LONG' : shortScore >= 85 ? 'SHORT' : null)
-    : null; // choppy/sideways market — no trade
+    : null;
 
-  // FIX 8 (admin-only strong filter, market regime): Agar overall Nifty/market
-  // khud downtrend mein hai, to LONG trades zyada fail hote hain (individual
-  // stock ka signal strong ho tab bhi broad market ke against jaata hai).
-  // Ye check sirf tabhi lagta hai jab caller ne marketTrend pass kiya ho —
-  // customer-facing signal isse touch nahi karta (marketTrend wahan pass hi
-  // nahi hota).
+  // Market regime: marketTrend null ho to filter off.
   const marketAligned = marketTrend === null
     ? true
     : (longCoreAgree ? marketTrend === 'Bullish' : shortCoreAgree ? marketTrend === 'Bearish' : true);
 
-  // strongSignal — sirf Admin ke signal-tracking/auto-scan ke liye. Normal
-  // signal ke saare conditions + core-indicator agreement + volume + DI gap
-  // + overall market direction ke saath alignment.
-  // Customer-facing dashboard/screener isko kabhi use nahi karte.
+  // strongSignal — sirf Admin tracking/auto-scan ke liye.
   const strongSignal = (adx > 25 && volumeConfirmed && diGapConfirmed && marketAligned)
     ? (longCoreAgree && longScore >= 85 ? 'LONG' : shortCoreAgree && shortScore >= 85 ? 'SHORT' : null)
     : null;
 
-  // FIX 3: ATR-based stop loss & targets instead of fixed 3%/6%/10%.
-  // Stop = 1.5x ATR away from entry (volatility-adjusted).
-  // Targets = 1x, 2x, 3x the stop distance (risk-multiple based).
-  const stopDistance = atr * 1.5;
-  const stopLoss = trend === 'Bullish' ? last - stopDistance : last + stopDistance;
-  const targets = trend === 'Bullish'
-    ? [last + stopDistance * 1, last + stopDistance * 2, last + stopDistance * 3]
-    : [last - stopDistance * 1, last - stopDistance * 2, last - stopDistance * 3];
+  // ATR-based SL, targets = SL distance ke R-multiples (TARGET_R), sab prices 0.05 tick pe rounded.
+  const isLong = (strongSignal || signal)
+    ? (strongSignal || signal) === 'LONG'
+    : trend === 'Bullish';
+  const dir = isLong ? 1 : -1;
+
+  const entry = roundTick(last);
+  const stopLoss = roundTick(last - dir * atr * STOP_ATR_MULT);
+  const riskPerShare = Number(Math.abs(entry - stopLoss).toFixed(2));
+  const targets = TARGET_R.map(r => roundTick(entry + dir * riskPerShare * r));
 
   return {
     lastClose: last,
     trend, momentum, rsi, adx, trendStrength, supertrend,
     longScore, shortScore, signal, strongSignal,
     week52High, week52Low, distFromHighPct,
-    entry: last,
+    entry,
     stopLoss,
     targets,
+    riskPerShare,            // 1R ka paisa — r_multiple nikalne ke liye
+    targetR: TARGET_R,       // [1.5, 2.5, 4]
+    maxHoldDays: MAX_HOLD_DAYS,
     suggestedHold: '~2 months',
     atr,
   };
