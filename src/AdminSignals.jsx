@@ -11,6 +11,7 @@ const COLORS = {
 };
 
 const PAGE_SIZE = 50;
+const NEW_RULES_START = '2026-11-24'; // is date se bane signals naye rules ke hain
 const REASON_LABEL = { sl: '🛑 SL', trail_sl: '🔒 Trail SL', t3: '🎯 T3', time_exit: '⏱️ Time exit' };
 
 const fmt = (v) => (v === null || v === undefined || v === '' ? '' : Number(v).toFixed(2));
@@ -80,10 +81,9 @@ export default function AdminSignals() {
     setCheckingGap(false);
   };
 
-  const newCount = signals.filter(s => s.close_reason).length + signals.filter(s => s.status === 'open' && s.t1_hit).length;
-  const rows = dataset === 'new'
-    ? signals.filter(s => s.close_reason || (s.status === 'open' && s.risk_per_share))
-    : signals;
+  const isNewRules = (s) => (s.signal_date || '') >= NEW_RULES_START;
+  const newCount = signals.filter(isNewRules).length;
+  const rows = dataset === 'new' ? signals.filter(isNewRules) : signals;
 
   const stats = {
     total: rows.length,
@@ -166,7 +166,7 @@ export default function AdminSignals() {
       </div>
       {dataset === 'new' && (
         <div style={{ fontSize: 11, color: COLORS.muted, marginBottom: 12 }}>
-          Naye rules = 1.5R/2.5R/4R targets, T1 pe 50% book + trail SL, 7 din time-exit, cost minus. Purane trades isme nahi hain.
+          Naye rules = 24 Nov 2026 ke baad bane signals: 1.5R/2.5R/4R targets, T1 pe 50% book + trail SL, 7 din time-exit, cost minus. Purane trades isme nahi hain.
         </div>
       )}
 
@@ -407,3 +407,4 @@ export default function AdminSignals() {
     </div>
   );
 }
+
