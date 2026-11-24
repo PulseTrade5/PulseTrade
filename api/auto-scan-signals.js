@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { analyzeStock, getMarketTrend } from '../src/technicalAnalysis.js';
 
-const supabase = createClient(
-  'https://okxbdzepfzysbnxmmysx.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9reGJkemVwZnp5c2JueG1teXN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIwNDQxMjQsImV4cCI6MjA5NzYyMDEyNH0.I5uOJhT-7aquna2fLrCLDtpsRHGMXOygWaVQn5AkIaI'
-);
+// Service-role key sirf server (Vercel env) mein rehti hai — RLS bypass karti hai, code/GitHub mein kabhi nahi.
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://okxbdzepfzysbnxmmysx.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = SUPABASE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false } })
+  : null;
 
 // ---- Config ----
 const MAX_HOLD_DAYS = 7;     // itne trading din mein exit na mile to time-exit
@@ -269,6 +271,10 @@ export default async function handler(req, res) {
   const authHeader = req.headers['authorization'];
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (!supabase) {
+    return res.status(500).json({ error: 'SUPABASE_SERVICE_ROLE_KEY env var missing hai (Vercel > Settings > Environment Variables)' });
   }
 
   const today = istDate(Date.now());
