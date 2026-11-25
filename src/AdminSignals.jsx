@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from './supabaseClient';
+import { analyzeStock, getMarketTrend } from './technicalAnalysis';
 
 const COLORS = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
@@ -12,6 +13,17 @@ const COLORS = {
 
 const PAGE_SIZE = 50;
 const NEW_RULES_START = '2026-11-24'; // is date se bane signals naye rules ke hain
+// Manual swing scan ke liye list (Nifty 50) — 4 PM cron ki list ka pehla hissa
+const SWING_SCAN_LIST = [
+  'RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY', 'ITC', 'SBIN', 'BHARTIARTL',
+  'LT', 'KOTAKBANK', 'AXISBANK', 'HINDUNILVR', 'BAJFINANCE', 'MARUTI', 'ASIANPAINT',
+  'SUNPHARMA', 'TITAN', 'ULTRACEMCO', 'NESTLEIND', 'WIPRO', 'ADANIENT', 'ADANIPORTS',
+  'ONGC', 'NTPC', 'POWERGRID', 'TATAMOTORS', 'TATASTEEL', 'JSWSTEEL', 'HCLTECH',
+  'TECHM', 'BAJAJFINSV', 'DIVISLAB', 'DRREDDY', 'CIPLA', 'GRASIM', 'BRITANNIA',
+  'EICHERMOT', 'HEROMOTOCO', 'BAJAJ-AUTO', 'HINDALCO', 'COALINDIA', 'SBILIFE',
+  'HDFCLIFE', 'INDUSINDBK', 'BPCL', 'APOLLOHOSP', 'UPL', 'SHREECEM', 'M&M',
+  'TATACONSUM', 'VEDL',
+];
 const REASON_LABEL = { sl: '🛑 SL', trail_sl: '🔒 Trail SL', t3: '🎯 T3', time_exit: '⏱️ Time exit' };
 
 const fmt = (v) => (v === null || v === undefined || v === '' ? '' : Number(v).toFixed(2));
@@ -28,6 +40,9 @@ export default function AdminSignals() {
   const [search, setSearch] = useState('');
   const [livePrices, setLivePrices] = useState({}); // id -> current price
   const [checkingGap, setCheckingGap] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [scanProgress, setScanProgress] = useState(0);
+  const [scanMsg, setScanMsg] = useState('');
 
   // Supabase ek baar mein max 1000 rows deta hai — pages mein sab laao
   const fetchSignals = async () => {
@@ -79,6 +94,77 @@ export default function AdminSignals() {
     openSignals.forEach(s => { updated[s.id] = priceMap[s.stock_symbol]; });
     setLivePrices(updated);
     setCheckingGap(false);
+  };
+
+  // Manual swing scan — 4 PM cron jaisa hi (strongSignal), bas abhi chalta hai
+  const handleSwingScan = async () => {
+    setScanning(true);
+    setScanProgress(0);
+    setScanMsg('');
+    const istDateOf = (ts) => new Date(ts * 1000 + 19800000).toISOString().split('T')[0];
+
+    const fetchC = async (sym) => {
+      const res = await fetch(`/api/get-stock-data?symbol=${encodeURIComponent(sym)}&range=1y`);
+      const data = await res.json();
+      if (!res.ok || !data.candles) return null;
+      let candles = data.candles;
+      // 3:45 PM se pehle aaj ki adhuri candle hata do (cron bhi aisa hi karta hai)
+      const nowIst = new Date(Date.now() + 19800000);
+      const mins = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
+      const todayIst = nowIst.toISOString().split('T')[0];
+      if (candles.length && istDateOf(candles[candles.length - 1].time) === todayIst && mins < 15 * 60 + 45) {
+        candles = candles.slice(0, -1);
+      }
+      return candles;
+    };
+
+    let marketTrend = null;
+    try { marketTrend = getMarketTrend(await fetchC('^NSEI')); } catch { /* filter off */ }
+
+    const openSet = new Set(signals.filter(s => s.status === 'open').map(s => s.stock_symbol));
+    let scanned = 0, strong = 0, normalOnly = 0, saved = 0, dup = 0;
+    const errors = [];
+
+    for (let i = 0; i < SWING_SCAN_LIST.length; i += 5) {
+      const batch = SWING_SCAN_LIST.slice(i, i + 5);
+      await Promise.all(batch.map(async (symbol) => {
+        try {
+          const candles = await fetchC(symbol + '.NS');
+          scanned++;
+          if (!candles || candles.length < 50) return;
+          const a = analyzeStock(candles, marketTrend);
+          if (a.error) return;
+          if (!a.strongSignal) { if (a.signal) normalOnly++; return; }
+          strong++;
+          if (openSet.has(symbol)) { dup++; return; }
+          const { error } = await supabase.from('signal_tracking').insert({
+            stock_symbol: symbol,
+            signal: a.strongSignal,
+            entry_price: a.entry,
+            stop_loss: a.stopLoss,
+            target1: a.targets?.[0],
+            target2: a.targets?.[1],
+            target3: a.targets?.[2],
+            risk_per_share: a.riskPerShare,
+            signal_date: istDateOf(candles[candles.length - 1].time),
+            status: 'open',
+          });
+          if (error) { errors.push(`${symbol}: ${error.message}`); return; }
+          openSet.add(symbol);
+          saved++;
+        } catch (e) {
+          errors.push(`${symbol}: ${e.message}`);
+        }
+      }));
+      setScanProgress(Math.min(i + 5, SWING_SCAN_LIST.length));
+    }
+
+    setScanMsg(
+      `Market trend: ${marketTrend || 'pata nahi'} • ${scanned} scan • ${strong} strong signal • ${saved} save hue • ${dup} pehle se open • ${normalOnly} sirf normal signal (strict filter fail)` +
+      (errors.length ? ` • Errors: ${errors.slice(0, 3).join(' | ')}` : '')
+    );
+    setScanning(false);
+    fetchSignals();
   };
 
   const isNewRules = (s) => (s.signal_date || '') >= NEW_RULES_START;
@@ -286,6 +372,20 @@ export default function AdminSignals() {
         </div>
       )}
 
+      <button onClick={handleSwingScan} disabled={scanning} style={{
+        width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
+        backgroundColor: scanning ? COLORS.surfaceBorder : COLORS.blue,
+        color: scanning ? COLORS.muted : '#FFF',
+        cursor: scanning ? 'not-allowed' : 'pointer', marginBottom: 6,
+      }}>
+        {scanning ? `⏳ Scan ho raha hai... ${scanProgress}/${SWING_SCAN_LIST.length}` : '🔍 Swing Scan Abhi Chalao'}
+      </button>
+      {scanMsg && (
+        <div style={{ fontSize: 12, color: COLORS.text, backgroundColor: COLORS.blueLight, borderRadius: 10, padding: '10px 12px', marginBottom: 10, lineHeight: 1.6, wordBreak: 'break-word' }}>
+          {scanMsg}
+        </div>
+      )}
+
       <button onClick={fetchSignals} disabled={loading} style={{
         width: '100%', padding: '14px', fontSize: 14, fontWeight: 700, borderRadius: 12, border: 'none',
         backgroundColor: loading ? COLORS.surfaceBorder : COLORS.gold,
@@ -407,4 +507,3 @@ export default function AdminSignals() {
     </div>
   );
 }
-
