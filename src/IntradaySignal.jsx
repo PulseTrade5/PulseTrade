@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { analyzeIntraday } from './intradayAnalysis';
 
 const COLORS = {
@@ -41,6 +41,8 @@ export default function IntradaySignal() {
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [scanDone, setScanDone] = useState(false);
+  const [now, setNow] = useState(Date.now());
+  const finalFired = useRef(false);
 
   const [symbolInput, setSymbolInput] = useState('');
   const [customLoading, setCustomLoading] = useState(false);
@@ -50,12 +52,14 @@ export default function IntradaySignal() {
   // Market hours check — IST 9:15 AM se 3:30 PM tak hi intraday signal kaam ka hai.
   // Isके bahar signal dikhana bhi galat hai kyunki us waqt trade le hi nahi sakte,
   // aur kal jab market khulega price fresh move karega — aaj ka data stale ho jaata hai.
-  const nowIST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const nowIST = new Date(new Date(now).toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
   const day = nowIST.getDay(); // 0 = Sunday, 6 = Saturday
   const minutesNow = nowIST.getHours() * 60 + nowIST.getMinutes();
   const marketOpen = 9 * 60 + 15;
   const marketClose = 15 * 60 + 30;
   const isMarketHours = day >= 1 && day <= 5 && minutesNow >= marketOpen && minutesNow <= marketClose;
+  // 3:00 PM se 3:30 PM tak = FINAL window (overnight/gap decision ke liye)
+  const isFinalWindow = isMarketHours && minutesNow >= 15 * 60;
 
   const runAutoScan = async () => {
     setScanning(true);
@@ -78,7 +82,26 @@ export default function IntradaySignal() {
     setScanDone(true);
   };
 
-  useEffect(() => { if (isMarketHours) runAutoScan(); }, []);
+  useEffect(() => {
+    if (isMarketHours) {
+      if (isFinalWindow) finalFired.current = true; // double scan se bachne ke liye
+      runAutoScan();
+    }
+  }, []);
+
+  // Har 30 sec mein time update — taaki tab khula rahe to 3 PM apne aap pakad le
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  // 3:00 PM hote hi ek baar fresh final scan (sirf jab tab khula ho)
+  useEffect(() => {
+    if (isFinalWindow && !finalFired.current) {
+      finalFired.current = true;
+      runAutoScan();
+    }
+  }, [isFinalWindow]);
 
   const handleCustomSearch = async () => {
     if (!isMarketHours) return;
@@ -118,6 +141,16 @@ export default function IntradaySignal() {
 
       {isMarketHours && (
       <>
+      {isFinalWindow && (
+        <div style={{ ...cardStyle, border: `1.5px solid ${COLORS.gold}`, backgroundColor: COLORS.goldLight }}>
+          <div style={{ fontSize: 13, fontWeight: 800, color: COLORS.text, marginBottom: 4 }}>🔔 3 PM FINAL SIGNALS</div>
+          <div style={{ fontSize: 12, color: COLORS.muted, lineHeight: 1.6 }}>
+            Market 3:30 PM pe band hoga — neeche ke signals final hain. Overnight rakhoge to agle din gap open ho sakta hai
+            aur stop loss skip hoke stop se bada loss ho sakta hai. Intraday signal ka stop/target usi din ke liye bana hai.
+          </div>
+        </div>
+      )}
+
       {/* Auto Scan */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
