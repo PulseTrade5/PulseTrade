@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { analyzeIntraday } from './intradayAnalysis';
+import { supabase } from './supabaseClient';
 
 const COLORS = {
   bg: "#F4F6FA", surface: "#FFFFFF", surfaceBorder: "#E2E8F0",
@@ -43,6 +44,8 @@ export default function IntradaySignal() {
   const [scanDone, setScanDone] = useState(false);
   const [now, setNow] = useState(Date.now());
   const finalFired = useRef(false);
+  const [history, setHistory] = useState([]);
+  const [historyErr, setHistoryErr] = useState('');
 
   const [symbolInput, setSymbolInput] = useState('');
   const [customLoading, setCustomLoading] = useState(false);
@@ -60,6 +63,48 @@ export default function IntradaySignal() {
   const isMarketHours = day >= 1 && day <= 5 && minutesNow >= marketOpen && minutesNow <= marketClose;
   // 3:00 PM se 3:30 PM tak = FINAL window (overnight/gap decision ke liye)
   const isFinalWindow = isMarketHours && minutesNow >= 15 * 60;
+
+  const istMinutesNow = () => {
+    const d = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    return d.getHours() * 60 + d.getMinutes();
+  };
+  const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const num = (v) => (v === null || v === undefined || isNaN(Number(v))) ? null : Number(v);
+
+  const loadHistory = async () => {
+    const { data, error } = await supabase
+      .from('intraday_signals').select('*')
+      .order('created_at', { ascending: false }).limit(100);
+    if (error) { setHistoryErr(error.message); return; }
+    setHistoryErr('');
+    setHistory(data || []);
+  };
+
+  // Har LONG/SHORT signal Supabase mein save — taaki market band hone ke baad bhi record rahe
+  const saveSignals = async (results) => {
+    const isFinal = istMinutesNow() >= 15 * 60;
+    const rows = results.filter(r => r.signal).map(r => ({
+      signal_date: todayIST(),
+      stock_symbol: r.symbol,
+      signal: r.signal,
+      entry_price: num(r.entry),
+      stop_loss: num(r.stopLoss),
+      target1: num(r.targets?.[0]),
+      target2: num(r.targets?.[1]),
+      target3: num(r.targets?.[2]),
+      last_close: num(r.lastClose),
+      rsi: num(r.rsi),
+      adx: num(r.adx),
+      is_final: isFinal,
+    }));
+    if (rows.length > 0) {
+      const { error } = await supabase
+        .from('intraday_signals')
+        .upsert(rows, { onConflict: 'signal_date,stock_symbol,signal,is_final', ignoreDuplicates: true });
+      if (error) setHistoryErr(error.message);
+    }
+    await loadHistory();
+  };
 
   const runAutoScan = async () => {
     setScanning(true);
@@ -80,7 +125,10 @@ export default function IntradaySignal() {
     }
     setScanning(false);
     setScanDone(true);
+    await saveSignals(all);
   };
+
+  useEffect(() => { loadHistory(); }, []);
 
   useEffect(() => {
     if (isMarketHours) {
@@ -121,6 +169,10 @@ export default function IntradaySignal() {
   const rowStyle = { display: 'flex', justifyContent: 'space-between', fontSize: 13, padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` };
 
   const signalCount = autoResults.filter(r => r.signal).length;
+  const historyByDate = history.reduce((acc, r) => {
+    (acc[r.signal_date] = acc[r.signal_date] || []).push(r);
+    return acc;
+  }, {});
 
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
@@ -310,6 +362,41 @@ export default function IntradaySignal() {
 
       </>
       )}
+
+      {/* Saved record — market band hone ke baad bhi dikhta hai */}
+      <div style={cardStyle}>
+        <div style={{ fontSize: 10, letterSpacing: 2, color: COLORS.muted, fontWeight: 700, marginBottom: 12 }}>📚 SAVED SIGNALS (RECORD)</div>
+        {historyErr && (
+          <div style={{ fontSize: 12, color: COLORS.red, fontWeight: 600, marginBottom: 10, wordBreak: 'break-word' }}>
+            Save/load error: {historyErr}
+          </div>
+        )}
+        {history.length === 0 && !historyErr && (
+          <div style={{ fontSize: 12, color: COLORS.muted, textAlign: 'center', padding: '12px 0' }}>Abhi koi saved signal nahi.</div>
+        )}
+        {Object.entries(historyByDate).map(([date, rows]) => (
+          <div key={date} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: COLORS.text, marginBottom: 6 }}>
+              {new Date(date).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })} ({rows.length})
+            </div>
+            {rows.map(r => (
+              <div key={r.id} style={{ padding: '8px 0', borderBottom: `1px solid ${COLORS.surfaceBorder}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 800, color: COLORS.text }}>
+                    {r.stock_symbol} {r.is_final && <span style={{ fontSize: 10, color: COLORS.gold }}>🔔 3PM FINAL</span>}
+                  </span>
+                  <span style={{ fontSize: 11, fontWeight: 800, color: r.signal === 'LONG' ? COLORS.green : COLORS.red }}>
+                    {r.signal === 'LONG' ? '🟢 LONG' : '🔴 SHORT'}
+                  </span>
+                </div>
+                <div style={{ fontSize: 11, color: COLORS.muted, marginTop: 3, lineHeight: 1.6 }}>
+                  Entry {fmtINR(r.entry_price)} • SL {fmtINR(r.stop_loss)} • T1 {fmtINR(r.target1)} • T2 {fmtINR(r.target2)} • T3 {fmtINR(r.target3)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
 
       <div style={{ fontSize: 11, color: COLORS.muted, textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
         ⚠️ Intraday trading high-risk hai — sirf technical analysis, investment advice nahi.
