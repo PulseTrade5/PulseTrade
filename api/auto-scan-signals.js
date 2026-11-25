@@ -57,7 +57,8 @@ const IST_MS = 5.5 * 60 * 60 * 1000;
 const istDate = (ms) => new Date(ms + IST_MS).toISOString().split('T')[0];
 
 // range: '1y' scan ke liye, '6mo' open signals check ke liye
-async function fetchCandles(symbol, range = '1y') {
+// live=true (3 PM scan): aaj ki adhuri candle rakhi jaati hai aur uska volume poore din ke hisaab se scale hota hai
+async function fetchCandles(symbol, range = '1y', live = false) {
   const sym = symbol.startsWith('^') ? symbol : symbol + '.NS';
   const res = await fetch(
     `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=1d`,
@@ -83,15 +84,22 @@ async function fetchCandles(symbol, range = '1y') {
   const mins = nowIst.getUTCHours() * 60 + nowIst.getUTCMinutes();
   const todayIst = nowIst.toISOString().split('T')[0];
   if (candles.length && candles[candles.length - 1].date === todayIst && mins < 15 * 60 + 45) {
-    candles.pop();
+    if (!live) {
+      candles.pop();
+    } else if (mins < 15 * 60 + 30) {
+      // Adhure din ka volume poore din ke andaaze mein badlo (9:15 se ab tak ke minutes / 375 total)
+      const elapsed = Math.min(375, Math.max(30, mins - (9 * 60 + 15)));
+      const last = candles[candles.length - 1];
+      if (last.volume != null) last.volume = last.volume * (375 / elapsed);
+    }
   }
   return candles;
 }
 
 // Market regime: Nifty 50-DMA ke upar = Bullish, neeche = Bearish (fail ho to null = filter off)
-async function fetchMarketTrend() {
+async function fetchMarketTrend(live = false) {
   try {
-    const candles = await fetchCandles('^NSEI', '1y');
+    const candles = await fetchCandles('^NSEI', '1y', live);
     return getMarketTrend(candles);
   } catch {
     return null;
@@ -210,10 +218,10 @@ async function checkOpenSignals() {
 }
 
 // NIFTY 200 scan karke naye signals banao — batch mein
-async function scanNewSignals() {
+async function scanNewSignals(live = false) {
   const stats = { scanned: 0, signalsFound: 0, skippedDuplicate: 0, errors: [] };
 
-  const marketTrend = await fetchMarketTrend();
+  const marketTrend = await fetchMarketTrend(live);
   stats.marketTrend = marketTrend;
 
   const batchSize = 10;
@@ -222,7 +230,7 @@ async function scanNewSignals() {
     await Promise.all(batch.map(async (symbol) => {
       try {
         stats.scanned++;
-        const candles = await fetchCandles(symbol, '1y');
+        const candles = await fetchCandles(symbol, '1y', live);
         if (!candles || candles.length < 50) return;
 
         const analysis = analyzeStock(candles, marketTrend);
@@ -279,7 +287,13 @@ export default async function handler(req, res) {
 
   const today = istDate(Date.now());
 
-  // Pehle purane open signals (SL/target/time-exit), phir naye signals
+  // ?mode=scan -> 3 PM scan: sirf naye signals (adhuri candle ke saath). Win/Loss check 4 PM pe hi hota hai.
+  if (req.query?.mode === 'scan') {
+    const scanOnly = await scanNewSignals(true);
+    return res.status(200).json({ success: true, mode: 'scan', date: today, newSignalsScan: scanOnly });
+  }
+
+  // Default (4 PM): pehle purane open signals (SL/target/time-exit), phir naye signals
   const checkResults = await checkOpenSignals();
   const scanResults = await scanNewSignals();
 
