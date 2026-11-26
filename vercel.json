@@ -1,14 +1,26 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ],
   "headers": [
     {
       "source": "/assets/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" },
-        { "key": "Pragma", "value": "no-cache" },
-        { "key": "Expires", "value": "0" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        }
       ]
     }
   ],
@@ -20,6 +32,10 @@
     {
       "path": "/api/trial-reminder",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/auto-scan-signals?mode=scan",
+      "schedule": "30 9 * * 1-5"
     },
     {
       "path": "/api/auto-scan-signals",
