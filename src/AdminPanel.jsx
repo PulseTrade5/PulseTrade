@@ -4,6 +4,7 @@ import AdminFund from './AdminFund';
 import AdminSignals from './AdminSignals';
 import IntradaySignal from './IntradaySignal';
 import TimeMachineAdmin from './TimeMachineAdmin';
+import TrackerBanner from './TrackerBanner';
 
 const ADMIN_EMAIL = 'prabhat3300@gmail.com';
 
@@ -324,6 +325,8 @@ export default function AdminPanel({ user, onLogout }) {
         </div>
 
         <div style={{ padding: '20px 20px 0' }}>
+          {activeTab !== 'signals' && <TrackerBanner refreshKey={activeTab} onOpen={() => { setActiveTab('signals'); setSelectedUser(null); }} />}
+
           {successMsg && <div style={{ backgroundColor: COLORS.greenLight, border: '1.5px solid #bbf7d0', borderRadius: 12, padding: '12px 16px', marginBottom: 16, fontSize: 13, fontWeight: 700, color: COLORS.green }}>{successMsg}</div>}
 
           {activeTab === 'users' && (
