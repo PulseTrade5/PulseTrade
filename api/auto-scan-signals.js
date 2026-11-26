@@ -12,6 +12,8 @@ const supabase = SUPABASE_KEY
 const MAX_HOLD_DAYS = 7;     // itne trading din mein exit na mile to time-exit
 const PARTIAL_AT_T1 = 0.5;   // T1 pe 50% book, baaki 50% T3 tak (SL entry pe trail)
 const COST_PCT = 0.001;      // brokerage+STT+slippage ka andaaza (0.1% round trip) — apne hisaab se badlo
+const MAX_OPEN_TOTAL = 6;     // ek saath itne se zyada open swing signals nahi
+const MAX_PER_SECTOR = 2;     // ek sector (jaise Financials) ke max itne open signals
 
 // NIFTY 200 (approx) — daily scan list, diversified large + mid cap universe
 const NIFTY_50 = [
@@ -49,6 +51,27 @@ const NIFTY_50 = [
   'SUNDARMFIN', 'SUNDRMFAST', 'SUPRAJIT', 'SUZLON', 'TATAINVEST', 'TRIDENT',
   'TTKPRESTIG', 'VGUARD', 'VINATIORGA', 'WHIRLPOOL', 'ZFCVINDIA',
 ];
+
+// Sector map — ek sector ke saare stocks ek saath girte hain, isliye max MAX_PER_SECTOR open signals
+const SECTORS = {
+  Financials: ['HDFCBANK', 'ICICIBANK', 'KOTAKBANK', 'AXISBANK', 'SBIN', 'INDUSINDBK', 'BANKBARODA', 'PNB', 'CANBK', 'IDFCFIRSTB', 'FEDERALBNK', 'BANDHANBNK', 'RBLBANK', 'YESBANK', 'CUB', 'BAJFINANCE', 'BAJAJFINSV', 'CHOLAFIN', 'MUTHOOTFIN', 'MANAPPURAM', 'LICHSGFIN', 'PFC', 'RECLTD', 'SBICARD', 'SUNDARMFIN', 'ABCAPITAL', 'IBULHSGFIN', 'CANFINHOME', 'PEL', 'HDFCAMC', 'MFSL', 'L&TFH', 'TATAINVEST', 'SBILIFE', 'HDFCLIFE', 'ICICIGI', 'ICICIPRULI'],
+  IT: ['TCS', 'INFY', 'WIPRO', 'HCLTECH', 'TECHM', 'LTIM', 'LTTS', 'MPHASIS', 'PERSISTENT', 'OFSS', 'BSOFT', 'TATAELXSI', 'NAUKRI', 'INDIAMART'],
+  Auto: ['MARUTI', 'TATAMOTORS', 'EICHERMOT', 'HEROMOTOCO', 'BAJAJ-AUTO', 'M&M', 'TVSMOTOR', 'ASHOKLEY', 'BALKRISIND', 'ESCORTS', 'MOTHERSON', 'BOSCHLTD', 'BHARATFORG', 'MRF', 'EXIDEIND', 'SONACOMS', 'SCHAEFFLER', 'SUNDRMFAST', 'ZFCVINDIA', 'SUPRAJIT', 'TIINDIA'],
+  Pharma: ['SUNPHARMA', 'DIVISLAB', 'DRREDDY', 'CIPLA', 'APOLLOHOSP', 'LUPIN', 'TORNTPHARM', 'ZYDUSLIFE', 'ALKEM', 'AUROPHARMA', 'BIOCON', 'GLAND', 'GLENMARK', 'GRANULES', 'IPCALAB', 'LAURUSLABS', 'SYNGENE', 'AJANTPHARM', 'MAXHEALTH', 'LALPATHLAB'],
+  FMCG: ['HINDUNILVR', 'ITC', 'NESTLEIND', 'BRITANNIA', 'TATACONSUM', 'DABUR', 'GODREJCP', 'MARICO', 'COLPAL', 'PGHH', 'UBL', 'UNITDSPR', 'VBL', 'EMAMILTD', 'RADICO', 'PATANJALI'],
+  Energy: ['RELIANCE', 'ONGC', 'BPCL', 'IOC', 'HINDPETRO', 'GAIL', 'PETRONET', 'IGL', 'MGL', 'GUJGASLTD', 'GSPL', 'OIL', 'COALINDIA'],
+  Power: ['NTPC', 'POWERGRID', 'TATAPOWER', 'ADANIGREEN', 'ADANIPOWER', 'ADANIENSOL', 'JSWENERGY', 'NHPC', 'TORNTPOWER', 'SUZLON'],
+  Metals: ['TATASTEEL', 'JSWSTEEL', 'HINDALCO', 'VEDL', 'JINDALSTEL', 'SAIL', 'NMDC', 'NATIONALUM', 'HINDCOPPER', 'JSL', 'APLAPOLLO', 'RATNAMANI'],
+  CementInfra: ['ULTRACEMCO', 'GRASIM', 'AMBUJACEM', 'SHREECEM', 'ACC', 'DALBHARAT', 'JKCEMENT', 'RAMCOCEM', 'LT', 'ADANIPORTS', 'ADANIENT', 'GMRINFRA', 'CONCOR'],
+  Realty: ['DLF', 'GODREJPROP', 'LODHA', 'OBEROIRLTY', 'PHOENIXLTD', 'PRESTIGE'],
+  Consumer: ['TITAN', 'ASIANPAINT', 'BERGEPAINT', 'KANSAINER', 'PIDILITIND', 'HAVELLS', 'VOLTAS', 'WHIRLPOOL', 'CROMPTON', 'POLYCAB', 'KEI', 'DIXON', 'VGUARD', 'PAGEIND', 'BATAINDIA', 'TRENT', 'ABFRL', 'JUBLFOOD', 'INDHOTEL', 'IRCTC', 'INDIGO', 'ZOMATO', 'TTKPRESTIG', 'SUPREMEIND', 'ASTRAL'],
+  Industrials: ['SIEMENS', 'ABB', 'BHEL', 'BEL', 'HAL', 'CUMMINSIND', 'HONAUT', 'HFCL'],
+  Chemicals: ['UPL', 'PIIND', 'SRF', 'AARTIIND', 'ATUL', 'DEEPAKNTR', 'NAVINFLUOR', 'VINATIORGA', 'TATACHEM', 'GNFC', 'SUMICHEM', 'RAIN'],
+  TelecomMedia: ['BHARTIARTL', 'IDEA', 'INDUSTOWER', 'TATACOMM', 'SUNTV', 'ZEEL'],
+};
+const SECTOR_OF = {};
+for (const [sec, syms] of Object.entries(SECTORS)) syms.forEach(sym => { SECTOR_OF[sym] = sec; });
+const sectorOf = (sym) => SECTOR_OF[sym] || null; // map mein nahi = koi sector limit nahi
 
 const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' };
 
@@ -217,13 +240,20 @@ async function checkOpenSignals() {
   return stats;
 }
 
-// NIFTY 200 scan karke naye signals banao — batch mein
+// NIFTY 200 scan karke naye signals banao — batch mein.
+// Pehle saare strong signals ikattha hote hain, phir score se rank karke limits ke andar hi save hote hain:
+// total open <= MAX_OPEN_TOTAL aur ek sector ke <= MAX_PER_SECTOR.
 async function scanNewSignals(live = false) {
-  const stats = { scanned: 0, signalsFound: 0, skippedDuplicate: 0, errors: [] };
+  const stats = {
+    scanned: 0, strongFound: 0, signalsFound: 0,
+    skippedDuplicate: 0, skippedSectorLimit: 0, skippedTotalLimit: 0,
+    openAfter: 0, errors: [],
+  };
 
   const marketTrend = await fetchMarketTrend(live);
   stats.marketTrend = marketTrend;
 
+  const candidates = [];
   const batchSize = 10;
   for (let i = 0; i < NIFTY_50.length; i += batchSize) {
     const batch = NIFTY_50.slice(i, i + batchSize);
@@ -236,38 +266,63 @@ async function scanNewSignals(live = false) {
         const analysis = analyzeStock(candles, marketTrend);
         if (analysis.error || !analysis.strongSignal) return;
 
-        const { data: existingOpen } = await supabase
-          .from('signal_tracking')
-          .select('id')
-          .eq('stock_symbol', symbol)
-          .eq('status', 'open')
-          .maybeSingle();
-
-        if (existingOpen) {
-          stats.skippedDuplicate++;
-          return;
-        }
-
-        const { error } = await supabase.from('signal_tracking').insert({
-          stock_symbol: symbol,
-          signal: analysis.strongSignal,
-          entry_price: analysis.entry,
-          stop_loss: analysis.stopLoss,
-          target1: analysis.targets?.[0],
-          target2: analysis.targets?.[1],
-          target3: analysis.targets?.[2],
-          risk_per_share: analysis.riskPerShare,
-          // Signal usi candle ki date ka hai jis pe bana (aaj ki date nahi, weekend/holiday pe galat hota)
-          signal_date: candles[candles.length - 1].date,
-          status: 'open',
+        const dirScore = analysis.strongSignal === 'LONG' ? analysis.longScore : analysis.shortScore;
+        candidates.push({
+          symbol,
+          analysis,
+          signalDate: candles[candles.length - 1].date,
+          score: (Number(dirScore) || 0) * 1000 + (Number(analysis.adx) || 0),
         });
-        if (error) { stats.errors.push(`${symbol} insert failed: ${error.message}`); return; }
-        stats.signalsFound++;
       } catch (e) {
         stats.errors.push(`${symbol}: ${e.message}`);
       }
     }));
   }
+  stats.strongFound = candidates.length;
+
+  // Abhi kitne signals open hain aur kis sector ke
+  const { data: openRows } = await supabase
+    .from('signal_tracking')
+    .select('stock_symbol')
+    .eq('status', 'open');
+  const openSymbols = new Set((openRows || []).map(r => r.stock_symbol));
+  const sectorCount = {};
+  for (const sym of openSymbols) {
+    const sec = sectorOf(sym);
+    if (sec) sectorCount[sec] = (sectorCount[sec] || 0) + 1;
+  }
+
+  // Sabse mazboot signal pehle
+  candidates.sort((a, b) => b.score - a.score);
+
+  for (const c of candidates) {
+    if (openSymbols.has(c.symbol)) { stats.skippedDuplicate++; continue; }
+    if (openSymbols.size >= MAX_OPEN_TOTAL) { stats.skippedTotalLimit++; continue; }
+    const sec = sectorOf(c.symbol);
+    if (sec && (sectorCount[sec] || 0) >= MAX_PER_SECTOR) { stats.skippedSectorLimit++; continue; }
+
+    const a = c.analysis;
+    const { error } = await supabase.from('signal_tracking').insert({
+      stock_symbol: c.symbol,
+      signal: a.strongSignal,
+      entry_price: a.entry,
+      stop_loss: a.stopLoss,
+      target1: a.targets?.[0],
+      target2: a.targets?.[1],
+      target3: a.targets?.[2],
+      risk_per_share: a.riskPerShare,
+      // Signal usi candle ki date ka hai jis pe bana (aaj ki date nahi, weekend/holiday pe galat hota)
+      signal_date: c.signalDate,
+      status: 'open',
+    });
+    if (error) { stats.errors.push(`${c.symbol} insert failed: ${error.message}`); continue; }
+
+    openSymbols.add(c.symbol);
+    if (sec) sectorCount[sec] = (sectorCount[sec] || 0) + 1;
+    stats.signalsFound++;
+  }
+
+  stats.openAfter = openSymbols.size;
   return stats;
 }
 
